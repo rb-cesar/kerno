@@ -1,0 +1,226 @@
+// Kerno — Prisma schema
+// Núcleo (identidade + contexto) + Hub Kanban + Hub Chat + Event log
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// NÚCLEO — Identidade
+// ============================================================
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  avatar       String?
+  lastSeenAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  workspaces   WorkspaceUser[]
+  projectUsers ProjectUser[]
+  messages     Message[]
+  cards        Card[]
+}
+
+// ============================================================
+// NÚCLEO — Contexto (Workspace / Project / Membership)
+// ============================================================
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+  users    WorkspaceUser[]
+}
+
+model WorkspaceUser {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  users     ProjectUser[]
+  boards    Board[]
+  channels  Channel[]
+  events    Event[]
+
+  @@index([workspaceId])
+}
+
+model ProjectUser {
+  id        String      @id @default(cuid())
+  userId    String
+  projectId String
+  role      ProjectRole @default(MEMBER)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+// ============================================================
+// HUB KANBAN
+// ============================================================
+
+model Board {
+  id        String   @id @default(cuid())
+  name      String
+  projectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns Column[]
+  cards   Card[]
+  labels  Label[]
+
+  @@index([projectId])
+}
+
+model Column {
+  id      String @id @default(cuid())
+  name    String
+  boardId String
+  order   Int
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@index([boardId])
+}
+
+model Card {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  columnId    String
+  boardId     String
+  assignedTo  String?
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  column Column      @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  board  Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user   User?       @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
+  labels CardLabel[]
+
+  @@index([columnId])
+  @@index([boardId])
+  @@index([assignedTo])
+}
+
+model Label {
+  id      String @id @default(cuid())
+  name    String
+  color   String
+  boardId String
+
+  board Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards CardLabel[]
+
+  @@index([boardId])
+}
+
+model CardLabel {
+  cardId  String
+  labelId String
+
+  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
+}
+
+// ============================================================
+// HUB CHAT
+// ============================================================
+
+model Channel {
+  id        String   @id @default(cuid())
+  name      String
+  projectId String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([projectId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  channelId String
+  userId    String?
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([channelId])
+}
+
+// ============================================================
+// EVENT LOG (auditoria + integração entre hubs)
+// ============================================================
+
+model Event {
+  id        String   @id @default(cuid())
+  type      String // "card:created", "card:moved", "message:sent", ...
+  payload   Json
+  projectId String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([type])
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum WorkspaceRole {
+  ADMIN
+  MEMBER
+}
+
+enum ProjectRole {
+  LEAD
+  MEMBER
+  VIEWER
+}

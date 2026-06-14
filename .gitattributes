@@ -1,0 +1,14 @@
+# Normaliza quebras de linha: LF no repositório
+* text=auto eol=lf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Lockfile gerado — minimiza diffs/conflitos
+pnpm-lock.yaml -diff linguist-generated
