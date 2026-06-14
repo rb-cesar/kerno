@@ -4,8 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@kerno/ui";
 import { useSocket } from "@/components/providers/socket-provider";
+import { ProjectMembersDialog } from "@/components/app/project-members-dialog";
 
-type Member = { id: string; name: string };
+type ProjectMember = { id: string; name: string; role: string };
+type WorkspaceMember = { id: string; name: string };
 
 const HUBS = [
   { key: "kanban", label: "Kanban" },
@@ -16,17 +18,25 @@ export function ProjectHeader({
   projectName,
   basePath,
   workspaceHref,
-  members,
+  projectId,
+  slug,
+  isManager,
+  projectMembers,
+  workspaceMembers,
 }: {
   projectName: string;
   basePath: string;
   workspaceHref: string;
-  members: Member[];
+  projectId: string;
+  slug: string;
+  isManager: boolean;
+  projectMembers: ProjectMember[];
+  workspaceMembers: WorkspaceMember[];
 }) {
   const pathname = usePathname();
   const { connected, onlineUserIds } = useSocket();
 
-  const online = members.filter((m) => onlineUserIds.includes(m.id));
+  const online = projectMembers.filter((m) => onlineUserIds.includes(m.id));
 
   return (
     <header className="flex shrink-0 flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -57,19 +67,24 @@ export function ProjectHeader({
         </nav>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span
-          className={cn(
-            "inline-block h-2 w-2 rounded-full",
-            connected ? "bg-emerald-500" : "bg-neutral-500",
-          )}
-          title={connected ? "Conectado" : "Desconectado"}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span
+            className={cn(
+              "inline-block h-2 w-2 rounded-full",
+              connected ? "bg-emerald-500" : "bg-neutral-500",
+            )}
+            title={connected ? "Conectado" : "Desconectado"}
+          />
+          {online.length > 0 ? `${online.length} online` : connected ? "Só você" : "Conectando…"}
+        </div>
+        <ProjectMembersDialog
+          projectId={projectId}
+          slug={slug}
+          isManager={isManager}
+          projectMembers={projectMembers}
+          workspaceMembers={workspaceMembers}
         />
-        {online.length > 0
-          ? `${online.length} online`
-          : connected
-            ? "Só você"
-            : "Conectando…"}
       </div>
     </header>
   );

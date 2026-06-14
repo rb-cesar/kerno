@@ -25,3 +25,19 @@ export async function assertProjectMember(userId: string, projectId: string) {
   if (!membership) throw new Error("Você não tem acesso a este projeto");
   return membership;
 }
+
+/** Pode gerenciar o projeto = admin do workspace OU lead do projeto. */
+export async function isProjectManager(userId: string, projectId: string): Promise<boolean> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { workspaceId: true },
+  });
+  if (!project) return false;
+
+  const [workspaceMembership, projectMembership] = await Promise.all([
+    getWorkspaceMembership(userId, project.workspaceId),
+    getProjectMembership(userId, projectId),
+  ]);
+
+  return workspaceMembership?.role === "ADMIN" || projectMembership?.role === "LEAD";
+}

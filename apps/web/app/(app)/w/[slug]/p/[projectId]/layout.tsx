@@ -22,14 +22,27 @@ export default async function ProjectLayout({
     where: { id: projectId },
     include: {
       users: { include: { user: { select: { id: true, name: true } } } },
+      workspace: {
+        select: {
+          users: { include: { user: { select: { id: true, name: true } } } },
+        },
+      },
     },
   });
   if (!project) notFound();
 
-  const members = project.users.map((m) => ({
+  const projectMembers = project.users.map((m) => ({
+    id: m.user.id,
+    name: m.user.name,
+    role: m.role,
+  }));
+  const workspaceMembers = project.workspace.users.map((m) => ({
     id: m.user.id,
     name: m.user.name,
   }));
+
+  const myWorkspaceRole = project.workspace.users.find((m) => m.userId === user.id)?.role;
+  const isManager = myWorkspaceRole === "ADMIN" || membership.role === "LEAD";
 
   return (
     <SocketProvider projectId={projectId} userId={user.id}>
@@ -38,7 +51,11 @@ export default async function ProjectLayout({
           projectName={project.name}
           basePath={`/w/${slug}/p/${projectId}`}
           workspaceHref={`/w/${slug}`}
-          members={members}
+          projectId={projectId}
+          slug={slug}
+          isManager={isManager}
+          projectMembers={projectMembers}
+          workspaceMembers={workspaceMembers}
         />
         <div className="flex-1 overflow-hidden">{children}</div>
       </div>
