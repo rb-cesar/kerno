@@ -29,6 +29,9 @@ importers:
       '@kerno/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@kerno/hub-chat':
+        specifier: workspace:^
+        version: link:../../packages/hubs/chat
       '@kerno/hub-kanban':
         specifier: workspace:^
         version: link:../../packages/hubs/kanban
@@ -149,7 +152,31 @@ importers:
       '@kerno/types':
         specifier: workspace:*
         version: link:../../types
+      '@kerno/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      lucide-react:
+        specifier: ^1.18.0
+        version: 1.18.0(react@19.2.7)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.21
+      '@types/react':
+        specifier: ^19.0.2
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.2
+        version: 19.2.3(@types/react@19.2.17)
+      socket.io-client:
+        specifier: ^4.8.1
+        version: 4.8.3
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

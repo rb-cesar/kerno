@@ -12,6 +12,7 @@
   "dependencies": {
     "@kerno/core": "workspace:*",
     "@kerno/db": "workspace:*",
+    "@kerno/hub-chat": "workspace:^",
     "@kerno/hub-kanban": "workspace:^",
     "@kerno/types": "workspace:*",
     "@kerno/ui": "workspace:*",
