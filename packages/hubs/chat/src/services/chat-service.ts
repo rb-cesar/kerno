@@ -75,12 +75,27 @@ export async function sendMessage(
   return toMessageDTO(message);
 }
 
-/** Mensagem de sistema (sem autor) — usada na integração entre hubs (Fase 4). */
+/** Mensagem de sistema (sem autor) — usada na integração entre hubs. */
 export async function postSystemMessage(channelId: string, content: string): Promise<MessageDTO> {
+  const channel = await prisma.channel.findUniqueOrThrow({
+    where: { id: channelId },
+    select: { projectId: true },
+  });
+
   const message = await prisma.message.create({
     data: { channelId, content, isSystem: true },
     include: { user: { select: { id: true, name: true } } },
   });
+
+  // Emite para que clientes conectados vejam a mensagem de sistema em tempo real.
+  eventBus.publish(
+    createEvent("message:sent", channel.projectId, {
+      messageId: message.id,
+      channelId,
+      content,
+    }),
+  );
+
   return toMessageDTO(message);
 }
 

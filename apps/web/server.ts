@@ -3,6 +3,7 @@ import { parse } from "node:url";
 import next from "next";
 import { Server as SocketIOServer } from "socket.io";
 import { initEventDispatcher } from "./lib/events/dispatcher";
+import { initKanbanChatIntegration } from "./lib/integrations/kanban-chat";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOST ?? "localhost";
@@ -70,6 +71,7 @@ async function main() {
   // Disponibiliza o io e liga o event bus -> (persistência + realtime).
   (globalThis as unknown as { kernoIo?: SocketIOServer }).kernoIo = io;
   initEventDispatcher(io);
+  initKanbanChatIntegration();
 
   httpServer.listen(port, () => {
     console.log(`▸ Kerno pronto em http://${hostname}:${port}  (dev=${dev})`);

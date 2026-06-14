@@ -1,8 +1,8 @@
 import { EventEmitter } from "node:events";
-import type { KernoEvent, KernoEventType } from "@kerno/types";
+import type { AnyKernoEvent, KernoEvent, KernoEventType } from "@kerno/types";
 
 type Handler<T extends KernoEventType> = (event: KernoEvent<T>) => void | Promise<void>;
-type AnyHandler = (event: KernoEvent) => void | Promise<void>;
+type AnyHandler = (event: AnyKernoEvent) => void | Promise<void>;
 
 const WILDCARD = "*";
 

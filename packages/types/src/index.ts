@@ -69,3 +69,7 @@ export type KernoEvent<T extends KernoEventType = KernoEventType> = KernoEventBa
   type: T;
   payload: KernoEventMap[T];
 };
+
+// União discriminada de verdade (um membro por tipo). Use em handlers que
+// recebem "qualquer evento" — o `switch (event.type)` estreita o payload.
+export type AnyKernoEvent = { [K in KernoEventType]: KernoEvent<K> }[KernoEventType];

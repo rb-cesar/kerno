@@ -1,5 +1,5 @@
 import type { Server as IOServer } from "socket.io";
-import type { KernoEvent } from "@kerno/types";
+import type { AnyKernoEvent } from "@kerno/types";
 import { eventBus } from "@kerno/core";
 import { prisma, Prisma } from "@kerno/db";
 
@@ -16,7 +16,7 @@ export function initEventDispatcher(io: IOServer): void {
   if (initialized) return;
   initialized = true;
 
-  eventBus.onAny(async (event: KernoEvent) => {
+  eventBus.onAny(async (event: AnyKernoEvent) => {
     try {
       await prisma.event.create({
         data: {

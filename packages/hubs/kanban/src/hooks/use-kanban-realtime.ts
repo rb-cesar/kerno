@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import type { Socket } from "socket.io-client";
-import type { KernoEvent } from "@kerno/types";
+import type { AnyKernoEvent } from "@kerno/types";
 
 /**
  * Reage a eventos `card:*` de OUTROS usuários no mesmo projeto e dispara um
@@ -17,7 +17,7 @@ export function useKanbanRealtime(
   useEffect(() => {
     if (!socket) return;
 
-    const handler = (event: KernoEvent) => {
+    const handler = (event: AnyKernoEvent) => {
       if (event.userId === currentUserId) return;
       if (event.type.startsWith("card:")) onRemoteChange();
     };

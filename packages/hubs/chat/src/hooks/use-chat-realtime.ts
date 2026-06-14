@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import type { Socket } from "socket.io-client";
-import type { KernoEvent, MessageSentPayload } from "@kerno/types";
+import type { AnyKernoEvent, MessageSentPayload } from "@kerno/types";
 
 /**
  * Escuta `message:sent` no projeto e notifica o componente, indicando se o
@@ -16,7 +16,7 @@ export function useChatRealtime(
   useEffect(() => {
     if (!socket) return;
 
-    const handler = (event: KernoEvent) => {
+    const handler = (event: AnyKernoEvent) => {
       if (event.type !== "message:sent") return;
       const payload = event.payload as MessageSentPayload;
       onMessage(payload.channelId, event.userId === currentUserId);

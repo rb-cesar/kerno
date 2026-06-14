@@ -57,6 +57,21 @@ pnpm dev
 
 App em http://localhost:3000
 
+### Dados de exemplo (seed)
+
+```bash
+pnpm db:seed
+```
+
+Cria o workspace **Kerno Demo** com o projeto **Onboarding do Kerno** (board com
+cards/labels e canais com mensagens). Logins:
+
+- `ana@kerno.dev` / `password123` (admin)
+- `bruno@kerno.dev` / `password123`
+
+> Integração entre hubs: ao mover um card no Kanban, o Chat posta automaticamente
+> uma mensagem de sistema no canal padrão (ex.: _"Ana moveu 'X' para Done ✓"_).
+
 ## Scripts úteis
 
 | Comando             | O que faz                                  |
@@ -73,7 +88,10 @@ App em http://localhost:3000
 ## Roadmap
 
 - **Fase 0** — Scaffold do monorepo ✅
-- **Fase 1** — Núcleo (auth, workspace/project, permissões, app shell, event dispatcher)
-- **Fase 2** — Hub Kanban
-- **Fase 3** — Hub Chat
-- **Fase 4** — Integração entre hubs + seed + validação
+- **Fase 1** — Núcleo (auth, workspace/project, permissões, app shell, event dispatcher) ✅
+- **Fase 2** — Hub Kanban ✅
+- **Fase 3** — Hub Chat ✅
+- **Fase 4** — Integração entre hubs + seed + validação ✅
+
+MVP completo. Próximos passos (roadmap do documento): Agenda Hub, GitHub Hub,
+threads/busca no Chat, deploy.
