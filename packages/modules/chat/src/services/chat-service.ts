@@ -1,5 +1,5 @@
 import { prisma } from "@kerno/db";
-import { createEvent, eventBus } from "@kerno/core";
+import { createEvent, eventBus } from "@kerno/events";
 import type { ChannelDTO, MessageDTO } from "../types";
 
 const MESSAGE_PAGE_SIZE = 50;

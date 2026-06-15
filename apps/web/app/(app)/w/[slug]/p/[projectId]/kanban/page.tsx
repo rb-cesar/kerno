@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@kerno/db";
-import { getBoardSnapshot } from "@kerno/hub-kanban/services";
+import { getBoardSnapshot } from "@kerno/kanban/services";
 import { requireUser } from "@/lib/auth-helpers";
 import { assertProjectMember } from "@/lib/permissions";
 import { KanbanClient } from "./kanban-client";

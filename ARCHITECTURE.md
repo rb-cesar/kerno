@@ -37,7 +37,8 @@ kerno/
 │     └─ server.ts
 └─ packages/
    ├─ core/                # BASE FIXA — o que sempre existe
-   │  ├─ events/           #   @kerno/events — event bus + contratos (módulo base)
+   │  ├─ events/           #   @kerno/events — event bus (módulo base)
+   │  ├─ types/            #   @kerno/types — contratos de evento (compartilhados)
    │  ├─ db/               #   @kerno/db — Prisma client + schema
    │  ├─ ui/               #   @kerno/ui — design system
    │  ├─ auth/             #   @kerno/auth — sessão + permissões
@@ -178,14 +179,15 @@ Os módulos são **bounded contexts**. Eles não se conhecem.
 
 O event bus é o **módulo base** — a fundação que liga tudo sem acoplar.
 
-- **`@kerno/events`** — o bus (publish/subscribe, tipado) + os **contratos** de
-  evento (`KernoEventType`, payloads). MVP: in-process. Ponto de extensão para
-  múltiplas instâncias (Redis pub/sub) é o `publish`.
+- **`@kerno/events`** — o bus (publish/subscribe, tipado). MVP: in-process. Ponto
+  de extensão para múltiplas instâncias (Redis pub/sub) é o `publish`.
+- **`@kerno/types`** — os **contratos** de evento (`KernoEventType`, payloads).
+  Package irmão do events; separado por ser compartilhado por vários módulos.
 - **Dispatcher** (`apps/web/composition`) — assina *todos* os eventos e: (1)
   persiste na tabela `Event` (auditoria); (2) repassa para a room do projeto via
   Socket.io. Ligado uma vez no boot (`server.ts`).
 - **Contratos no core, não nos módulos.** Um tipo de evento é compartilhado por
-  ≥2 módulos → mora em `@kerno/events`.
+  ≥2 módulos → mora em `@kerno/types`.
 
 ---
 

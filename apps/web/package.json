@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kerno/core": "workspace:*",
+    "@kerno/events": "workspace:*",
     "@kerno/db": "workspace:*",
-    "@kerno/hub-chat": "workspace:^",
-    "@kerno/hub-kanban": "workspace:^",
+    "@kerno/chat": "workspace:^",
+    "@kerno/kanban": "workspace:^",
     "@kerno/types": "workspace:*",
     "@kerno/ui": "workspace:*",
     "bcryptjs": "^3.0.3",

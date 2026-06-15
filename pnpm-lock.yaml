@@ -23,16 +23,16 @@ importers:
 
   apps/web:
     dependencies:
-      '@kerno/core':
-        specifier: workspace:*
-        version: link:../../packages/core/events
+      '@kerno/chat':
+        specifier: workspace:^
+        version: link:../../packages/modules/chat
       '@kerno/db':
         specifier: workspace:*
         version: link:../../packages/core/db
-      '@kerno/hub-chat':
-        specifier: workspace:^
-        version: link:../../packages/modules/chat
-      '@kerno/hub-kanban':
+      '@kerno/events':
+        specifier: workspace:*
+        version: link:../../packages/core/events
+      '@kerno/kanban':
         specifier: workspace:^
         version: link:../../packages/modules/kanban
       '@kerno/types':
@@ -198,12 +198,12 @@ importers:
 
   packages/modules/chat:
     dependencies:
-      '@kerno/core':
-        specifier: workspace:*
-        version: link:../../core/events
       '@kerno/db':
         specifier: workspace:*
         version: link:../../core/db
+      '@kerno/events':
+        specifier: workspace:*
+        version: link:../../core/events
       '@kerno/types':
         specifier: workspace:*
         version: link:../../core/types
@@ -241,12 +241,12 @@ importers:
       '@hello-pangea/dnd':
         specifier: ^18.0.1
         version: 18.0.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@kerno/core':
-        specifier: workspace:*
-        version: link:../../core/events
       '@kerno/db':
         specifier: workspace:*
         version: link:../../core/db
+      '@kerno/events':
+        specifier: workspace:*
+        version: link:../../core/events
       '@kerno/types':
         specifier: workspace:*
         version: link:../../core/types

@@ -1,4 +1,4 @@
-import { projectIdOfChannel } from "@kerno/hub-chat/services";
+import { projectIdOfChannel } from "@kerno/chat/services";
 import { requireUser } from "./auth-helpers";
 import { assertProjectMember } from "./permissions";
 

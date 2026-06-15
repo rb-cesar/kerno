@@ -1,5 +1,5 @@
 {
-  "name": "@kerno/hub-kanban",
+  "name": "@kerno/kanban",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
-    "@kerno/core": "workspace:*",
+    "@kerno/events": "workspace:*",
     "@kerno/db": "workspace:*",
     "@kerno/types": "workspace:*",
     "@kerno/ui": "workspace:*",

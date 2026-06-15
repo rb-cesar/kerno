@@ -1,6 +1,6 @@
 import { prisma } from "@kerno/db";
-import { getMessages, listChannels } from "@kerno/hub-chat/services";
-import type { ChatData } from "@kerno/hub-chat/types";
+import { getMessages, listChannels } from "@kerno/chat/services";
+import type { ChatData } from "@kerno/chat/types";
 import { requireUser } from "@/lib/auth-helpers";
 import { assertProjectMember } from "@/lib/permissions";
 import { ChatClient } from "./chat-client";

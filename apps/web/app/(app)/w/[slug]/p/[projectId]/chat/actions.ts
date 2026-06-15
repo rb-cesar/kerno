@@ -1,7 +1,7 @@
 "use server";
 
-import * as chat from "@kerno/hub-chat/services";
-import type { ChannelDTO, ChatResult, MessageDTO } from "@kerno/hub-chat/types";
+import * as chat from "@kerno/chat/services";
+import type { ChannelDTO, ChatResult, MessageDTO } from "@kerno/chat/types";
 import { guardChannel, guardProject } from "@/lib/chat-guard";
 
 function errorMessage(error: unknown): string {

@@ -2,12 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: [
-    "@kerno/core",
+    "@kerno/events",
     "@kerno/db",
     "@kerno/types",
     "@kerno/ui",
-    "@kerno/hub-kanban",
-    "@kerno/hub-chat",
+    "@kerno/kanban",
+    "@kerno/chat",
   ],
 };
 

@@ -3,7 +3,7 @@ import {
   projectIdOfCard,
   projectIdOfColumn,
   projectIdOfLabel,
-} from "@kerno/hub-kanban/services";
+} from "@kerno/kanban/services";
 import { requireUser } from "./auth-helpers";
 import { assertProjectMember } from "./permissions";
 

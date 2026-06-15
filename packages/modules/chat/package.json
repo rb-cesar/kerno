@@ -1,5 +1,5 @@
 {
-  "name": "@kerno/hub-chat",
+  "name": "@kerno/chat",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kerno/core": "workspace:*",
+    "@kerno/events": "workspace:*",
     "@kerno/db": "workspace:*",
     "@kerno/types": "workspace:*",
     "@kerno/ui": "workspace:*",

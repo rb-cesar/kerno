@@ -1,7 +1,7 @@
 "use server";
 
-import * as kanban from "@kerno/hub-kanban/services";
-import type { BoardData, KanbanCommand, KanbanMutationResult } from "@kerno/hub-kanban/types";
+import * as kanban from "@kerno/kanban/services";
+import type { BoardData, KanbanCommand, KanbanMutationResult } from "@kerno/kanban/types";
 import { guardBoard, guardCard, guardColumn, guardLabel } from "@/lib/kanban-guard";
 
 function errorMessage(error: unknown): string {

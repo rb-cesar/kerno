@@ -1,6 +1,6 @@
 "use client";
 
-import { KanbanBoard, type BoardData } from "@kerno/hub-kanban";
+import { KanbanBoard, type BoardData } from "@kerno/kanban";
 import { useSocket } from "@/components/providers/socket-provider";
 import { kanbanFetch, kanbanMutate } from "./actions";
 

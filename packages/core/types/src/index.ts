@@ -1,5 +1,5 @@
 // Contratos compartilhados entre o núcleo e os hubs.
-// O event bus (@kerno/core) e o realtime (Socket.io) são tipados por aqui.
+// O event bus (@kerno/events) e o realtime (Socket.io) são tipados por aqui.
 
 export type KernoEventType =
   | "card:created"

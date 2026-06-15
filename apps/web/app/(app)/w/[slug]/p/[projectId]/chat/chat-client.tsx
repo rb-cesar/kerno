@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatPanel, type ChatData } from "@kerno/hub-chat";
+import { ChatPanel, type ChatData } from "@kerno/chat";
 import { useSocket } from "@/components/providers/socket-provider";
 import { chatCreateChannel, chatFetchMessages, chatSendMessage } from "./actions";
 
