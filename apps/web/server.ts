@@ -2,8 +2,8 @@ import { createServer } from "node:http";
 import { parse } from "node:url";
 import next from "next";
 import { Server as SocketIOServer } from "socket.io";
-import { initEventDispatcher } from "./lib/events/dispatcher";
-import { initKanbanChatIntegration } from "./lib/integrations/kanban-chat";
+import { initEventDispatcher } from "./composition/event-dispatcher";
+import { initKanbanChatIntegration } from "./composition/kanban-chat";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOST ?? "localhost";
