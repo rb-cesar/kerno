@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth-helpers";
-import { getProjectMembership } from "@/lib/permissions";
-import { getProjectWithMembers } from "@/server/project-service";
+import { getProjectMembership } from "@kerno/workspaces";
+import { getProjectWithMembers } from "@kerno/workspaces";
 import { SocketProvider } from "@/components/providers/socket-provider";
 import { HubRail } from "@/components/app/hub-rail";
 import { ProjectHeader } from "@/components/app/project-header";

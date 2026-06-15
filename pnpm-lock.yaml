@@ -41,6 +41,9 @@ importers:
       '@kerno/ui':
         specifier: workspace:*
         version: link:../../packages/core/ui
+      '@kerno/workspaces':
+        specifier: workspace:*
+        version: link:../../packages/core/workspaces
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -192,6 +195,19 @@ importers:
       '@types/react':
         specifier: ^19.0.2
         version: 19.2.17
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/core/workspaces:
+    dependencies:
+      '@kerno/db':
+        specifier: workspace:*
+        version: link:../db
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.21
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

@@ -4,6 +4,7 @@ const nextConfig = {
   transpilePackages: [
     "@kerno/events",
     "@kerno/db",
+    "@kerno/workspaces",
     "@kerno/types",
     "@kerno/ui",
     "@kerno/kanban",

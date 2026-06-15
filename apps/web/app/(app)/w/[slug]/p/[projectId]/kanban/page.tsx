@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@kerno/db";
 import { getBoardSnapshot } from "@kerno/kanban/services";
 import { requireUser } from "@/lib/auth-helpers";
-import { assertProjectMember } from "@/lib/permissions";
+import { assertProjectMember } from "@kerno/workspaces";
 import { KanbanClient } from "./kanban-client";
 
 export default async function KanbanPage({

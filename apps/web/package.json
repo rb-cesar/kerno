@@ -12,6 +12,7 @@
   "dependencies": {
     "@kerno/events": "workspace:*",
     "@kerno/db": "workspace:*",
+    "@kerno/workspaces": "workspace:*",
     "@kerno/chat": "workspace:^",
     "@kerno/kanban": "workspace:^",
     "@kerno/types": "workspace:*",

@@ -1,5 +1,5 @@
 import { prisma } from "@kerno/db";
-import { getWorkspaceMembership } from "@/lib/permissions";
+import { getWorkspaceMembership } from "./permissions";
 
 /**
  * Camada de serviço (server-only) para membros de projeto.

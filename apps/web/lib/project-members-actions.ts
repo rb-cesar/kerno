@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "./auth-helpers";
-import { isProjectManager } from "./permissions";
+import { isProjectManager } from "@kerno/workspaces";
 import {
   addProjectMember as addProjectMemberService,
   removeProjectMember as removeProjectMemberService,
   type ProjectRole,
-} from "@/server/member-service";
+} from "@kerno/workspaces";
 
 type Result = { ok: true } | { ok: false; error: string };
 

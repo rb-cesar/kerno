@@ -1,6 +1,6 @@
 import { projectIdOfChannel } from "@kerno/chat/services";
 import { requireUser } from "./auth-helpers";
-import { assertProjectMember } from "./permissions";
+import { assertProjectMember } from "@kerno/workspaces";
 
 async function guard(projectId: string | null) {
   const user = await requireUser();
