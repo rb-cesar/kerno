@@ -1,0 +1,15 @@
+// Event log — auditoria + integração entre hubs (preenchido pelo dispatcher).
+
+model Event {
+  id        String   @id @default(cuid())
+  type      String // "card:created", "card:moved", "message:sent", ...
+  payload   Json
+  projectId String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([type])
+}

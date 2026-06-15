@@ -1,0 +1,71 @@
+// Hub Kanban — dono das tabelas Board / Column / Card / Label.
+
+model Board {
+  id        String   @id @default(cuid())
+  name      String
+  projectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns Column[]
+  cards   Card[]
+  labels  Label[]
+
+  @@index([projectId])
+}
+
+model Column {
+  id      String @id @default(cuid())
+  name    String
+  boardId String
+  order   Int
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@index([boardId])
+}
+
+model Card {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  columnId    String
+  boardId     String
+  assignedTo  String?
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  column Column      @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  board  Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user   User?       @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
+  labels CardLabel[]
+
+  @@index([columnId])
+  @@index([boardId])
+  @@index([assignedTo])
+}
+
+model Label {
+  id      String @id @default(cuid())
+  name    String
+  color   String
+  boardId String
+
+  board Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards CardLabel[]
+
+  @@index([boardId])
+}
+
+model CardLabel {
+  cardId  String
+  labelId String
+
+  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
+}

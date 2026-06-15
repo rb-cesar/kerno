@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "prisma": {
+    "schema": "prisma/schema",
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {

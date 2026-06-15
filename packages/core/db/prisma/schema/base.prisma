@@ -1,0 +1,90 @@
+// Núcleo — identidade + contexto (workspace / projeto / membership).
+// generator + datasource vivem aqui (precisam estar em um único arquivo).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  avatar       String?
+  lastSeenAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  workspaces   WorkspaceUser[]
+  projectUsers ProjectUser[]
+  messages     Message[]
+  cards        Card[]
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+  users    WorkspaceUser[]
+}
+
+model WorkspaceUser {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  users     ProjectUser[]
+  boards    Board[]
+  channels  Channel[]
+  events    Event[]
+
+  @@index([workspaceId])
+}
+
+model ProjectUser {
+  id        String      @id @default(cuid())
+  userId    String
+  projectId String
+  role      ProjectRole @default(MEMBER)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+enum WorkspaceRole {
+  ADMIN
+  MEMBER
+}
+
+enum ProjectRole {
+  LEAD
+  MEMBER
+  VIEWER
+}
