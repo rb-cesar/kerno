@@ -22,7 +22,17 @@ function initialsOf(name: string): string {
     .toUpperCase();
 }
 
-export function UserMenu({ name, email }: { name: string; email: string }) {
+export function UserMenu({
+  name,
+  email,
+  side = "bottom",
+  align = "end",
+}: {
+  name: string;
+  email: string;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -32,7 +42,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent side={side} align={align}>
         <DropdownMenuLabel>
           <div>{name}</div>
           <div className="text-xs font-normal text-muted-foreground">{email}</div>

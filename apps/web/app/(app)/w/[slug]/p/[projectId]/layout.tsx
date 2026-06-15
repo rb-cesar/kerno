@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@kerno/db";
 import { requireUser } from "@/lib/auth-helpers";
 import { getProjectMembership } from "@/lib/permissions";
+import { getProjectWithMembers } from "@/server/project-service";
 import { SocketProvider } from "@/components/providers/socket-provider";
+import { HubRail } from "@/components/app/hub-rail";
 import { ProjectHeader } from "@/components/app/project-header";
 
 export default async function ProjectLayout({
@@ -18,46 +19,32 @@ export default async function ProjectLayout({
   const membership = await getProjectMembership(user.id, projectId);
   if (!membership) notFound();
 
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      users: { include: { user: { select: { id: true, name: true } } } },
-      workspace: {
-        select: {
-          users: { include: { user: { select: { id: true, name: true } } } },
-        },
-      },
-    },
-  });
+  const project = await getProjectWithMembers(projectId, user.id);
   if (!project) notFound();
 
-  const projectMembers = project.users.map((m) => ({
-    id: m.user.id,
-    name: m.user.name,
-    role: m.role,
-  }));
-  const workspaceMembers = project.workspace.users.map((m) => ({
-    id: m.user.id,
-    name: m.user.name,
-  }));
-
-  const myWorkspaceRole = project.workspace.users.find((m) => m.userId === user.id)?.role;
-  const isManager = myWorkspaceRole === "ADMIN" || membership.role === "LEAD";
+  const { projectMembers, workspaceMembers } = project;
+  const isManager = project.myWorkspaceRole === "ADMIN" || membership.role === "LEAD";
 
   return (
     <SocketProvider projectId={projectId} userId={user.id}>
-      <div className="flex h-[calc(100vh-3.5rem)] flex-col">
-        <ProjectHeader
-          projectName={project.name}
+      <div className="flex h-screen overflow-hidden">
+        <HubRail
           basePath={`/w/${slug}/p/${projectId}`}
-          workspaceHref={`/w/${slug}`}
-          projectId={projectId}
-          slug={slug}
-          isManager={isManager}
-          projectMembers={projectMembers}
-          workspaceMembers={workspaceMembers}
+          userName={user.name ?? "Usuário"}
+          userEmail={user.email ?? ""}
         />
-        <div className="flex-1 overflow-hidden">{children}</div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <ProjectHeader
+            projectName={project.name}
+            workspaceHref={`/w/${slug}`}
+            projectId={projectId}
+            slug={slug}
+            isManager={isManager}
+            projectMembers={projectMembers}
+            workspaceMembers={workspaceMembers}
+          />
+          <div className="flex-1 overflow-hidden">{children}</div>
+        </div>
       </div>
     </SocketProvider>
   );

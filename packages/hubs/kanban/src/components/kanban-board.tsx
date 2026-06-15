@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import type { Socket } from "socket.io-client";
 import type { BoardData, KanbanFetch, KanbanMutate } from "../types";
@@ -8,7 +8,14 @@ import { useKanbanRealtime } from "../hooks/use-kanban-realtime";
 import { KanbanProvider } from "./kanban-context";
 import { KanbanColumn } from "./kanban-column";
 import { AddColumn } from "./add-column";
-import { LabelManager } from "./label-manager";
+import { KanbanSidebar } from "./kanban-sidebar";
+
+function toggleInSet(prev: Set<string>, id: string): Set<string> {
+  const next = new Set(prev);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}
 
 export function KanbanBoard({
   initial,
@@ -24,6 +31,25 @@ export function KanbanBoard({
   fetchSnapshot: KanbanFetch;
 }) {
   const [data, setData] = useState<BoardData>(initial);
+  const [labelFilter, setLabelFilter] = useState<Set<string>>(new Set());
+  const [assigneeFilter, setAssigneeFilter] = useState<Set<string>>(new Set());
+
+  const filtersActive = labelFilter.size > 0 || assigneeFilter.size > 0;
+
+  const visibleColumns = useMemo(() => {
+    if (!filtersActive) return data.columns;
+    return data.columns.map((col) => ({
+      ...col,
+      cards: col.cards.filter((card) => {
+        const labelOk =
+          labelFilter.size === 0 || card.labels.some((l) => labelFilter.has(l.id));
+        const assigneeOk =
+          assigneeFilter.size === 0 ||
+          (card.assignedTo != null && assigneeFilter.has(card.assignedTo));
+        return labelOk && assigneeOk;
+      }),
+    }));
+  }, [data.columns, filtersActive, labelFilter, assigneeFilter]);
 
   const refresh = useCallback(async () => {
     const fresh = await fetchSnapshot(initial.id);
@@ -77,18 +103,40 @@ export function KanbanBoard({
         labels: data.labels,
       }}
     >
-      <div className="flex h-full flex-col">
-        <div className="flex items-center justify-end px-4 py-2">
-          <LabelManager boardId={data.id} />
+      <div className="flex h-full">
+        <KanbanSidebar
+          boardId={data.id}
+          boardName={data.name}
+          labels={data.labels}
+          members={data.members}
+          labelFilter={labelFilter}
+          assigneeFilter={assigneeFilter}
+          onToggleLabel={(id) => setLabelFilter((prev) => toggleInSet(prev, id))}
+          onToggleAssignee={(id) => setAssigneeFilter((prev) => toggleInSet(prev, id))}
+          onClear={() => {
+            setLabelFilter(new Set());
+            setAssigneeFilter(new Set());
+          }}
+        />
+        <div className="flex h-full min-w-0 flex-1 flex-col">
+          {filtersActive ? (
+            <div className="border-b bg-muted/30 px-4 py-1.5 text-xs text-muted-foreground">
+              Arrastar desativado enquanto há filtros ativos.
+            </div>
+          ) : null}
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex flex-1 gap-4 overflow-x-auto px-4 py-4">
+              {visibleColumns.map((column) => (
+                <KanbanColumn
+                  key={column.id}
+                  column={column}
+                  dragDisabled={filtersActive}
+                />
+              ))}
+              <AddColumn boardId={data.id} />
+            </div>
+          </DragDropContext>
         </div>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex flex-1 gap-4 overflow-x-auto px-4 pb-4">
-            {data.columns.map((column) => (
-              <KanbanColumn key={column.id} column={column} />
-            ))}
-            <AddColumn boardId={data.id} />
-          </div>
-        </DragDropContext>
       </div>
     </KanbanProvider>
   );

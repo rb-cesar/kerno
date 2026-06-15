@@ -58,7 +58,13 @@ function AddCard({ columnId }: { columnId: string }) {
   );
 }
 
-export function KanbanColumn({ column }: { column: ColumnDTO }) {
+export function KanbanColumn({
+  column,
+  dragDisabled = false,
+}: {
+  column: ColumnDTO;
+  dragDisabled?: boolean;
+}) {
   const { mutate, refresh } = useKanban();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(column.name);
@@ -134,7 +140,12 @@ export function KanbanColumn({ column }: { column: ColumnDTO }) {
             )}
           >
             {column.cards.map((card, index) => (
-              <KanbanCard key={card.id} card={card} index={index} />
+              <KanbanCard
+                key={card.id}
+                card={card}
+                index={index}
+                dragDisabled={dragDisabled}
+              />
             ))}
             {provided.placeholder}
           </div>

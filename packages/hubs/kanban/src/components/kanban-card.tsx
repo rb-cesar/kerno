@@ -28,7 +28,15 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export function KanbanCard({ card, index }: { card: CardDTO; index: number }) {
+export function KanbanCard({
+  card,
+  index,
+  dragDisabled = false,
+}: {
+  card: CardDTO;
+  index: number;
+  dragDisabled?: boolean;
+}) {
   const { mutate, refresh, members, labels } = useKanban();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -67,7 +75,7 @@ export function KanbanCard({ card, index }: { card: CardDTO; index: number }) {
     });
 
   return (
-    <Draggable draggableId={card.id} index={index}>
+    <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled}>
       {(provided, snapshot) => (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { cn } from "@kerno/ui";
 import { useSocket } from "@/components/providers/socket-provider";
 import { ProjectMembersDialog } from "@/components/app/project-members-dialog";
@@ -9,14 +8,8 @@ import { ProjectMembersDialog } from "@/components/app/project-members-dialog";
 type ProjectMember = { id: string; name: string; role: string };
 type WorkspaceMember = { id: string; name: string };
 
-const HUBS = [
-  { key: "kanban", label: "Kanban" },
-  { key: "chat", label: "Chat" },
-] as const;
-
 export function ProjectHeader({
   projectName,
-  basePath,
   workspaceHref,
   projectId,
   slug,
@@ -25,7 +18,6 @@ export function ProjectHeader({
   workspaceMembers,
 }: {
   projectName: string;
-  basePath: string;
   workspaceHref: string;
   projectId: string;
   slug: string;
@@ -33,38 +25,21 @@ export function ProjectHeader({
   projectMembers: ProjectMember[];
   workspaceMembers: WorkspaceMember[];
 }) {
-  const pathname = usePathname();
   const { connected, onlineUserIds } = useSocket();
 
   const online = projectMembers.filter((m) => onlineUserIds.includes(m.id));
 
   return (
-    <header className="flex shrink-0 flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4">
       <div className="flex items-center gap-3">
-        <Link href={workspaceHref} className="text-sm text-muted-foreground hover:underline">
+        <Link
+          href={workspaceHref}
+          title="Voltar ao workspace"
+          className="text-sm text-muted-foreground hover:underline"
+        >
           ←
         </Link>
         <h1 className="font-semibold">{projectName}</h1>
-        <nav className="flex items-center gap-1">
-          {HUBS.map((hub) => {
-            const href = `${basePath}/${hub.key}`;
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <Link
-                key={hub.key}
-                href={href}
-                className={cn(
-                  "rounded-md px-3 py-1 text-sm transition-colors",
-                  active
-                    ? "bg-secondary text-secondary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                )}
-              >
-                {hub.label}
-              </Link>
-            );
-          })}
-        </nav>
       </div>
 
       <div className="flex items-center gap-3">
