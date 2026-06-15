@@ -41,8 +41,8 @@ kerno/
    │  ├─ types/            #   @kerno/types — contratos de evento (compartilhados)
    │  ├─ db/               #   @kerno/db — Prisma client + schema
    │  ├─ ui/               #   @kerno/ui — design system
-   │  ├─ auth/             #   @kerno/auth — sessão + permissões
-   │  └─ workspaces/       #   @kerno/workspaces — núcleo de domínio (projeto/membro)
+   │  └─ workspaces/       #   @kerno/workspaces — domínio do núcleo + permissões
+   │                       #   (auth/NextAuth fica no app — ver §10)
    └─ modules/             # REMOVÍVEL — os hubs de produto
       ├─ kanban/           #   @kerno/kanban
       └─ chat/             #   @kerno/chat
@@ -69,9 +69,9 @@ A pergunta que decide onde uma coisa mora:
 > - **Sim** → é um hub de produto → `packages/modules/`.
 > - **Não, sempre existe** → é base → `packages/core/`.
 
-Por isso `events`, `db`, `ui`, `auth` e `workspaces` (projeto/membro) são
+Por isso `events`, `db`, `ui` e `workspaces` (projeto/membro/permissões) são
 **core**: o Kerno não existe sem eles. Kanban e Chat são **modules**: um time
-pode ativar ou não.
+pode ativar ou não. (O auth/NextAuth fica no app, camada de entrega — §10.)
 
 ---
 
@@ -87,7 +87,6 @@ packages/modules/kanban/src/
 ├─ services/         # casos de uso (fala Prisma direto; publica eventos)
 ├─ mappers/          # linha Prisma → DTO (funções puras)
 ├─ domain/           # regras/entidades puras (OPCIONAL, só onde há regra real)
-├─ actions.ts        # fronteira "use server"
 └─ ui/               # componentes React (client)
 ```
 
@@ -98,6 +97,9 @@ Regras:
 - **Um módulo nunca importa outro módulo.** Kanban não conhece Chat. Comunicação
   só por eventos (§7).
 - Um módulo pode depender do **core** (`@kerno/db`, `@kerno/ui`, `@kerno/events`).
+- **A fronteira (server actions) fica no app, não no módulo.** Auth/sessão é
+  responsabilidade da camada de entrega (NextAuth vive no app). O módulo expõe
+  *serviços*; o app os chama em `apps/web/app/.../actions.ts` após autenticar.
 
 ---
 
@@ -134,8 +136,9 @@ Papéis:
 - **Domain** — só quando há regra de verdade (ex: "projeto precisa de ≥1 lead",
   ordenação de cards). Modelo anêmico (Prisma como dado + service com a lógica)
   é **legítimo** para CRUD simples.
-- **Boundary (`actions.ts`)** — `auth → permissão → chama service → devolve`.
-  Fina; traduz `Error` do domínio em `{ ok: false, error }` para a UI.
+- **Boundary (`actions.ts`, no app)** — `auth → permissão → chama service →
+  devolve`. Fina; traduz `Error` do domínio em `{ ok: false, error }` para a UI.
+  Vive em `apps/web` (camada de entrega), pois o auth é app-bound.
 
 ### Por que não há camada `repository/`
 
@@ -227,8 +230,10 @@ A casca Next. **Não tem regra de negócio nem Prisma.** Ela orquestra.
 
 - **`composition/`** — wiring de boot: dispatcher de eventos + integrações entre
   hubs. Invocado por `server.ts`.
-- **Server actions** moram **no módulo** (`modules/<m>/actions.ts`). Se o Next
-  reclamar de `"use server"` em package, o plano B é um re-export fino em `app/`.
+- **Server actions (a fronteira) ficam no app**, em `app/.../actions.ts`. Elas
+  autenticam (NextAuth), checam permissão e chamam os *serviços* do módulo. O
+  módulo não conhece auth — só expõe serviços/UI/types. Decisão consciente: o
+  auth é app-bound, então a fronteira pertence à camada de entrega.
 
 ---
 
