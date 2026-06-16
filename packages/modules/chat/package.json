@@ -13,9 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kerno/events": "workspace:*",
+    "@kerno/core": "workspace:*",
     "@kerno/db": "workspace:*",
-    "@kerno/types": "workspace:*",
     "@kerno/ui": "workspace:*",
     "lucide-react": "^1.18.0"
   },

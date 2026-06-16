@@ -1,4 +1,6 @@
 packages:
   - "apps/*"
-  - "packages/core/*"
+  - "packages/core"
+  - "packages/db"
+  - "packages/ui"
   - "packages/modules/*"

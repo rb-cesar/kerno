@@ -2,7 +2,7 @@ import type {
   KernoEvent,
   KernoEventMap,
   KernoEventType,
-} from "@kerno/types";
+} from "../types";
 
 export { eventBus } from "./bus";
 

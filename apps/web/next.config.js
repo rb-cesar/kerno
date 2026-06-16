@@ -2,10 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: [
-    "@kerno/events",
+    "@kerno/core",
     "@kerno/db",
-    "@kerno/workspaces",
-    "@kerno/types",
     "@kerno/ui",
     "@kerno/kanban",
     "@kerno/chat",

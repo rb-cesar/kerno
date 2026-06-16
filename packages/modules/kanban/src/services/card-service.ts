@@ -1,5 +1,5 @@
 import { prisma } from "@kerno/db";
-import { eventBus, createEvent } from "@kerno/events";
+import { eventBus, createEvent } from "@kerno/core/events";
 
 export async function createCard(columnId: string, title: string, actorId: string) {
   const column = await prisma.column.findUniqueOrThrow({

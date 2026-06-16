@@ -14,9 +14,8 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
-    "@kerno/events": "workspace:*",
+    "@kerno/core": "workspace:*",
     "@kerno/db": "workspace:*",
-    "@kerno/types": "workspace:*",
     "@kerno/ui": "workspace:*",
     "lucide-react": "^1.18.0"
   },

@@ -7,7 +7,7 @@ export default {
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
-    "../../packages/hubs/*/src/**/*.{ts,tsx}",
+    "../../packages/modules/*/src/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {

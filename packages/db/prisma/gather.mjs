@@ -12,10 +12,10 @@ import { mkdirSync, rmSync, copyFileSync, readdirSync, existsSync } from "node:f
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const here = dirname(fileURLToPath(import.meta.url)); // packages/core/db/prisma
+const here = dirname(fileURLToPath(import.meta.url)); // packages/db/prisma
 const out = join(here, "schema");
 const coreModels = join(here, "models");
-const modulesDir = join(here, "../../../modules"); // packages/modules
+const modulesDir = join(here, "../../modules"); // packages/modules
 
 function copyPrismaFrom(dir) {
   if (!existsSync(dir)) return [];

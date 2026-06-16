@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import type { Socket } from "socket.io-client";
-import type { AnyKernoEvent, MessageSentPayload } from "@kerno/types";
+import type { AnyKernoEvent, MessageSentPayload } from "@kerno/core/types";
 
 /**
  * Escuta `message:sent` no projeto e notifica o componente, indicando se o

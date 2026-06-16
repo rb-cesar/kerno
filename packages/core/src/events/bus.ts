@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { AnyKernoEvent, KernoEvent, KernoEventType } from "@kerno/types";
+import type { AnyKernoEvent, KernoEvent, KernoEventType } from "../types";
 
 type Handler<T extends KernoEventType> = (event: KernoEvent<T>) => void | Promise<void>;
 type AnyHandler = (event: AnyKernoEvent) => void | Promise<void>;

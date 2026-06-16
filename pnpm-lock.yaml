@@ -26,24 +26,18 @@ importers:
       '@kerno/chat':
         specifier: workspace:^
         version: link:../../packages/modules/chat
+      '@kerno/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@kerno/db':
         specifier: workspace:*
-        version: link:../../packages/core/db
-      '@kerno/events':
-        specifier: workspace:*
-        version: link:../../packages/core/events
+        version: link:../../packages/db
       '@kerno/kanban':
         specifier: workspace:^
         version: link:../../packages/modules/kanban
-      '@kerno/types':
-        specifier: workspace:*
-        version: link:../../packages/core/types
       '@kerno/ui':
         specifier: workspace:*
-        version: link:../../packages/core/ui
-      '@kerno/workspaces':
-        specifier: workspace:*
-        version: link:../../packages/core/workspaces
+        version: link:../../packages/ui
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -112,7 +106,20 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/core/db:
+  packages/core:
+    dependencies:
+      '@kerno/db':
+        specifier: workspace:*
+        version: link:../db
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.21
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/db:
     dependencies:
       '@prisma/client':
         specifier: ^6.1.0
@@ -137,26 +144,84 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/core/events:
+  packages/modules/chat:
     dependencies:
-      '@kerno/types':
+      '@kerno/core':
         specifier: workspace:*
-        version: link:../types
+        version: link:../../core
+      '@kerno/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@kerno/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      lucide-react:
+        specifier: ^1.18.0
+        version: 1.18.0(react@19.2.7)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.21
+      '@types/react':
+        specifier: ^19.0.2
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.2
+        version: 19.2.3(@types/react@19.2.17)
+      socket.io-client:
+        specifier: ^4.8.1
+        version: 4.8.3
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/core/types:
+  packages/modules/kanban:
+    dependencies:
+      '@hello-pangea/dnd':
+        specifier: ^18.0.1
+        version: 18.0.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@kerno/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@kerno/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@kerno/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      lucide-react:
+        specifier: ^1.18.0
+        version: 1.18.0(react@19.2.7)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.21
+      '@types/react':
+        specifier: ^19.0.2
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.2
+        version: 19.2.3(@types/react@19.2.17)
+      socket.io-client:
+        specifier: ^4.8.1
+        version: 4.8.3
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/core/ui:
+  packages/ui:
     dependencies:
       '@radix-ui/react-avatar':
         specifier: ^1.1.12
@@ -195,102 +260,6 @@ importers:
       '@types/react':
         specifier: ^19.0.2
         version: 19.2.17
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  packages/core/workspaces:
-    dependencies:
-      '@kerno/db':
-        specifier: workspace:*
-        version: link:../db
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.21
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  packages/modules/chat:
-    dependencies:
-      '@kerno/db':
-        specifier: workspace:*
-        version: link:../../core/db
-      '@kerno/events':
-        specifier: workspace:*
-        version: link:../../core/events
-      '@kerno/types':
-        specifier: workspace:*
-        version: link:../../core/types
-      '@kerno/ui':
-        specifier: workspace:*
-        version: link:../../core/ui
-      lucide-react:
-        specifier: ^1.18.0
-        version: 1.18.0(react@19.2.7)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.2.7(react@19.2.7)
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.21
-      '@types/react':
-        specifier: ^19.0.2
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: ^19.0.2
-        version: 19.2.3(@types/react@19.2.17)
-      socket.io-client:
-        specifier: ^4.8.1
-        version: 4.8.3
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  packages/modules/kanban:
-    dependencies:
-      '@hello-pangea/dnd':
-        specifier: ^18.0.1
-        version: 18.0.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@kerno/db':
-        specifier: workspace:*
-        version: link:../../core/db
-      '@kerno/events':
-        specifier: workspace:*
-        version: link:../../core/events
-      '@kerno/types':
-        specifier: workspace:*
-        version: link:../../core/types
-      '@kerno/ui':
-        specifier: workspace:*
-        version: link:../../core/ui
-      lucide-react:
-        specifier: ^1.18.0
-        version: 1.18.0(react@19.2.7)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.2.7(react@19.2.7)
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.21
-      '@types/react':
-        specifier: ^19.0.2
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: ^19.0.2
-        version: 19.2.3(@types/react@19.2.17)
-      socket.io-client:
-        specifier: ^4.8.1
-        version: 4.8.3
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

@@ -5,7 +5,7 @@ import {
   projectIdOfLabel,
 } from "@kerno/kanban/services";
 import { requireUser } from "./auth-helpers";
-import { assertProjectMember } from "@kerno/workspaces";
+import { assertProjectMember } from "@kerno/core/workspaces";
 
 async function guard(projectId: string | null) {
   const user = await requireUser();

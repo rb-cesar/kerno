@@ -2,7 +2,7 @@ import { prisma } from "@kerno/db";
 import { getMessages, listChannels } from "@kerno/chat/services";
 import type { ChatData } from "@kerno/chat/types";
 import { requireUser } from "@/lib/auth-helpers";
-import { assertProjectMember } from "@kerno/workspaces";
+import { assertProjectMember } from "@kerno/core/workspaces";
 import { ChatClient } from "./chat-client";
 
 export default async function ChatPage({

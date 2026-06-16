@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@kerno/db";
 import { requireUser } from "@/lib/auth-helpers";
-import { assertWorkspaceMember, getWorkspaceMembership } from "@kerno/workspaces";
+import { assertWorkspaceMember, getWorkspaceMembership } from "@kerno/core/workspaces";
 import { createProjectSchema, inviteMemberSchema } from "@/lib/validations";
 
 type FormState = { error?: string; success?: string } | null;
