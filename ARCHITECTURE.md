@@ -36,14 +36,14 @@ kerno/
 │     ├─ composition/      #   wiring de boot (liga bus ↔ Socket.io, integrações)
 │     └─ server.ts
 └─ packages/
-   ├─ core/                # BASE FIXA — o que sempre existe
-   │  ├─ events/           #   @kerno/events — event bus (módulo base)
-   │  ├─ types/            #   @kerno/types — contratos de evento (compartilhados)
-   │  ├─ db/               #   @kerno/db — Prisma client + schema
-   │  ├─ ui/               #   @kerno/ui — design system
-   │  └─ workspaces/       #   @kerno/workspaces — domínio do núcleo + permissões
-   │                       #   (auth/NextAuth fica no app — ver §10)
-   └─ modules/             # REMOVÍVEL — os hubs de produto
+   ├─ core/                # @kerno/core — base de DOMÍNIO (1 package, subpaths)
+   │  └─ src/
+   │     ├─ events/        #   @kerno/core/events — event bus (módulo base)
+   │     ├─ types/         #   @kerno/core/types — contratos de evento
+   │     └─ workspaces/    #   @kerno/core/workspaces — domínio núcleo + permissões
+   ├─ db/                  # @kerno/db — INFRA de dados (Prisma)
+   ├─ ui/                  # @kerno/ui — design system (React)
+   └─ modules/             # hubs de produto (removíveis)
       ├─ kanban/           #   @kerno/kanban
       └─ chat/             #   @kerno/chat
 ```
@@ -52,26 +52,35 @@ kerno/
 # pnpm-workspace.yaml — a única coisa estrutural; o nome das pastas é convenção
 packages:
   - "apps/*"
-  - "packages/core/*"
+  - "packages/core"
+  - "packages/db"
+  - "packages/ui"
   - "packages/modules/*"
 ```
 
-O topo se explica sozinho: **`apps` (o que sobe pra produção) · `core` (base
-fixa) · `modules` (hubs).**
+`core` é a **base de domínio** num único package (events + types + workspaces).
+`db` (Prisma) e `ui` (React) são packages próprios — unidades de dependência
+distintas (servidor vs cliente), por isso fora do core. (Auth/NextAuth fica no
+app — §10.)
 
 ---
 
-## 3. A régua: `core/` vs `modules/`
+## 3. Onde cada coisa mora
 
-A pergunta que decide onde uma coisa mora:
+Dois eixos decidem:
 
-> **Dá pra adicionar/remover sem quebrar o Kerno?**
-> - **Sim** → é um hub de produto → `packages/modules/`.
-> - **Não, sempre existe** → é base → `packages/core/`.
+> **1. É domínio, infra ou apresentação?**
+> - Domínio/base do Kerno (events, contratos, workspaces) → **`@kerno/core`**.
+> - Infra de dados (Prisma) → **`@kerno/db`**. Apresentação (React) → **`@kerno/ui`**.
+>
+> **2. Dá pra remover sem quebrar o Kerno?**
+> - Sim → hub de produto → `packages/modules/`.
+> - Não → é base (core/db/ui).
 
-Por isso `events`, `db`, `ui` e `workspaces` (projeto/membro/permissões) são
-**core**: o Kerno não existe sem eles. Kanban e Chat são **modules**: um time
-pode ativar ou não. (O auth/NextAuth fica no app, camada de entrega — §10.)
+`db` e `ui` ficam **fora do core** mesmo sendo base, porque são unidades de
+build/dependência diferentes (Prisma é server-only; React é client). Misturá-los
+no core arrastaria as duas para todo consumidor. Kanban e Chat são **modules**.
+(Auth/NextAuth fica no app, camada de entrega — §10.)
 
 ---
 
@@ -96,7 +105,7 @@ Regras:
   reorganizar o interior sem quebrar ninguém.
 - **Um módulo nunca importa outro módulo.** Kanban não conhece Chat. Comunicação
   só por eventos (§7).
-- Um módulo pode depender do **core** (`@kerno/db`, `@kerno/ui`, `@kerno/events`).
+- Um módulo pode depender da base (`@kerno/core/events`, `@kerno/db`, `@kerno/ui`).
 - **A fronteira (server actions) fica no app, não no módulo.** Auth/sessão é
   responsabilidade da camada de entrega (NextAuth vive no app). O módulo expõe
   *serviços*; o app os chama em `apps/web/app/.../actions.ts` após autenticar.
@@ -178,31 +187,31 @@ Os módulos são **bounded contexts**. Eles não se conhecem.
 
 ---
 
-## 8. Sistema de eventos (`core/events`)
+## 8. Sistema de eventos (`@kerno/core/events`)
 
 O event bus é o **módulo base** — a fundação que liga tudo sem acoplar.
 
-- **`@kerno/events`** — o bus (publish/subscribe, tipado). MVP: in-process. Ponto
-  de extensão para múltiplas instâncias (Redis pub/sub) é o `publish`.
-- **`@kerno/types`** — os **contratos** de evento (`KernoEventType`, payloads).
-  Package irmão do events; separado por ser compartilhado por vários módulos.
+- **`@kerno/core/events`** — o bus (publish/subscribe, tipado). MVP: in-process.
+  Ponto de extensão para múltiplas instâncias (Redis pub/sub) é o `publish`.
+- **`@kerno/core/types`** — os **contratos** de evento (`KernoEventType`,
+  payloads). Subpath do core; compartilhado por vários módulos.
 - **Dispatcher** (`apps/web/composition`) — assina *todos* os eventos e: (1)
   persiste na tabela `Event` (auditoria); (2) repassa para a room do projeto via
   Socket.io. Ligado uma vez no boot (`server.ts`).
-- **Contratos no core, não nos módulos.** Um tipo de evento é compartilhado por
-  ≥2 módulos → mora em `@kerno/types`.
+- **Contratos no core, não nos módulos.** Um tipo de evento compartilhado por
+  ≥2 módulos → mora em `@kerno/core/types`.
 
 ---
 
 ## 9. Banco de dados
 
-- **Um banco, um cliente Prisma** (`@kerno/db`, no core). Monólito modular
-  compartilha o banco — isso é o esperado. O **cliente/infra** mora no core.
+- **Um banco, um cliente Prisma** (`@kerno/db`, package próprio de infra).
+  Monólito modular compartilha o banco — isso é o esperado.
 - **Cada módulo é dono dos seus models** — o `.prisma` vive no próprio módulo.
-  O core guarda só os models do núcleo (base + events).
+  O `@kerno/db` guarda só os models do núcleo (base + events) + o cliente.
 
 ```
-packages/core/db/prisma/
+packages/db/prisma/
 ├─ models/base.prisma     # generator + datasource + User/Workspace/Project
 ├─ models/events.prisma   # Event (log)
 ├─ gather.mjs             # junta os fragmentos antes do prisma generate
@@ -271,5 +280,5 @@ Observações:
 - **Mapper** — converte linha Prisma → DTO.
 - **Boundary** — a porta de entrada server (`actions.ts`, `"use server"`).
 - **Composition root** — onde os módulos são ligados entre si (`apps/web/composition`).
-- **Event bus** — canal publish/subscribe entre módulos (`@kerno/events`).
+- **Event bus** — canal publish/subscribe entre módulos (`@kerno/core/events`).
 ```
