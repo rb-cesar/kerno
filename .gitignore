@@ -23,3 +23,5 @@ Thumbs.db
 
 # prisma
 prisma/*.db
+# schema reunido pelo gather (fonte: core/db/prisma/models + modules/*/prisma)
+packages/core/db/prisma/schema/

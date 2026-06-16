@@ -196,18 +196,24 @@ O event bus é o **módulo base** — a fundação que liga tudo sem acoplar.
 
 ## 9. Banco de dados
 
-- **Um banco, um cliente Prisma** (`@kerno/db`). Monólito modular compartilha o
-  banco — isso é o esperado.
-- **Schema fatiado por módulo** (multi-file schema do Prisma): cada módulo é dono
-  do seu `.prisma`, e o Prisma funde tudo num cliente central.
+- **Um banco, um cliente Prisma** (`@kerno/db`, no core). Monólito modular
+  compartilha o banco — isso é o esperado. O **cliente/infra** mora no core.
+- **Cada módulo é dono dos seus models** — o `.prisma` vive no próprio módulo.
+  O core guarda só os models do núcleo (base + events).
 
 ```
-packages/core/db/prisma/schema/
-├─ base.prisma      # generator + datasource + User/Workspace/Project (núcleo)
-├─ kanban.prisma    # Board, Column, Card, Label   ← dono: módulo kanban
-├─ chat.prisma      # Channel, Message             ← dono: módulo chat
-└─ events.prisma    # Event (log)
+packages/core/db/prisma/
+├─ models/base.prisma     # generator + datasource + User/Workspace/Project
+├─ models/events.prisma   # Event (log)
+├─ gather.mjs             # junta os fragmentos antes do prisma generate
+└─ schema/                # SAÍDA do gather (gerada, gitignorada)
+packages/modules/kanban/prisma/kanban.prisma   # Board, Column, Card, Label
+packages/modules/chat/prisma/chat.prisma       # Channel, Message
 ```
+
+- **Por que o "gather":** o Prisma gera UM client de UMA pasta. O `gather.mjs`
+  copia `models/` (core) + `modules/*/prisma/` para `prisma/schema/` antes de
+  `generate`/`migrate`. Já encadeado nos scripts do `@kerno/db`.
 
 - **Relações cruzadas → referência por id.** O ideal é o núcleo **não** listar
   `boards`/`channels` (hoje o `Project` lista — acoplamento a limpar). Hubs
