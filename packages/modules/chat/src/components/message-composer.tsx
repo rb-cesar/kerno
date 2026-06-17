@@ -66,7 +66,6 @@ import {
   COMMAND_PRIORITY_NORMAL,
   FORMAT_TEXT_COMMAND,
   INSERT_LINE_BREAK_COMMAND,
-  INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
   KEY_MODIFIER_COMMAND,
   TextNode,
@@ -257,9 +256,13 @@ function EnterToSendPlugin({
           if (event.shiftKey) {
             event.preventDefault();
             // Numa lista, a "quebra de linha" cria um novo item (continua a lista);
-            // fora dela, insere uma quebra suave.
-            if (inList) editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
-            else editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
+            // fora dela, insere uma quebra suave. Usamos insertParagraph() direto
+            // (vale p/ lista pontilhada E numerada) — dispatchCommand não criava o item.
+            if (inList && $isRangeSelection(selection)) {
+              selection.insertParagraph();
+            } else {
+              editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
+            }
             return true;
           }
 
