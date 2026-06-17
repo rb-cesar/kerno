@@ -64,6 +64,7 @@ import {
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_NORMAL,
   FORMAT_TEXT_COMMAND,
+  INSERT_LINE_BREAK_COMMAND,
   KEY_ENTER_COMMAND,
   KEY_MODIFIER_COMMAND,
   TextNode,
@@ -228,7 +229,12 @@ function EnterToSendPlugin({
         (event) => {
           if (!event) return false;
           if (menuOpenRef.current) return false; // deixa o typeahead de emoji tratar
-          if (event.shiftKey) return false; // quebra de linha
+          // Shift+Enter: quebra de linha manual em qualquer contexto (inclusive lista).
+          if (event.shiftKey) {
+            event.preventDefault();
+            editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
+            return true;
+          }
           if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
             onSubmit();
