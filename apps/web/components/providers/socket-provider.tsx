@@ -21,11 +21,15 @@ export function useSocket() {
 
 export function SocketProvider({
   projectId,
-  userId,
+  url,
+  token,
   children,
 }: {
   projectId: string;
-  userId: string;
+  /** Origem da API (sem o /api), onde o Socket.io vive. */
+  url: string;
+  /** JWT da sessão (BFF) — usado no handshake. */
+  token: string | null;
   children: React.ReactNode;
 }) {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -33,12 +37,15 @@ export function SocketProvider({
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const s = io({ path: "/socket.io" });
+    if (!token) return;
+
+    const s = io(url, { auth: { token } });
     setSocket(s);
 
     s.on("connect", () => {
       setConnected(true);
-      s.emit("project:join", { projectId, userId });
+      // userId agora vem do token, validado no servidor.
+      s.emit("project:join", { projectId });
     });
     s.on("disconnect", () => setConnected(false));
     s.on("presence:update", (ids: string[]) => setOnlineUserIds(ids));
@@ -48,7 +55,7 @@ export function SocketProvider({
       s.disconnect();
       setSocket(null);
     };
-  }, [projectId, userId]);
+  }, [projectId, url, token]);
 
   return (
     <SocketContext.Provider value={{ socket, connected, onlineUserIds }}>

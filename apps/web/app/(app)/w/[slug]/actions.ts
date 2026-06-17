@@ -2,10 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@kerno/db";
+import type { ActionResult } from "@kerno/contracts/workspaces";
 import { requireUser } from "@/lib/auth-helpers";
-import { assertWorkspaceMember, getWorkspaceMembership } from "@kerno/core/workspaces";
 import { createProjectSchema, inviteMemberSchema } from "@/lib/validations";
+import { apiFetch } from "@/lib/api-client";
 
 type FormState = { error?: string; success?: string } | null;
 
@@ -13,11 +13,9 @@ export async function createProjectAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  await requireUser();
   const workspaceId = String(formData.get("workspaceId") ?? "");
   const slug = String(formData.get("slug") ?? "");
-
-  await assertWorkspaceMember(user.id, workspaceId);
 
   const parsed = createProjectSchema.safeParse({
     name: formData.get("name"),
@@ -27,48 +25,27 @@ export async function createProjectAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
-  const description = parsed.data.description?.trim() || null;
+  let projectId: string;
+  try {
+    const res = await apiFetch<{ projectId: string }>(`/workspaces/${workspaceId}/projects`, {
+      method: "POST",
+      body: JSON.stringify({ name: parsed.data.name, description: parsed.data.description }),
+    });
+    projectId = res.projectId;
+  } catch {
+    return { error: "Não foi possível criar o projeto" };
+  }
 
-  const project = await prisma.project.create({
-    data: {
-      name: parsed.data.name,
-      description,
-      workspaceId,
-      users: { create: { userId: user.id, role: "LEAD" } },
-      boards: {
-        create: {
-          name: "Principal",
-          columns: {
-            create: [
-              { name: "To Do", order: 0 },
-              { name: "In Progress", order: 1 },
-              { name: "Done", order: 2 },
-            ],
-          },
-        },
-      },
-      channels: {
-        create: { name: "geral", isDefault: true },
-      },
-    },
-  });
-
-  redirect(`/w/${slug}/p/${project.id}`);
+  redirect(`/w/${slug}/p/${projectId}`);
 }
 
 export async function inviteMemberAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  await requireUser();
   const workspaceId = String(formData.get("workspaceId") ?? "");
   const slug = String(formData.get("slug") ?? "");
-
-  const membership = await getWorkspaceMembership(user.id, workspaceId);
-  if (!membership) return { error: "Você não tem acesso a este workspace" };
-  if (membership.role !== "ADMIN") {
-    return { error: "Apenas administradores podem convidar membros" };
-  }
 
   const parsed = inviteMemberSchema.safeParse({
     email: formData.get("email"),
@@ -78,20 +55,13 @@ export async function inviteMemberAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
-  const target = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (!target) {
-    return { error: "Nenhum usuário do Kerno com este e-mail (no MVP, convide quem já tem conta)" };
-  }
+  const result = await apiFetch<ActionResult>(`/workspaces/${workspaceId}/members`, {
+    method: "POST",
+    body: JSON.stringify(parsed.data),
+  }).catch((): ActionResult => ({ ok: false, error: "Não foi possível convidar o membro" }));
 
-  const already = await getWorkspaceMembership(target.id, workspaceId);
-  if (already) {
-    return { error: "Este usuário já é membro do workspace" };
-  }
-
-  await prisma.workspaceUser.create({
-    data: { userId: target.id, workspaceId, role: parsed.data.role },
-  });
+  if (!result.ok) return { error: result.error };
 
   revalidatePath(`/w/${slug}`);
-  return { success: `${target.name} adicionado ao workspace` };
+  return { success: result.message ?? "Membro adicionado ao workspace" };
 }

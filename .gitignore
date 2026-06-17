@@ -23,5 +23,6 @@ Thumbs.db
 
 # prisma
 prisma/*.db
-# schema reunido pelo gather (fonte: db/prisma/models + modules/*/prisma)
-packages/db/prisma/schema/
+# fragmentos .prisma reunidos pelo gather (fonte: db/prisma/models + modules/*/prisma).
+# A subpasta migrations/ é versionada (não ignorar) — o Prisma a procura aqui dentro.
+packages/db/prisma/schema/*.prisma

@@ -28,11 +28,17 @@ export const authConfig = {
     },
     jwt({ token, user }) {
       if (user?.id) token.id = user.id;
+      if (user && "apiToken" in user && typeof user.apiToken === "string") {
+        token.apiToken = user.apiToken;
+      }
       return token;
     },
     session({ session, token }) {
       if (session.user && typeof token.id === "string") {
         session.user.id = token.id;
+      }
+      if (typeof token.apiToken === "string") {
+        session.apiToken = token.apiToken;
       }
       return session;
     },

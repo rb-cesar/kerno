@@ -3,7 +3,10 @@
 import { createContext, useContext } from "react";
 import type {
   ChatCreateChannel,
+  ChatFetchDirectMessages,
   ChatFetchMessages,
+  ChatOpenDirect,
+  ChatSendDirectMessage,
   ChatSendMessage,
   MemberDTO,
 } from "../types";
@@ -12,6 +15,9 @@ type ChatContextValue = {
   send: ChatSendMessage;
   createChannel: ChatCreateChannel;
   fetchMessages: ChatFetchMessages;
+  openDirect: ChatOpenDirect;
+  sendDirect: ChatSendDirectMessage;
+  fetchDirectMessages: ChatFetchDirectMessages;
   currentUserId: string;
   members: MemberDTO[];
   onlineUserIds: string[];

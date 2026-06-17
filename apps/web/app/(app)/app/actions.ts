@@ -1,41 +1,33 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { prisma } from "@kerno/db";
 import { requireUser } from "@/lib/auth-helpers";
 import { createWorkspaceSchema } from "@/lib/validations";
-import { slugify } from "@/lib/slug";
+import { apiFetch } from "@/lib/api-client";
 
 type FormState = { error?: string } | null;
-
-async function uniqueSlug(name: string): Promise<string> {
-  const base = slugify(name);
-  let slug = base;
-  let n = 1;
-  while (await prisma.workspace.findUnique({ where: { slug } })) {
-    slug = `${base}-${n++}`;
-  }
-  return slug;
-}
 
 export async function createWorkspaceAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  await requireUser();
 
   const parsed = createWorkspaceSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
-  const workspace = await prisma.workspace.create({
-    data: {
-      name: parsed.data.name,
-      slug: await uniqueSlug(parsed.data.name),
-      users: { create: { userId: user.id, role: "ADMIN" } },
-    },
-  });
+  let slug: string;
+  try {
+    const res = await apiFetch<{ slug: string }>("/workspaces", {
+      method: "POST",
+      body: JSON.stringify({ name: parsed.data.name }),
+    });
+    slug = res.slug;
+  } catch {
+    return { error: "Não foi possível criar o workspace" };
+  }
 
-  redirect(`/w/${workspace.slug}`);
+  redirect(`/w/${slug}`);
 }

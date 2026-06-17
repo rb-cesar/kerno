@@ -5,8 +5,9 @@
 //   - core/db/prisma/models/*.prisma          (núcleo: base + events)
 //   - packages/modules/<m>/prisma/*.prisma    (cada módulo é dono dos seus models)
 //
-// Saída: prisma/schema/ (gerada, gitignorada). Rode via `pnpm db:gather`
-// (já encadeado em generate/migrate/push/studio/build).
+// Saída: prisma/schema/*.prisma (gerados, gitignorados). A subpasta
+// prisma/schema/migrations/ é versionada e preservada entre execuções.
+// Rode via `pnpm db:gather` (já encadeado em generate/migrate/push/studio/build).
 
 import { mkdirSync, rmSync, copyFileSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -27,8 +28,14 @@ function copyPrismaFrom(dir) {
     });
 }
 
-rmSync(out, { recursive: true, force: true });
+// Limpa só os fragmentos .prisma; PRESERVA migrations/ — com schema multi-arquivo
+// o Prisma procura as migrations DENTRO da pasta de schema (prisma/schema/migrations),
+// e elas são versionadas (ver .gitignore). Apagar a pasta inteira aqui orfanava o
+// histórico de migrations.
 mkdirSync(out, { recursive: true });
+for (const entry of readdirSync(out)) {
+  if (entry.endsWith(".prisma")) rmSync(join(out, entry));
+}
 
 const gathered = [...copyPrismaFrom(coreModels)];
 for (const mod of readdirSync(modulesDir)) {

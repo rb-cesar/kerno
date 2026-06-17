@@ -1,64 +1,35 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "./auth-helpers";
-import { isProjectManager } from "@kerno/core/workspaces";
-import {
-  addProjectMember as addProjectMemberService,
-  removeProjectMember as removeProjectMemberService,
-  type ProjectRole,
-} from "@kerno/core/workspaces";
-
-type Result = { ok: true } | { ok: false; error: string };
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Erro inesperado";
-}
+import type { ActionResult } from "@kerno/contracts/workspaces";
+import type { ProjectRole } from "@kerno/core/workspaces";
+import { apiFetch } from "@/lib/api-client";
 
 export async function addProjectMember(input: {
   projectId: string;
   slug: string;
   userId: string;
   role?: ProjectRole;
-}): Promise<Result> {
-  try {
-    const user = await requireUser();
-    if (!(await isProjectManager(user.id, input.projectId))) {
-      return { ok: false, error: "Sem permissão para gerenciar membros" };
-    }
+}): Promise<ActionResult> {
+  const result = await apiFetch<ActionResult>(`/projects/${input.projectId}/members`, {
+    method: "POST",
+    body: JSON.stringify({ userId: input.userId, role: input.role }),
+  }).catch((): ActionResult => ({ ok: false, error: "Falha ao adicionar membro" }));
 
-    await addProjectMemberService({
-      projectId: input.projectId,
-      userId: input.userId,
-      role: input.role,
-    });
-
-    revalidatePath(`/w/${input.slug}/p/${input.projectId}`, "layout");
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) };
-  }
+  if (result.ok) revalidatePath(`/w/${input.slug}/p/${input.projectId}`, "layout");
+  return result;
 }
 
 export async function removeProjectMember(input: {
   projectId: string;
   slug: string;
   userId: string;
-}): Promise<Result> {
-  try {
-    const user = await requireUser();
-    if (!(await isProjectManager(user.id, input.projectId))) {
-      return { ok: false, error: "Sem permissão para gerenciar membros" };
-    }
+}): Promise<ActionResult> {
+  const result = await apiFetch<ActionResult>(
+    `/projects/${input.projectId}/members/${input.userId}`,
+    { method: "DELETE" },
+  ).catch((): ActionResult => ({ ok: false, error: "Falha ao remover membro" }));
 
-    await removeProjectMemberService({
-      projectId: input.projectId,
-      userId: input.userId,
-    });
-
-    revalidatePath(`/w/${input.slug}/p/${input.projectId}`, "layout");
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) };
-  }
+  if (result.ok) revalidatePath(`/w/${input.slug}/p/${input.projectId}`, "layout");
+  return result;
 }

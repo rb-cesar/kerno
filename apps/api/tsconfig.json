@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@kerno/db": ["../../packages/db/src/index.ts"],
+      "@kerno/contracts": ["../../packages/contracts/src/index.ts"],
+      "@kerno/contracts/*": ["../../packages/contracts/src/*.ts"],
+      "@kerno/core/events": ["../../packages/core/src/events/index.ts"],
+      "@kerno/core/types": ["../../packages/core/src/types/index.ts"],
+      "@kerno/core/workspaces": ["../../packages/core/src/workspaces/index.ts"],
+      "@kerno/kanban/services": ["../../packages/modules/kanban/src/services/index.ts"],
+      "@kerno/chat/services": ["../../packages/modules/chat/src/services/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

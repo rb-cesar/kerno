@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { cn } from "@kerno/ui";
 import type { MessageDTO } from "../types";
+import { MessageContent } from "./message-content";
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -49,7 +49,7 @@ export function MessageList({ messages }: { messages: MessageDTO[] }) {
                 <span className="text-sm font-medium">{message.author?.name ?? "Desconhecido"}</span>
                 <span className="text-xs text-muted-foreground">{formatTime(message.createdAt)}</span>
               </div>
-              <div className={cn("whitespace-pre-wrap break-words text-sm")}>{message.content}</div>
+              <MessageContent content={message.content} />
             </div>
           </div>
         ),

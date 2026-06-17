@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@kerno/contracts": "workspace:*",
     "@kerno/core": "workspace:*",
     "@kerno/db": "workspace:*",
     "@kerno/chat": "workspace:^",

@@ -1,10 +1,10 @@
 "use server";
 
-import bcrypt from "bcryptjs";
-import { prisma } from "@kerno/db";
 import { signIn } from "@/auth";
 import { registerSchema } from "@/lib/validations";
 import type { AuthFormState } from "@/app/(auth)/login/actions";
+
+const API_URL = process.env.API_URL ?? "http://localhost:3333/api";
 
 export async function registerAction(
   _prev: AuthFormState,
@@ -20,17 +20,26 @@ export async function registerAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
-  const { name, email, password } = parsed.data;
+  // Criação da conta vai para a API (NestJS). Sem Prisma/bcrypt no web.
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(parsed.data),
+  });
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  if (res.status === 409) {
     return { error: "Já existe uma conta com este e-mail" };
   }
+  if (!res.ok) {
+    return { error: "Não foi possível criar a conta" };
+  }
 
-  const passwordHash = await bcrypt.hash(password, 10);
-  await prisma.user.create({ data: { name, email, passwordHash } });
-
+  // Estabelece a sessão NextAuth (authorize chama /auth/login).
   // signIn lança um redirect para /app em caso de sucesso.
-  await signIn("credentials", { email, password, redirectTo: "/app" });
+  await signIn("credentials", {
+    email: parsed.data.email,
+    password: parsed.data.password,
+    redirectTo: "/app",
+  });
   return null;
 }

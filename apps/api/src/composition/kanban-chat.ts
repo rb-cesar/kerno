@@ -39,8 +39,8 @@ async function describe(event: AnyKernoEvent): Promise<string | null> {
 
 /**
  * Integração entre hubs: ao receber eventos do Kanban, posta uma mensagem de
- * sistema no canal padrão do projeto. Vive na camada de composição do app —
- * nenhum hub conhece o outro. Registrado uma vez no boot (server.ts).
+ * sistema no canal padrão do projeto. Vive na camada de composição da API —
+ * nenhum hub conhece o outro. Registrada uma vez no boot.
  */
 export function initKanbanChatIntegration(): void {
   if (registered) return;

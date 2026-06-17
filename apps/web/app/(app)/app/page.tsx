@@ -1,17 +1,14 @@
 import Link from "next/link";
-import { prisma } from "@kerno/db";
+import type { WorkspaceListItem } from "@kerno/contracts/workspaces";
 import { Card, CardDescription, CardHeader, CardTitle } from "@kerno/ui";
 import { requireUser } from "@/lib/auth-helpers";
+import { apiFetch } from "@/lib/api-client";
 import { CreateWorkspaceForm } from "./create-workspace-form";
 
 export default async function WorkspacesPage() {
-  const user = await requireUser();
+  await requireUser();
 
-  const workspaces = await prisma.workspace.findMany({
-    where: { users: { some: { userId: user.id } } },
-    orderBy: { createdAt: "asc" },
-    include: { _count: { select: { projects: true } } },
-  });
+  const workspaces = await apiFetch<WorkspaceListItem[]>("/workspaces").catch(() => []);
 
   return (
     <div className="mx-auto max-w-3xl space-y-10 p-6">
@@ -29,9 +26,7 @@ export default async function WorkspacesPage() {
                 <Card className="transition-colors hover:bg-accent">
                   <CardHeader>
                     <CardTitle>{ws.name}</CardTitle>
-                    <CardDescription>
-                      {ws._count.projects} projeto(s)
-                    </CardDescription>
+                    <CardDescription>{ws.projectCount} projeto(s)</CardDescription>
                   </CardHeader>
                 </Card>
               </Link>

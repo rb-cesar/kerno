@@ -1,45 +1,69 @@
 "use server";
 
-import * as chat from "@kerno/chat/services";
-import type { ChannelDTO, ChatResult, MessageDTO } from "@kerno/chat/types";
-import { guardChannel, guardProject } from "@/lib/chat-guard";
+import type {
+  ChannelDTO,
+  ChatResult,
+  DirectConversationDTO,
+  MessageDTO,
+} from "@kerno/chat/types";
+import { apiFetch } from "@/lib/api-client";
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Erro inesperado";
+function chatError(error: unknown): { ok: false; error: string } {
+  return { ok: false, error: error instanceof Error ? error.message : "Erro inesperado" };
 }
 
+// BFF: auth + permissão + services vivem na API (NestJS). Estes actions só
+// repassam para os endpoints do hub Chat.
+
 export async function chatFetchMessages(channelId: string): Promise<MessageDTO[]> {
-  await guardChannel(channelId);
-  return chat.getMessages(channelId);
+  return apiFetch<MessageDTO[]>(`/chat/channels/${channelId}/messages`).catch(() => []);
 }
 
 export async function chatSendMessage(input: {
   channelId: string;
   content: string;
 }): Promise<ChatResult<MessageDTO>> {
-  try {
-    const user = await guardChannel(input.channelId);
-    const content = input.content.trim();
-    if (!content) return { ok: false, error: "Mensagem vazia" };
-    if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
-    const message = await chat.sendMessage(input.channelId, content, user.id);
-    return { ok: true, data: message };
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) };
-  }
+  return apiFetch<ChatResult<MessageDTO>>(`/chat/messages`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  }).catch((error: unknown) => ({
+    ok: false,
+    error: error instanceof Error ? error.message : "Erro inesperado",
+  }));
 }
 
 export async function chatCreateChannel(input: {
   projectId: string;
   name: string;
 }): Promise<ChatResult<ChannelDTO>> {
-  try {
-    await guardProject(input.projectId);
-    const name = input.name.trim().toLowerCase().replace(/\s+/g, "-");
-    if (!name) return { ok: false, error: "Nome inválido" };
-    const channel = await chat.createChannel(input.projectId, name);
-    return { ok: true, data: channel };
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) };
-  }
+  return apiFetch<ChatResult<ChannelDTO>>(`/chat/channels`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  }).catch(chatError);
+}
+
+// ── Mensagens diretas (DM) ───────────────────────────────────────────────────
+
+export async function chatOpenDirect(input: {
+  projectId: string;
+  userId: string;
+}): Promise<ChatResult<DirectConversationDTO>> {
+  return apiFetch<ChatResult<DirectConversationDTO>>(`/chat/direct`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  }).catch(chatError);
+}
+
+export async function chatFetchDirectMessages(conversationId: string): Promise<MessageDTO[]> {
+  return apiFetch<MessageDTO[]>(`/chat/direct/${conversationId}/messages`).catch(() => []);
+}
+
+export async function chatSendDirectMessage(input: {
+  conversationId: string;
+  content: string;
+}): Promise<ChatResult<MessageDTO>> {
+  return apiFetch<ChatResult<MessageDTO>>(`/chat/direct/messages`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  }).catch(chatError);
 }

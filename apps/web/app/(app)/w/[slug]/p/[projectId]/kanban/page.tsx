@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@kerno/db";
-import { getBoardSnapshot } from "@kerno/kanban/services";
+import type { BoardData } from "@kerno/kanban/types";
 import { requireUser } from "@/lib/auth-helpers";
-import { assertProjectMember } from "@kerno/core/workspaces";
+import { apiFetch } from "@/lib/api-client";
 import { KanbanClient } from "./kanban-client";
 
 export default async function KanbanPage({
@@ -12,17 +11,12 @@ export default async function KanbanPage({
 }) {
   const { projectId } = await params;
   const user = await requireUser();
-  await assertProjectMember(user.id, projectId);
 
-  const board = await prisma.board.findFirst({
-    where: { projectId },
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
+  // Carga inicial via API (BFF). A permissão de membro é checada no backend.
+  const board = await apiFetch<BoardData>(`/kanban/projects/${projectId}/board`).catch(
+    () => null,
+  );
   if (!board) notFound();
 
-  const snapshot = await getBoardSnapshot(board.id);
-  if (!snapshot) notFound();
-
-  return <KanbanClient initial={snapshot} currentUserId={user.id} />;
+  return <KanbanClient initial={board} currentUserId={user.id} />;
 }

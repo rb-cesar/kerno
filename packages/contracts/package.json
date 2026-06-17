@@ -1,0 +1,19 @@
+{
+  "name": "@kerno/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./common": "./src/common.ts",
+    "./events": "./src/events.ts",
+    "./kanban": "./src/kanban.ts",
+    "./chat": "./src/chat.ts",
+    "./workspaces": "./src/workspaces.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,10 +1,14 @@
 import { notFound } from "next/navigation";
+import type { ProjectView } from "@kerno/contracts/workspaces";
+import { auth } from "@/auth";
 import { requireUser } from "@/lib/auth-helpers";
-import { getProjectMembership } from "@kerno/core/workspaces";
-import { getProjectWithMembers } from "@kerno/core/workspaces";
+import { apiFetch } from "@/lib/api-client";
 import { SocketProvider } from "@/components/providers/socket-provider";
 import { HubRail } from "@/components/app/hub-rail";
 import { ProjectHeader } from "@/components/app/project-header";
+
+// Origem da API (sem o sufixo /api) onde o Socket.io escuta.
+const SOCKET_URL = (process.env.API_URL ?? "http://localhost:3333/api").replace(/\/api\/?$/, "");
 
 export default async function ProjectLayout({
   params,
@@ -15,18 +19,17 @@ export default async function ProjectLayout({
 }) {
   const { slug, projectId } = await params;
   const user = await requireUser();
+  const session = await auth();
 
-  const membership = await getProjectMembership(user.id, projectId);
-  if (!membership) notFound();
-
-  const project = await getProjectWithMembers(projectId, user.id);
+  // Gate de acesso + dados do projeto via API (BFF). 404 se não for membro.
+  const project = await apiFetch<ProjectView>(`/projects/${projectId}/view`).catch(() => null);
   if (!project) notFound();
 
   const { projectMembers, workspaceMembers } = project;
-  const isManager = project.myWorkspaceRole === "ADMIN" || membership.role === "LEAD";
+  const isManager = project.myWorkspaceRole === "ADMIN" || project.myProjectRole === "LEAD";
 
   return (
-    <SocketProvider projectId={projectId} userId={user.id}>
+    <SocketProvider projectId={projectId} url={SOCKET_URL} token={session?.apiToken ?? null}>
       <div className="flex h-screen overflow-hidden">
         <HubRail
           basePath={`/w/${slug}/p/${projectId}`}

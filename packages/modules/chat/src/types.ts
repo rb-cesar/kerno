@@ -1,33 +1,15 @@
-// Contratos do Hub Chat — compartilhados entre services (server) e UI (client).
+// Contratos do Hub Chat. Os DTOs e envelopes vivem em @kerno/contracts (pacote
+// puro, compartilhável com apps cliente). Aqui ficam só os tipos de wiring da
+// camada de entrega (as server actions injetadas pelo app).
 
-export interface MemberDTO {
-  id: string;
-  name: string;
-}
+export * from "@kerno/contracts/chat";
 
-export interface ChannelDTO {
-  id: string;
-  name: string;
-  isDefault: boolean;
-}
-
-export interface MessageDTO {
-  id: string;
-  content: string;
-  createdAt: string; // ISO
-  isSystem: boolean;
-  author: MemberDTO | null;
-}
-
-export interface ChatData {
-  projectId: string;
-  channels: ChannelDTO[];
-  members: MemberDTO[];
-  initialChannelId: string | null;
-  initialMessages: MessageDTO[];
-}
-
-export type ChatResult<T> = { ok: true; data: T } | { ok: false; error: string };
+import type {
+  ChannelDTO,
+  DirectConversationDTO,
+  MessageDTO,
+  ChatResult,
+} from "@kerno/contracts/chat";
 
 /** Server actions injetadas pelo app no componente do hub. */
 export type ChatSendMessage = (input: {
@@ -41,3 +23,17 @@ export type ChatCreateChannel = (input: {
 }) => Promise<ChatResult<ChannelDTO>>;
 
 export type ChatFetchMessages = (channelId: string) => Promise<MessageDTO[]>;
+
+// ── Mensagens diretas (DM) ──────────────────────────────────────────────────
+
+export type ChatOpenDirect = (input: {
+  projectId: string;
+  userId: string;
+}) => Promise<ChatResult<DirectConversationDTO>>;
+
+export type ChatSendDirectMessage = (input: {
+  conversationId: string;
+  content: string;
+}) => Promise<ChatResult<MessageDTO>>;
+
+export type ChatFetchDirectMessages = (conversationId: string) => Promise<MessageDTO[]>;
