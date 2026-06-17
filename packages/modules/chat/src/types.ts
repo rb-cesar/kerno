@@ -39,3 +39,8 @@ export type ChatSendDirectMessage = (input: {
 }) => Promise<ChatResult<MessageDTO>>;
 
 export type ChatFetchDirectMessages = (conversationId: string) => Promise<MessageDTO[]>;
+
+export type ChatToggleReaction = (input: {
+  messageId: string;
+  emoji: string;
+}) => Promise<ChatResult<{ messageId: string }>>;

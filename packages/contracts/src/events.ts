@@ -8,6 +8,7 @@ export type KernoEventType =
   | "card:assigned"
   | "message:sent"
   | "dm:sent"
+  | "reaction:changed"
   | "user:joined"
   | "user:left";
 
@@ -55,6 +56,17 @@ export interface DirectMessagePayload {
   participantIds: string[];
 }
 
+/**
+ * Reação adicionada/removida numa mensagem. Em canal vai para a room do projeto;
+ * em DM (conversationId + participantIds) só para as rooms pessoais.
+ */
+export interface ReactionChangedPayload {
+  messageId: string;
+  channelId: string | null;
+  conversationId: string | null;
+  participantIds: string[];
+}
+
 export interface UserPresencePayload {
   userId: string;
 }
@@ -67,6 +79,7 @@ export interface KernoEventMap {
   "card:assigned": CardAssignedPayload;
   "message:sent": MessageSentPayload;
   "dm:sent": DirectMessagePayload;
+  "reaction:changed": ReactionChangedPayload;
   "user:joined": UserPresencePayload;
   "user:left": UserPresencePayload;
 }

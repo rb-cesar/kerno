@@ -60,8 +60,24 @@ model Message {
   user         User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
   replyTo      Message?            @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies      Message[]           @relation("MessageReplies")
+  reactions    Reaction[]
 
   @@index([channelId])
   @@index([conversationId])
   @@index([replyToId])
+}
+
+// Reação (emoji) de um usuário a uma mensagem. `userId` é escalar (sem FK p/ User,
+// que vive no núcleo) — uma reação por (mensagem, usuário, emoji).
+model Reaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
 }

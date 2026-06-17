@@ -1,6 +1,12 @@
 import { prisma } from "@kerno/db";
 import { createEvent, eventBus } from "@kerno/core/events";
-import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO } from "../types";
+import type {
+  ChannelDTO,
+  DirectConversationDTO,
+  MemberDTO,
+  MessageDTO,
+  ReactionDTO,
+} from "../types";
 
 const MESSAGE_PAGE_SIZE = 50;
 
@@ -15,6 +21,7 @@ const MESSAGE_INCLUDE = {
       user: { select: { name: true } },
     },
   },
+  reactions: { select: { emoji: true, userId: true } },
 } as const;
 
 type ReplyRow = {
@@ -24,6 +31,8 @@ type ReplyRow = {
   user: { name: string } | null;
 } | null;
 
+type ReactionRow = { emoji: string; userId: string };
+
 type MessageRow = {
   id: string;
   content: string;
@@ -31,13 +40,26 @@ type MessageRow = {
   isSystem: boolean;
   user: { id: string; name: string } | null;
   replyTo?: ReplyRow;
+  reactions?: ReactionRow[];
 };
 
 function makeExcerpt(content: string): string {
   return content.replace(/\s+/g, " ").trim().slice(0, 120);
 }
 
-function toMessageDTO(row: MessageRow): MessageDTO {
+/** Agrupa reações por emoji, preservando a ordem de 1ª aparição. */
+function aggregateReactions(rows: ReactionRow[], viewerId: string): ReactionDTO[] {
+  const byEmoji = new Map<string, { count: number; mine: boolean }>();
+  for (const r of rows) {
+    const entry = byEmoji.get(r.emoji) ?? { count: 0, mine: false };
+    entry.count += 1;
+    if (r.userId === viewerId) entry.mine = true;
+    byEmoji.set(r.emoji, entry);
+  }
+  return [...byEmoji.entries()].map(([emoji, v]) => ({ emoji, count: v.count, mine: v.mine }));
+}
+
+function toMessageDTO(row: MessageRow, viewerId: string): MessageDTO {
   return {
     id: row.id,
     content: row.content,
@@ -53,6 +75,7 @@ function toMessageDTO(row: MessageRow): MessageDTO {
           excerpt: makeExcerpt(row.replyTo.content),
         }
       : null,
+    reactions: aggregateReactions(row.reactions ?? [], viewerId),
   };
 }
 
@@ -92,6 +115,7 @@ export async function listChannels(projectId: string): Promise<ChannelDTO[]> {
 
 export async function getMessages(
   channelId: string,
+  viewerId: string,
   limit = MESSAGE_PAGE_SIZE,
 ): Promise<MessageDTO[]> {
   const rows = await prisma.message.findMany({
@@ -100,7 +124,7 @@ export async function getMessages(
     take: limit,
     include: MESSAGE_INCLUDE,
   });
-  return rows.reverse().map(toMessageDTO);
+  return rows.reverse().map((row) => toMessageDTO(row, viewerId));
 }
 
 export async function createChannel(projectId: string, name: string): Promise<ChannelDTO> {
@@ -138,7 +162,7 @@ export async function sendMessage(
     ),
   );
 
-  return toMessageDTO(message);
+  return toMessageDTO(message, actorId);
 }
 
 /** Mensagem de sistema (sem autor) — usada na integração entre hubs. */
@@ -162,7 +186,7 @@ export async function postSystemMessage(channelId: string, content: string): Pro
     }),
   );
 
-  return toMessageDTO(message);
+  return toMessageDTO(message, "");
 }
 
 export async function projectIdOfChannel(channelId: string): Promise<string | null> {
@@ -246,6 +270,7 @@ export async function openDirect(
 
 export async function getDirectMessages(
   conversationId: string,
+  viewerId: string,
   limit = MESSAGE_PAGE_SIZE,
 ): Promise<MessageDTO[]> {
   const rows = await prisma.message.findMany({
@@ -254,7 +279,7 @@ export async function getDirectMessages(
     take: limit,
     include: MESSAGE_INCLUDE,
   });
-  return rows.reverse().map(toMessageDTO);
+  return rows.reverse().map((row) => toMessageDTO(row, viewerId));
 }
 
 export async function sendDirectMessage(
@@ -291,7 +316,7 @@ export async function sendDirectMessage(
     ),
   );
 
-  return toMessageDTO(message);
+  return toMessageDTO(message, actorId);
 }
 
 /** Para os guards da API: projeto + participantes de uma conversa. */
@@ -304,4 +329,69 @@ export async function conversationAccess(
   });
   if (!conv) return null;
   return { projectId: conv.projectId, participantIds: conv.participants.map((p) => p.userId) };
+}
+
+// ── Reações ────────────────────────────────────────────────────────────────
+
+/** Contexto de uma mensagem (canal/conversa/projeto) — para guards e roteamento. */
+export async function messageContext(messageId: string): Promise<{
+  projectId: string;
+  channelId: string | null;
+  conversationId: string | null;
+  participantIds: string[];
+} | null> {
+  const msg = await prisma.message.findUnique({
+    where: { id: messageId },
+    select: {
+      channelId: true,
+      conversationId: true,
+      channel: { select: { projectId: true } },
+      conversation: {
+        select: { projectId: true, participants: { select: { userId: true } } },
+      },
+    },
+  });
+  if (!msg) return null;
+  const projectId = msg.channel?.projectId ?? msg.conversation?.projectId;
+  if (!projectId) return null;
+  return {
+    projectId,
+    channelId: msg.channelId,
+    conversationId: msg.conversationId,
+    participantIds: msg.conversation?.participants.map((p) => p.userId) ?? [],
+  };
+}
+
+/** Adiciona/remove a reação (toggle) e publica `reaction:changed`. */
+export async function toggleReaction(
+  messageId: string,
+  emoji: string,
+  userId: string,
+): Promise<void> {
+  const ctx = await messageContext(messageId);
+  if (!ctx) return;
+
+  const existing = await prisma.reaction.findUnique({
+    where: { messageId_userId_emoji: { messageId, userId, emoji } },
+  });
+  if (existing) {
+    await prisma.reaction.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.reaction.create({ data: { messageId, userId, emoji } });
+  }
+
+  eventBus.publish(
+    createEvent(
+      "reaction:changed",
+      ctx.projectId,
+      {
+        messageId,
+        channelId: ctx.channelId,
+        conversationId: ctx.conversationId,
+        // só preenche participantes em DM (roteamento por room pessoal)
+        participantIds: ctx.conversationId ? ctx.participantIds : [],
+      },
+      userId,
+    ),
+  );
 }

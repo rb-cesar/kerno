@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { CornerUpLeft } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CornerUpLeft, SmilePlus } from "lucide-react";
 import { cn } from "@kerno/ui";
 import type { MessageDTO } from "../types";
 import { useChat } from "./chat-context";
 import { MessageContent } from "./message-content";
+
+const QUICK_EMOJIS = ["👍", "❤️", "😂", "🎉", "👀", "✅", "🙏", "🔥"];
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -23,12 +25,15 @@ function initials(name: string): string {
 export function MessageList({
   messages,
   onReply,
+  onToggleReaction,
 }: {
   messages: MessageDTO[];
   onReply: (message: MessageDTO) => void;
+  onToggleReaction: (messageId: string, emoji: string) => void;
 }) {
   const { currentUserId } = useChat();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [reactOpenFor, setReactOpenFor] = useState<string | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -84,14 +89,55 @@ export function MessageList({
                 <span className="text-xs text-muted-foreground">
                   {formatTime(message.createdAt)}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onReply(message)}
-                  title="Responder"
-                  className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                <div
+                  className={cn(
+                    "relative flex items-center gap-1 text-muted-foreground transition-opacity",
+                    reactOpenFor === message.id
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100",
+                  )}
                 >
-                  <CornerUpLeft className="h-3 w-3" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => onReply(message)}
+                    title="Responder"
+                    className="hover:text-foreground"
+                  >
+                    <CornerUpLeft className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReactOpenFor((cur) => (cur === message.id ? null : message.id))
+                    }
+                    title="Reagir"
+                    className="hover:text-foreground"
+                  >
+                    <SmilePlus className="h-3 w-3" />
+                  </button>
+                  {reactOpenFor === message.id ? (
+                    <div
+                      className={cn(
+                        "absolute top-5 z-10 flex gap-0.5 rounded-md border bg-popover p-1 shadow-md",
+                        isOwn ? "right-0" : "left-0",
+                      )}
+                    >
+                      {QUICK_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            onToggleReaction(message.id, emoji);
+                            setReactOpenFor(null);
+                          }}
+                          className="rounded p-1 text-base leading-none hover:bg-accent"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               <div
@@ -102,6 +148,27 @@ export function MessageList({
               >
                 <MessageContent content={message.content} />
               </div>
+
+              {message.reactions.length > 0 ? (
+                <div className={cn("mt-1 flex flex-wrap gap-1", isOwn && "justify-end")}>
+                  {message.reactions.map((reaction) => (
+                    <button
+                      key={reaction.emoji}
+                      type="button"
+                      onClick={() => onToggleReaction(message.id, reaction.emoji)}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs transition-colors",
+                        reaction.mine
+                          ? "border-sky-500/60 bg-sky-600/20"
+                          : "border-border bg-muted/40 hover:bg-muted",
+                      )}
+                    >
+                      <span>{reaction.emoji}</span>
+                      <span className="text-muted-foreground">{reaction.count}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         );

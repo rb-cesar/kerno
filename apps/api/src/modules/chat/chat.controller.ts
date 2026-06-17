@@ -4,6 +4,7 @@ import type {
   OpenDirectInput,
   SendDirectMessageInput,
   SendMessageInput,
+  ToggleReactionInput,
 } from "@kerno/contracts/chat";
 import { CurrentUser } from "../../core/auth/current-user.decorator";
 import { JwtAuthGuard } from "../../core/auth/jwt-auth.guard";
@@ -35,6 +36,12 @@ export class ChatController {
   @Post("channels")
   createChannel(@CurrentUser() user: RequestUser, @Body() body: CreateChannelInput) {
     return this.chat.createChannel(user.id, body);
+  }
+
+  @Post("reactions")
+  @HttpCode(200)
+  toggleReaction(@CurrentUser() user: RequestUser, @Body() body: ToggleReactionInput) {
+    return this.chat.toggleReaction(user.id, body);
   }
 
   // ── Mensagens diretas (DM) ────────────────────────────────────────────────

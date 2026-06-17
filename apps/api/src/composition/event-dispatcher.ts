@@ -39,6 +39,14 @@ export function initEventDispatcher(io: IOServer): void {
       return;
     }
 
+    // Reação numa DM: também é privada (participantIds preenchido só nesse caso).
+    if (event.type === "reaction:changed" && event.payload.participantIds.length > 0) {
+      for (const participantId of event.payload.participantIds) {
+        io.to(`user:${participantId}`).emit("kerno:event", event);
+      }
+      return;
+    }
+
     io.to(`project:${event.projectId}`).emit("kerno:event", event);
   });
 

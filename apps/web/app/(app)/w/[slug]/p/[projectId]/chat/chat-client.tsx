@@ -9,6 +9,7 @@ import {
   chatOpenDirect,
   chatSendDirectMessage,
   chatSendMessage,
+  chatToggleReaction,
 } from "./actions";
 
 export function ChatClient({
@@ -32,6 +33,7 @@ export function ChatClient({
       openDirect={chatOpenDirect}
       sendDirect={chatSendDirectMessage}
       fetchDirectMessages={chatFetchDirectMessages}
+      toggleReaction={chatToggleReaction}
     />
   );
 }

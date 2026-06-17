@@ -59,6 +59,16 @@ export async function chatFetchDirectMessages(conversationId: string): Promise<M
   return apiFetch<MessageDTO[]>(`/chat/direct/${conversationId}/messages`).catch(() => []);
 }
 
+export async function chatToggleReaction(input: {
+  messageId: string;
+  emoji: string;
+}): Promise<ChatResult<{ messageId: string }>> {
+  return apiFetch<ChatResult<{ messageId: string }>>(`/chat/reactions`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  }).catch(chatError);
+}
+
 export async function chatSendDirectMessage(input: {
   conversationId: string;
   content: string;

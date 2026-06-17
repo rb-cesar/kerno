@@ -11,6 +11,7 @@ import type {
   OpenDirectInput,
   SendDirectMessageInput,
   SendMessageInput,
+  ToggleReactionInput,
 } from "@kerno/contracts/chat";
 import {
   assertMember,
@@ -39,7 +40,9 @@ export class ChatService {
     ]);
 
     const initialChannelId = channels[0]?.id ?? null;
-    const initialMessages = initialChannelId ? await chat.getMessages(initialChannelId) : [];
+    const initialMessages = initialChannelId
+      ? await chat.getMessages(initialChannelId, userId)
+      : [];
 
     return {
       projectId,
@@ -53,7 +56,7 @@ export class ChatService {
 
   async fetchMessages(userId: string, channelId: string): Promise<MessageDTO[]> {
     await guardChannel(userId, channelId);
-    return chat.getMessages(channelId);
+    return chat.getMessages(channelId, userId);
   }
 
   async sendMessage(userId: string, input: SendMessageInput): Promise<ChatResult<MessageDTO>> {
@@ -102,7 +105,30 @@ export class ChatService {
 
   async directMessages(userId: string, conversationId: string): Promise<MessageDTO[]> {
     await guardConversation(userId, conversationId);
-    return chat.getDirectMessages(conversationId);
+    return chat.getDirectMessages(conversationId, userId);
+  }
+
+  async toggleReaction(
+    userId: string,
+    input: ToggleReactionInput,
+  ): Promise<ChatResult<{ messageId: string }>> {
+    try {
+      const ctx = await chat.messageContext(input.messageId);
+      if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
+
+      // Garante que o usuário tem acesso ao canal/conversa da mensagem.
+      if (ctx.channelId) await guardChannel(userId, ctx.channelId);
+      else if (ctx.conversationId) await guardConversation(userId, ctx.conversationId);
+      else return { ok: false, error: "Mensagem inválida" };
+
+      const emoji = input.emoji?.trim();
+      if (!emoji || emoji.length > 16) return { ok: false, error: "Emoji inválido" };
+
+      await chat.toggleReaction(input.messageId, emoji, userId);
+      return { ok: true, data: { messageId: input.messageId } };
+    } catch (error) {
+      return { ok: false, error: errorMessage(error) };
+    }
   }
 
   async sendDirect(

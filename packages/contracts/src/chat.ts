@@ -18,6 +18,13 @@ export interface MessageReplyDTO {
   excerpt: string;
 }
 
+/** Reações agregadas por emoji numa mensagem. */
+export interface ReactionDTO {
+  emoji: string;
+  count: number;
+  mine: boolean; // o usuário atual reagiu com este emoji
+}
+
 export interface MessageDTO {
   id: string;
   content: string;
@@ -25,6 +32,7 @@ export interface MessageDTO {
   isSystem: boolean;
   author: MemberDTO | null;
   replyTo: MessageReplyDTO | null;
+  reactions: ReactionDTO[];
 }
 
 /** Conversa privada (DM) entre membros de um mesmo projeto. */
@@ -67,4 +75,9 @@ export interface SendDirectMessageInput {
   conversationId: string;
   content: string;
   replyToId?: string | null;
+}
+
+export interface ToggleReactionInput {
+  messageId: string;
+  emoji: string;
 }

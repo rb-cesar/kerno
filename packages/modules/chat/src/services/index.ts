@@ -11,4 +11,6 @@ export {
   getDirectMessages,
   sendDirectMessage,
   conversationAccess,
+  messageContext,
+  toggleReaction,
 } from "./chat-service";

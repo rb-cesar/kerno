@@ -13,6 +13,7 @@ import type {
   ChatOpenDirect,
   ChatSendDirectMessage,
   ChatSendMessage,
+  ChatToggleReaction,
   DirectConversationDTO,
   MessageDTO,
 } from "../types";
@@ -62,6 +63,7 @@ export function ChatPanel({
   openDirect,
   sendDirect,
   fetchDirectMessages,
+  toggleReaction,
 }: {
   initial: ChatData;
   currentUserId: string;
@@ -73,6 +75,7 @@ export function ChatPanel({
   openDirect: ChatOpenDirect;
   sendDirect: ChatSendDirectMessage;
   fetchDirectMessages: ChatFetchDirectMessages;
+  toggleReaction: ChatToggleReaction;
 }) {
   const [channels, setChannels] = useState<ChannelDTO[]>(initial.channels);
   const [conversations, setConversations] = useState<DirectConversationDTO[]>(
@@ -117,8 +120,15 @@ export function ChatPanel({
   );
 
   const onRealtime = useCallback(
-    (target: ChatTarget, fromSelf: boolean) => {
+    (target: ChatTarget, fromSelf: boolean, kind: "message" | "reaction") => {
       if (fromSelf) return;
+
+      // Reação: só atualiza se for o alvo aberto (nunca marca como não-lida).
+      if (kind === "reaction") {
+        const asActive: ActiveTarget = { kind: target.kind, id: target.id };
+        if (sameTarget(active, asActive)) void loadMessages(asActive);
+        return;
+      }
 
       // DM de uma conversa que ainda não está na lista (criada pelo outro lado):
       // monta o DTO a partir dos membros conhecidos e adiciona à sidebar.
@@ -175,6 +185,11 @@ export function ChatPanel({
     select({ kind: "dm", id: res.data.id });
   };
 
+  const handleToggleReaction = async (messageId: string, emoji: string) => {
+    const res = await toggleReaction({ messageId, emoji });
+    if (res.ok && active) void loadMessages(active);
+  };
+
   const activeChannel =
     active?.kind === "channel" ? channels.find((c) => c.id === active.id) ?? null : null;
   const activeConversation =
@@ -213,7 +228,11 @@ export function ChatPanel({
                 <Hash className="h-4 w-4 text-muted-foreground" />
                 {activeChannel.name}
               </div>
-              <MessageList messages={messages} onReply={setReplyTo} />
+              <MessageList
+                messages={messages}
+                onReply={setReplyTo}
+                onToggleReaction={handleToggleReaction}
+              />
               {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
               <MessageComposer
                 onSend={handleSend}
@@ -229,7 +248,11 @@ export function ChatPanel({
                   <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
                 ) : null}
               </div>
-              <MessageList messages={messages} onReply={setReplyTo} />
+              <MessageList
+                messages={messages}
+                onReply={setReplyTo}
+                onToggleReaction={handleToggleReaction}
+              />
               {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
               <MessageComposer
                 onSend={handleSend}
