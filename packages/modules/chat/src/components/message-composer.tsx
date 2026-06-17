@@ -268,10 +268,11 @@ function EnterToSendPlugin({
             return true;
           }
 
-          // Enter em bloco estruturado → comportamento nativo (novo item / nova linha).
-          if (inList || inCodeOrQuote) return false;
+          // Em bloco de código/citação o Enter mantém o comportamento nativo (nova
+          // linha) para permitir conteúdo multi-linha. Em lista (e texto normal),
+          // Enter envia — só o Shift+Enter cria item/quebra.
+          if (inCodeOrQuote) return false;
 
-          // Enter em texto normal → envia.
           event.preventDefault();
           onSubmit();
           return true;
