@@ -75,6 +75,7 @@ import {
 } from "lexical";
 import { Button, cn } from "@kerno/ui";
 import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./emoji-plugin";
+import { SlashCommandPlugin } from "./slash-plugin";
 
 // Subconjunto de transformers — markdown como atalho de digitação (símbolos somem
 // ao digitar) e formato de serialização. Sem headings (é chat).
@@ -219,10 +220,10 @@ function FormatShortcutsPlugin() {
  */
 function EnterToSendPlugin({
   onSubmit,
-  menuOpenRef,
+  menuOpenRefs,
 }: {
   onSubmit: () => void;
-  menuOpenRef: MutableRefObject<boolean>;
+  menuOpenRefs: MutableRefObject<boolean>[];
 }) {
   const [editor] = useLexicalComposerContext();
   useEffect(
@@ -231,7 +232,8 @@ function EnterToSendPlugin({
         KEY_ENTER_COMMAND,
         (event) => {
           if (!event) return false;
-          if (menuOpenRef.current) return false; // deixa o typeahead de emoji tratar
+          // Se um menu (emoji "/"/comandos) está aberto, deixa-o tratar o Enter.
+          if (menuOpenRefs.some((ref) => ref.current)) return false;
 
           // Detecta o bloco atual subindo a árvore de pais (robusto a aninhamento).
           let inList = false;
@@ -279,7 +281,7 @@ function EnterToSendPlugin({
         },
         COMMAND_PRIORITY_HIGH,
       ),
-    [editor, onSubmit, menuOpenRef],
+    [editor, onSubmit, menuOpenRefs],
   );
   return null;
 }
@@ -397,6 +399,7 @@ function ComposerInner({
   const [pending, startTransition] = useTransition();
   const busy = Boolean(disabled) || pending;
   const emojiMenuOpen = useRef(false);
+  const slashMenuOpen = useRef(false);
 
   useEffect(() => {
     editor.setEditable(!busy);
@@ -456,7 +459,8 @@ function ComposerInner({
       <FormatShortcutsPlugin />
       <EmojiShortcutPlugin />
       <EmojiTypeaheadPlugin menuOpenRef={emojiMenuOpen} />
-      <EnterToSendPlugin onSubmit={submit} menuOpenRef={emojiMenuOpen} />
+      <SlashCommandPlugin menuOpenRef={slashMenuOpen} />
+      <EnterToSendPlugin onSubmit={submit} menuOpenRefs={[emojiMenuOpen, slashMenuOpen]} />
     </div>
   );
 }
@@ -485,8 +489,8 @@ export function MessageComposer({
         <ComposerInner disabled={disabled} placeholder={placeholder} onSend={onSend} />
       </LexicalComposer>
       <p className="mt-1 px-1 text-[11px] text-muted-foreground">
-        Enter envia · Shift+Enter quebra linha (em listas, novo item) · Ctrl+Enter envia ·
-        :emoji: vira emoji
+        Enter envia · Shift+Enter quebra linha · / abre comandos · :emoji: vira emoji ·
+        Ctrl+Enter envia
       </p>
     </div>
   );

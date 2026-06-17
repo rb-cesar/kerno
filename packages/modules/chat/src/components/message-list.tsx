@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { cn } from "@kerno/ui";
 import type { MessageDTO } from "../types";
+import { useChat } from "./chat-context";
 import { MessageContent } from "./message-content";
 
 function formatTime(iso: string): string {
@@ -18,6 +20,7 @@ function initials(name: string): string {
 }
 
 export function MessageList({ messages }: { messages: MessageDTO[] }) {
+  const { currentUserId } = useChat();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,26 +37,51 @@ export function MessageList({ messages }: { messages: MessageDTO[] }) {
 
   return (
     <div className="flex-1 space-y-3 overflow-y-auto p-4">
-      {messages.map((message) =>
-        message.isSystem ? (
-          <div key={message.id} className="text-center text-xs italic text-muted-foreground">
-            {message.content}
-          </div>
-        ) : (
-          <div key={message.id} className="flex gap-2">
-            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
-              {initials(message.author?.name ?? "?")}
-            </span>
-            <div className="min-w-0">
+      {messages.map((message) => {
+        if (message.isSystem) {
+          return (
+            <div key={message.id} className="text-center text-xs italic text-muted-foreground">
+              {message.content}
+            </div>
+          );
+        }
+
+        const isOwn = message.author?.id === currentUserId;
+
+        return (
+          <div
+            key={message.id}
+            className={cn("flex gap-2", isOwn ? "flex-row-reverse" : "")}
+          >
+            {!isOwn ? (
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+                {initials(message.author?.name ?? "?")}
+              </span>
+            ) : null}
+
+            <div className={cn("flex min-w-0 max-w-[80%] flex-col", isOwn && "items-end")}>
               <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium">{message.author?.name ?? "Desconhecido"}</span>
-                <span className="text-xs text-muted-foreground">{formatTime(message.createdAt)}</span>
+                {!isOwn ? (
+                  <span className="text-sm font-medium">
+                    {message.author?.name ?? "Desconhecido"}
+                  </span>
+                ) : null}
+                <span className="text-xs text-muted-foreground">
+                  {formatTime(message.createdAt)}
+                </span>
               </div>
-              <MessageContent content={message.content} />
+              <div
+                className={cn(
+                  "mt-0.5 rounded-2xl px-3 py-2",
+                  isOwn ? "bg-sky-600/20" : "bg-muted/60",
+                )}
+              >
+                <MessageContent content={message.content} />
+              </div>
             </div>
           </div>
-        ),
-      )}
+        );
+      })}
       <div ref={bottomRef} />
     </div>
   );
