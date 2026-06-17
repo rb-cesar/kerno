@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useTransition } from "react";
+import { useCallback, useEffect, useRef, useTransition, type MutableRefObject } from "react";
 import {
   Bold,
   Braces,
@@ -70,6 +70,7 @@ import {
   type LexicalEditor,
 } from "lexical";
 import { Button, cn } from "@kerno/ui";
+import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./emoji-plugin";
 
 // Subconjunto de transformers — markdown como atalho de digitação (símbolos somem
 // ao digitar) e formato de serialização. Sem headings (é chat).
@@ -212,7 +213,13 @@ function FormatShortcutsPlugin() {
  * Enter envia; Shift+Enter quebra linha; Ctrl/Cmd+Enter também envia. Dentro de
  * lista / citação / bloco de código, Enter continua o bloco (não envia).
  */
-function EnterToSendPlugin({ onSubmit }: { onSubmit: () => void }) {
+function EnterToSendPlugin({
+  onSubmit,
+  menuOpenRef,
+}: {
+  onSubmit: () => void;
+  menuOpenRef: MutableRefObject<boolean>;
+}) {
   const [editor] = useLexicalComposerContext();
   useEffect(
     () =>
@@ -220,6 +227,7 @@ function EnterToSendPlugin({ onSubmit }: { onSubmit: () => void }) {
         KEY_ENTER_COMMAND,
         (event) => {
           if (!event) return false;
+          if (menuOpenRef.current) return false; // deixa o typeahead de emoji tratar
           if (event.shiftKey) return false; // quebra de linha
           if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
@@ -240,7 +248,7 @@ function EnterToSendPlugin({ onSubmit }: { onSubmit: () => void }) {
         },
         COMMAND_PRIORITY_HIGH,
       ),
-    [editor, onSubmit],
+    [editor, onSubmit, menuOpenRef],
   );
   return null;
 }
@@ -309,6 +317,8 @@ function Toolbar({ editor, busy }: { editor: LexicalEditor; busy: boolean }) {
       <ToolbarButton title="Bloco de código" busy={busy} onClick={() => setBlock(() => $createCodeNode())}>
         <Braces className="h-3.5 w-3.5" />
       </ToolbarButton>
+      <span className="mx-1 h-4 w-px bg-border" />
+      <EmojiPickerButton busy={busy} />
     </div>
   );
 }
@@ -327,6 +337,7 @@ function ComposerInner({
   const [editor] = useLexicalComposerContext();
   const [pending, startTransition] = useTransition();
   const busy = Boolean(disabled) || pending;
+  const emojiMenuOpen = useRef(false);
 
   useEffect(() => {
     editor.setEditable(!busy);
@@ -385,7 +396,8 @@ function ComposerInner({
       <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
       <FormatShortcutsPlugin />
       <EmojiShortcutPlugin />
-      <EnterToSendPlugin onSubmit={submit} />
+      <EmojiTypeaheadPlugin menuOpenRef={emojiMenuOpen} />
+      <EnterToSendPlugin onSubmit={submit} menuOpenRef={emojiMenuOpen} />
     </div>
   );
 }
