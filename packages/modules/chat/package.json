@@ -25,7 +25,8 @@
     "@lexical/rich-text": "^0.45.0",
     "@lexical/selection": "^0.45.0",
     "lexical": "^0.45.0",
-    "lucide-react": "^1.18.0"
+    "lucide-react": "^1.18.0",
+    "prism-react-renderer": "^2.4.1"
   },
   "peerDependencies": {
     "react": "^19.0.0",

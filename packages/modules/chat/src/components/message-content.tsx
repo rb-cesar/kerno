@@ -1,6 +1,27 @@
 "use client";
 
 import { Fragment, type ReactNode } from "react";
+import { Highlight, themes } from "prism-react-renderer";
+
+// Bloco de código com syntax highlighting. prism-react-renderer gera nós React
+// (estilos inline por token) — nada de innerHTML, então segue seguro contra XSS.
+function CodeBlock({ code, lang }: { code: string; lang: string }) {
+  return (
+    <Highlight theme={themes.vsDark} code={code} language={lang || "text"}>
+      {({ style, tokens, getLineProps, getTokenProps }) => (
+        <pre className="overflow-x-auto rounded-md p-3 font-mono text-[0.85em]" style={style}>
+          {tokens.map((line, i) => (
+            <div key={i} {...getLineProps({ line })}>
+              {line.map((token, key) => (
+                <span key={key} {...getTokenProps({ token })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
+  );
+}
 
 // Renderizador de Markdown (subconjunto estilo Discord/Slack), SEM dependências
 // e SEM dangerouslySetInnerHTML: tudo vira nó React, então o conteúdo do usuário
@@ -141,8 +162,9 @@ export function MessageContent({ content }: { content: string }): ReactNode {
   while (i < lines.length) {
     const line = at(i);
 
-    // Bloco de código cercado por ``` .
+    // Bloco de código cercado por ``` (com linguagem opcional: ```ts).
     if (line.trimStart().startsWith("```")) {
+      const lang = line.trim().slice(3).trim();
       const code: string[] = [];
       i += 1;
       while (i < lines.length && !at(i).trimStart().startsWith("```")) {
@@ -150,14 +172,7 @@ export function MessageContent({ content }: { content: string }): ReactNode {
         i += 1;
       }
       i += 1; // pula o ``` de fechamento
-      blocks.push(
-        <pre
-          key={`pre.${i}`}
-          className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-[0.85em]"
-        >
-          <code>{code.join("\n")}</code>
-        </pre>,
-      );
+      blocks.push(<CodeBlock key={`pre.${i}`} code={code.join("\n")} lang={lang} />);
       continue;
     }
 
