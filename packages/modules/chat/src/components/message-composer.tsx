@@ -321,6 +321,34 @@ function Toolbar({ editor, busy }: { editor: LexicalEditor; busy: boolean }) {
       if ($isRangeSelection(selection)) $setBlocksType(selection, create);
     });
 
+  const toggleCodeBlock = () =>
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+
+      // Já dentro de um bloco de código? volta para parágrafo (toggle).
+      let node: LexicalNode | null = selection.anchor.getNode();
+      while (node) {
+        if ($isCodeNode(node)) {
+          $setBlocksType(selection, () => $createParagraphNode());
+          return;
+        }
+        node = node.getParent();
+      }
+
+      $setBlocksType(selection, () => $createCodeNode());
+
+      // Garante um parágrafo antes e depois, para escrever fora do bloco.
+      const after = $getSelection();
+      if ($isRangeSelection(after)) {
+        const block = after.anchor.getNode().getTopLevelElement();
+        if (block) {
+          if (block.getNextSibling() === null) block.insertAfter($createParagraphNode());
+          if (block.getPreviousSibling() === null) block.insertBefore($createParagraphNode());
+        }
+      }
+    });
+
   return (
     <div className="flex items-center gap-0.5 border-b px-1.5 py-1">
       <ToolbarButton title="Negrito (Ctrl+B)" busy={busy} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}>
@@ -345,7 +373,7 @@ function Toolbar({ editor, busy }: { editor: LexicalEditor; busy: boolean }) {
       <ToolbarButton title="Citação" busy={busy} onClick={() => setBlock(() => $createQuoteNode())}>
         <Quote className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Bloco de código" busy={busy} onClick={() => setBlock(() => $createCodeNode())}>
+      <ToolbarButton title="Bloco de código" busy={busy} onClick={toggleCodeBlock}>
         <Braces className="h-3.5 w-3.5" />
       </ToolbarButton>
       <span className="mx-1 h-4 w-px bg-border" />
