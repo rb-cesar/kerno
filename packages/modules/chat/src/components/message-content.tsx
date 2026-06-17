@@ -1,25 +1,59 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { Highlight, themes } from "prism-react-renderer";
+import { Check, Copy } from "lucide-react";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard indisponível (ex.: contexto não-seguro) — ignora silenciosamente
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? "Copiado" : "Copiar"}
+    </button>
+  );
+}
 
 // Bloco de código com syntax highlighting. prism-react-renderer gera nós React
 // (estilos inline por token) — nada de innerHTML, então segue seguro contra XSS.
 function CodeBlock({ code, lang }: { code: string; lang: string }) {
   return (
-    <Highlight theme={themes.vsDark} code={code} language={lang || "text"}>
-      {({ style, tokens, getLineProps, getTokenProps }) => (
-        <pre className="overflow-x-auto rounded-md p-3 font-mono text-[0.85em]" style={style}>
-          {tokens.map((line, i) => (
-            <div key={i} {...getLineProps({ line })}>
-              {line.map((token, key) => (
-                <span key={key} {...getTokenProps({ token })} />
-              ))}
-            </div>
-          ))}
-        </pre>
-      )}
-    </Highlight>
+    <div className="overflow-hidden rounded-md border border-border">
+      <div className="flex items-center justify-between border-b border-border bg-muted/50 px-3 py-1">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {lang || "código"}
+        </span>
+        <CopyButton text={code} />
+      </div>
+      <Highlight theme={themes.vsDark} code={code} language={lang || "text"}>
+        {({ style, tokens, getLineProps, getTokenProps }) => (
+          <pre className="overflow-x-auto p-3 font-mono text-[0.85em]" style={style}>
+            {tokens.map((line, i) => (
+              <div key={i} {...getLineProps({ line })}>
+                {line.map((token, key) => (
+                  <span key={key} {...getTokenProps({ token })} />
+                ))}
+              </div>
+            ))}
+          </pre>
+        )}
+      </Highlight>
+    </div>
   );
 }
 

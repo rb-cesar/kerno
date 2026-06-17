@@ -111,7 +111,7 @@ export function EmojiTypeaheadPlugin({
       menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
-          <div className="mt-6 w-60 overflow-hidden rounded-md border bg-popover p-1 shadow-md">
+          <div className="absolute bottom-full left-0 mb-2 max-h-72 w-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
             {options.map((option, i) => (
               <button
                 key={option.key}

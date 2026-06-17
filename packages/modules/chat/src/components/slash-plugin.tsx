@@ -143,7 +143,7 @@ export function SlashCommandPlugin({ menuOpenRef }: { menuOpenRef: MutableRefObj
       menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
-          <div className="mt-6 w-56 overflow-hidden rounded-md border bg-popover p-1 shadow-md">
+          <div className="absolute bottom-full left-0 mb-2 max-h-72 w-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
             {options.map((option, i) => {
               const Icon = option.command.Icon;
               return (

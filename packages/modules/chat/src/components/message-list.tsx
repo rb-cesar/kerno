@@ -49,23 +49,16 @@ export function MessageList({ messages }: { messages: MessageDTO[] }) {
         const isOwn = message.author?.id === currentUserId;
 
         return (
-          <div
-            key={message.id}
-            className={cn("flex gap-2", isOwn ? "flex-row-reverse" : "")}
-          >
-            {!isOwn ? (
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
-                {initials(message.author?.name ?? "?")}
-              </span>
-            ) : null}
+          <div key={message.id} className={cn("flex gap-2", isOwn && "flex-row-reverse")}>
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+              {initials(message.author?.name ?? "?")}
+            </span>
 
             <div className={cn("flex min-w-0 max-w-[80%] flex-col", isOwn && "items-end")}>
-              <div className="flex items-baseline gap-2">
-                {!isOwn ? (
-                  <span className="text-sm font-medium">
-                    {message.author?.name ?? "Desconhecido"}
-                  </span>
-                ) : null}
+              <div className={cn("flex items-baseline gap-2", isOwn && "flex-row-reverse")}>
+                <span className="text-sm font-medium">
+                  {message.author?.name ?? "Desconhecido"}
+                </span>
                 <span className="text-xs text-muted-foreground">
                   {formatTime(message.createdAt)}
                 </span>
