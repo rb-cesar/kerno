@@ -42,6 +42,7 @@ import {
 import { $createQuoteNode, $isQuoteNode, QuoteNode } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
 import {
+  $isListItemNode,
   $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
@@ -65,10 +66,12 @@ import {
   COMMAND_PRIORITY_NORMAL,
   FORMAT_TEXT_COMMAND,
   INSERT_LINE_BREAK_COMMAND,
+  INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
   KEY_MODIFIER_COMMAND,
   TextNode,
   type LexicalEditor,
+  type LexicalNode,
 } from "lexical";
 import { Button, cn } from "@kerno/ui";
 import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./emoji-plugin";
@@ -229,25 +232,46 @@ function EnterToSendPlugin({
         (event) => {
           if (!event) return false;
           if (menuOpenRef.current) return false; // deixa o typeahead de emoji tratar
-          // Shift+Enter: quebra de linha manual em qualquer contexto (inclusive lista).
+
+          // Detecta o bloco atual subindo a árvore de pais (robusto a aninhamento).
+          let inList = false;
+          let inCodeOrQuote = false;
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            let node: LexicalNode | null = selection.anchor.getNode();
+            while (node) {
+              if ($isListNode(node) || $isListItemNode(node)) {
+                inList = true;
+                break;
+              }
+              if ($isCodeNode(node) || $isQuoteNode(node)) {
+                inCodeOrQuote = true;
+                break;
+              }
+              node = node.getParent();
+            }
+          }
+
           if (event.shiftKey) {
             event.preventDefault();
-            editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
+            // Numa lista, a "quebra de linha" cria um novo item (continua a lista);
+            // fora dela, insere uma quebra suave.
+            if (inList) editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
+            else editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
             return true;
           }
+
+          // Ctrl/Cmd+Enter sempre envia (útil para enviar de dentro de uma lista).
           if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
             onSubmit();
             return true;
           }
-          // Enter dentro de bloco estruturado → comportamento nativo (novo item/linha).
-          const selection = $getSelection();
-          if ($isRangeSelection(selection)) {
-            const top = selection.anchor.getNode().getTopLevelElement();
-            if (top && ($isListNode(top) || $isCodeNode(top) || $isQuoteNode(top))) {
-              return false;
-            }
-          }
+
+          // Enter em bloco estruturado → comportamento nativo (novo item / nova linha).
+          if (inList || inCodeOrQuote) return false;
+
+          // Enter em texto normal → envia.
           event.preventDefault();
           onSubmit();
           return true;
@@ -432,7 +456,7 @@ export function MessageComposer({
         <ComposerInner disabled={disabled} placeholder={placeholder} onSend={onSend} />
       </LexicalComposer>
       <p className="mt-1 px-1 text-[11px] text-muted-foreground">
-        Enter envia · Shift+Enter quebra linha · dentro de listas o Enter cria novo item ·
+        Enter envia · Shift+Enter quebra linha (em listas, novo item) · Ctrl+Enter envia ·
         :emoji: vira emoji
       </p>
     </div>
