@@ -22,6 +22,7 @@ export async function chatFetchMessages(channelId: string): Promise<MessageDTO[]
 export async function chatSendMessage(input: {
   channelId: string;
   content: string;
+  replyToId?: string | null;
 }): Promise<ChatResult<MessageDTO>> {
   return apiFetch<ChatResult<MessageDTO>>(`/chat/messages`, {
     method: "POST",
@@ -61,6 +62,7 @@ export async function chatFetchDirectMessages(conversationId: string): Promise<M
 export async function chatSendDirectMessage(input: {
   conversationId: string;
   content: string;
+  replyToId?: string | null;
 }): Promise<ChatResult<MessageDTO>> {
   return apiFetch<ChatResult<MessageDTO>>(`/chat/direct/messages`, {
     method: "POST",

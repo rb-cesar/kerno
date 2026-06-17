@@ -15,6 +15,7 @@ import type {
 export type ChatSendMessage = (input: {
   channelId: string;
   content: string;
+  replyToId?: string | null;
 }) => Promise<ChatResult<MessageDTO>>;
 
 export type ChatCreateChannel = (input: {
@@ -34,6 +35,7 @@ export type ChatOpenDirect = (input: {
 export type ChatSendDirectMessage = (input: {
   conversationId: string;
   content: string;
+  replyToId?: string | null;
 }) => Promise<ChatResult<MessageDTO>>;
 
 export type ChatFetchDirectMessages = (conversationId: string) => Promise<MessageDTO[]>;

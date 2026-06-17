@@ -4,13 +4,38 @@ import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO } from ".
 
 const MESSAGE_PAGE_SIZE = 50;
 
+// Include padrão para montar um MessageDTO: autor + a mensagem citada (replyTo).
+const MESSAGE_INCLUDE = {
+  user: { select: { id: true, name: true } },
+  replyTo: {
+    select: {
+      id: true,
+      content: true,
+      isSystem: true,
+      user: { select: { name: true } },
+    },
+  },
+} as const;
+
+type ReplyRow = {
+  id: string;
+  content: string;
+  isSystem: boolean;
+  user: { name: string } | null;
+} | null;
+
 type MessageRow = {
   id: string;
   content: string;
   createdAt: Date;
   isSystem: boolean;
   user: { id: string; name: string } | null;
+  replyTo?: ReplyRow;
 };
+
+function makeExcerpt(content: string): string {
+  return content.replace(/\s+/g, " ").trim().slice(0, 120);
+}
 
 function toMessageDTO(row: MessageRow): MessageDTO {
   return {
@@ -19,7 +44,42 @@ function toMessageDTO(row: MessageRow): MessageDTO {
     createdAt: row.createdAt.toISOString(),
     isSystem: row.isSystem,
     author: row.user ? { id: row.user.id, name: row.user.name } : null,
+    replyTo: row.replyTo
+      ? {
+          id: row.replyTo.id,
+          authorName: row.replyTo.isSystem
+            ? "Sistema"
+            : (row.replyTo.user?.name ?? "Desconhecido"),
+          excerpt: makeExcerpt(row.replyTo.content),
+        }
+      : null,
   };
+}
+
+/** Garante que a mensagem citada pertence ao mesmo canal (senão ignora). */
+async function replyIdIfInChannel(
+  replyToId: string | null | undefined,
+  channelId: string,
+): Promise<string | null> {
+  if (!replyToId) return null;
+  const target = await prisma.message.findUnique({
+    where: { id: replyToId },
+    select: { channelId: true },
+  });
+  return target?.channelId === channelId ? replyToId : null;
+}
+
+/** Garante que a mensagem citada pertence à mesma conversa (senão ignora). */
+async function replyIdIfInConversation(
+  replyToId: string | null | undefined,
+  conversationId: string,
+): Promise<string | null> {
+  if (!replyToId) return null;
+  const target = await prisma.message.findUnique({
+    where: { id: replyToId },
+    select: { conversationId: true },
+  });
+  return target?.conversationId === conversationId ? replyToId : null;
 }
 
 export async function listChannels(projectId: string): Promise<ChannelDTO[]> {
@@ -38,7 +98,7 @@ export async function getMessages(
     where: { channelId },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { user: { select: { id: true, name: true } } },
+    include: MESSAGE_INCLUDE,
   });
   return rows.reverse().map(toMessageDTO);
 }
@@ -52,6 +112,7 @@ export async function sendMessage(
   channelId: string,
   content: string,
   actorId: string,
+  replyToId?: string | null,
 ): Promise<MessageDTO> {
   const channel = await prisma.channel.findUniqueOrThrow({
     where: { id: channelId },
@@ -59,8 +120,13 @@ export async function sendMessage(
   });
 
   const message = await prisma.message.create({
-    data: { channelId, content, userId: actorId },
-    include: { user: { select: { id: true, name: true } } },
+    data: {
+      channelId,
+      content,
+      userId: actorId,
+      replyToId: await replyIdIfInChannel(replyToId, channelId),
+    },
+    include: MESSAGE_INCLUDE,
   });
 
   eventBus.publish(
@@ -84,7 +150,7 @@ export async function postSystemMessage(channelId: string, content: string): Pro
 
   const message = await prisma.message.create({
     data: { channelId, content, isSystem: true },
-    include: { user: { select: { id: true, name: true } } },
+    include: MESSAGE_INCLUDE,
   });
 
   // Emite para que clientes conectados vejam a mensagem de sistema em tempo real.
@@ -186,7 +252,7 @@ export async function getDirectMessages(
     where: { conversationId },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { user: { select: { id: true, name: true } } },
+    include: MESSAGE_INCLUDE,
   });
   return rows.reverse().map(toMessageDTO);
 }
@@ -195,6 +261,7 @@ export async function sendDirectMessage(
   conversationId: string,
   content: string,
   actorId: string,
+  replyToId?: string | null,
 ): Promise<MessageDTO> {
   const conv = await prisma.directConversation.findUniqueOrThrow({
     where: { id: conversationId },
@@ -202,8 +269,13 @@ export async function sendDirectMessage(
   });
 
   const message = await prisma.message.create({
-    data: { conversationId, content, userId: actorId },
-    include: { user: { select: { id: true, name: true } } },
+    data: {
+      conversationId,
+      content,
+      userId: actorId,
+      replyToId: await replyIdIfInConversation(replyToId, conversationId),
+    },
+    include: MESSAGE_INCLUDE,
   });
 
   eventBus.publish(

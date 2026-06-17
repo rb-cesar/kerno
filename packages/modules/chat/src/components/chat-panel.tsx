@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { AtSign, Hash } from "lucide-react";
+import { AtSign, CornerUpLeft, Hash, X } from "lucide-react";
 import type { Socket } from "socket.io-client";
 import { cn } from "@kerno/ui";
 import type {
@@ -27,6 +27,28 @@ type ActiveTarget = { kind: "channel"; id: string } | { kind: "dm"; id: string }
 
 function sameTarget(a: ActiveTarget | null, b: ActiveTarget): boolean {
   return a !== null && a.kind === b.kind && a.id === b.id;
+}
+
+/** Faixa "respondendo a X", mostrada acima do composer. */
+function ReplyBanner({ reply, onCancel }: { reply: MessageDTO; onCancel: () => void }) {
+  return (
+    <div className="flex items-center gap-2 border-t bg-muted/40 px-3 py-1.5 text-xs">
+      <CornerUpLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span className="text-muted-foreground">Respondendo a</span>
+      <span className="font-medium">{reply.author?.name ?? "Desconhecido"}</span>
+      <span className="min-w-0 flex-1 truncate text-muted-foreground">
+        {reply.content.replace(/\s+/g, " ").trim()}
+      </span>
+      <button
+        type="button"
+        onClick={onCancel}
+        title="Cancelar resposta"
+        className="shrink-0 text-muted-foreground hover:text-foreground"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
 }
 
 export function ChatPanel({
@@ -61,6 +83,7 @@ export function ChatPanel({
   );
   const [messages, setMessages] = useState<MessageDTO[]>(initial.initialMessages);
   const [unread, setUnread] = useState<Set<string>>(new Set());
+  const [replyTo, setReplyTo] = useState<MessageDTO | null>(null);
 
   const loadMessages = useCallback(
     async (target: ActiveTarget) => {
@@ -76,6 +99,7 @@ export function ChatPanel({
   const select = useCallback(
     (target: ActiveTarget) => {
       setActive(target);
+      setReplyTo(null);
       setUnread((prev) => {
         if (!prev.has(target.id)) return prev;
         const next = new Set(prev);
@@ -126,11 +150,15 @@ export function ChatPanel({
 
   const handleSend = async (content: string) => {
     if (!active) return;
+    const replyToId = replyTo?.id ?? null;
     const res =
       active.kind === "channel"
-        ? await send({ channelId: active.id, content })
-        : await sendDirect({ conversationId: active.id, content });
-    if (res.ok) setMessages((prev) => [...prev, res.data]);
+        ? await send({ channelId: active.id, content, replyToId })
+        : await sendDirect({ conversationId: active.id, content, replyToId });
+    if (res.ok) {
+      setMessages((prev) => [...prev, res.data]);
+      setReplyTo(null);
+    }
   };
 
   const handleChannelCreated = (channel: ChannelDTO) => {
@@ -185,7 +213,8 @@ export function ChatPanel({
                 <Hash className="h-4 w-4 text-muted-foreground" />
                 {activeChannel.name}
               </div>
-              <MessageList messages={messages} />
+              <MessageList messages={messages} onReply={setReplyTo} />
+              {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
               <MessageComposer
                 onSend={handleSend}
                 placeholder={`Mensagem em #${activeChannel.name}`}
@@ -200,7 +229,8 @@ export function ChatPanel({
                   <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
                 ) : null}
               </div>
-              <MessageList messages={messages} />
+              <MessageList messages={messages} onReply={setReplyTo} />
+              {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
               <MessageComposer
                 onSend={handleSend}
                 placeholder={`Mensagem para ${activeConversation.participants[0]?.name ?? "membro"}`}

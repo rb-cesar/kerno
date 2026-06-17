@@ -11,12 +11,20 @@ export interface ChannelDTO {
   isDefault: boolean;
 }
 
+/** Resumo da mensagem citada ao responder. */
+export interface MessageReplyDTO {
+  id: string;
+  authorName: string;
+  excerpt: string;
+}
+
 export interface MessageDTO {
   id: string;
   content: string;
   createdAt: string; // ISO
   isSystem: boolean;
   author: MemberDTO | null;
+  replyTo: MessageReplyDTO | null;
 }
 
 /** Conversa privada (DM) entre membros de um mesmo projeto. */
@@ -41,6 +49,7 @@ export type ChatResult<T> = { ok: true; data: T } | { ok: false; error: string }
 export interface SendMessageInput {
   channelId: string;
   content: string;
+  replyToId?: string | null;
 }
 
 export interface CreateChannelInput {
@@ -57,4 +66,5 @@ export interface OpenDirectInput {
 export interface SendDirectMessageInput {
   conversationId: string;
   content: string;
+  replyToId?: string | null;
 }

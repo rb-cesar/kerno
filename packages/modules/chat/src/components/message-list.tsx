@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { CornerUpLeft } from "lucide-react";
 import { cn } from "@kerno/ui";
 import type { MessageDTO } from "../types";
 import { useChat } from "./chat-context";
@@ -19,7 +20,13 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export function MessageList({ messages }: { messages: MessageDTO[] }) {
+export function MessageList({
+  messages,
+  onReply,
+}: {
+  messages: MessageDTO[];
+  onReply: (message: MessageDTO) => void;
+}) {
   const { currentUserId } = useChat();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -49,12 +56,27 @@ export function MessageList({ messages }: { messages: MessageDTO[] }) {
         const isOwn = message.author?.id === currentUserId;
 
         return (
-          <div key={message.id} className={cn("flex gap-2", isOwn && "flex-row-reverse")}>
+          <div key={message.id} className={cn("group flex gap-2", isOwn && "flex-row-reverse")}>
             <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
               {initials(message.author?.name ?? "?")}
             </span>
 
             <div className={cn("flex min-w-0 max-w-[80%] flex-col", isOwn && "items-end")}>
+              {message.replyTo ? (
+                <div
+                  className={cn(
+                    "mb-0.5 flex items-center gap-1 text-xs text-muted-foreground",
+                    isOwn && "flex-row-reverse",
+                  )}
+                >
+                  <CornerUpLeft className="h-3 w-3 shrink-0" />
+                  <span className="font-medium">{message.replyTo.authorName}</span>
+                  <span className="max-w-[16rem] truncate opacity-80">
+                    {message.replyTo.excerpt}
+                  </span>
+                </div>
+              ) : null}
+
               <div className={cn("flex items-baseline gap-2", isOwn && "flex-row-reverse")}>
                 <span className="text-sm font-medium">
                   {message.author?.name ?? "Desconhecido"}
@@ -62,7 +84,16 @@ export function MessageList({ messages }: { messages: MessageDTO[] }) {
                 <span className="text-xs text-muted-foreground">
                   {formatTime(message.createdAt)}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => onReply(message)}
+                  title="Responder"
+                  className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                >
+                  <CornerUpLeft className="h-3 w-3" />
+                </button>
               </div>
+
               <div
                 className={cn(
                   "mt-0.5 rounded-2xl px-3 py-2",

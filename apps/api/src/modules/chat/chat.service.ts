@@ -62,7 +62,7 @@ export class ChatService {
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
-      const message = await chat.sendMessage(input.channelId, content, userId);
+      const message = await chat.sendMessage(input.channelId, content, userId, input.replyToId);
       return { ok: true, data: message };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -114,7 +114,12 @@ export class ChatService {
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
-      const message = await chat.sendDirectMessage(input.conversationId, content, userId);
+      const message = await chat.sendDirectMessage(
+        input.conversationId,
+        content,
+        userId,
+        input.replyToId,
+      );
       return { ok: true, data: message };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
