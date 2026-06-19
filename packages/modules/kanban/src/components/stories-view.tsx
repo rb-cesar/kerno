@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { Suspense, lazy, useEffect, useState, useTransition } from "react";
 import { BookMarked, Plus, Trash2 } from "lucide-react";
 import {
   Button,
@@ -16,12 +16,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Textarea,
   cn,
 } from "@kerno/ui";
 import type { CardDTO, Priority, StatusCategory, StoryDTO } from "../types";
 import { useKanban } from "./kanban-context";
 import { CATEGORY_COLOR, PRIORITY_LABEL, PRIORITY_ORDER, toDateInput } from "./meta";
+
+// Lazy: o editor Lexical só baixa ao abrir uma história (mantém a aba leve).
+const RichTextEditor = lazy(() =>
+  import("@kerno/editor").then((m) => ({ default: m.RichTextEditor })),
+);
 
 const STATUS_ORDER: StatusCategory[] = [
   "BACKLOG",
@@ -196,14 +200,20 @@ function StoryEditor({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="story-desc">Descrição</Label>
-          <Textarea
-            id="story-desc"
-            rows={5}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descreva a história…"
-          />
+          <Label>Descrição</Label>
+          <Suspense
+            fallback={
+              <div className="rounded-md border p-3 text-sm text-muted-foreground">
+                Carregando editor…
+              </div>
+            }
+          >
+            <RichTextEditor
+              value={description}
+              onChange={setDescription}
+              placeholder="Descreva a história…"
+            />
+          </Suspense>
         </div>
 
         {/* Tarefas vinculadas */}

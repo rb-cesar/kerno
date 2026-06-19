@@ -109,6 +109,16 @@ export async function updateCard(
     );
   }
 
+  // Resync genérico (cobre edição de campos + vínculo com story) p/ outros clientes.
+  eventBus.publish(
+    createEvent(
+      "kanban:changed",
+      existing.board.projectId,
+      { boardId: existing.boardId, cardId: input.cardId },
+      actorId,
+    ),
+  );
+
   return card;
 }
 

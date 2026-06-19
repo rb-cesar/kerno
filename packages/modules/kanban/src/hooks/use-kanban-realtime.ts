@@ -19,7 +19,7 @@ export function useKanbanRealtime(
 
     const handler = (event: AnyKernoEvent) => {
       if (event.userId === currentUserId) return;
-      if (event.type.startsWith("card:")) onRemoteChange();
+      if (event.type.startsWith("card:") || event.type === "kanban:changed") onRemoteChange();
     };
 
     socket.on("kerno:event", handler);

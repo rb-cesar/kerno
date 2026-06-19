@@ -156,41 +156,41 @@ export class KanbanService {
         }
         case "createChecklist": {
           await guardCard(userId, command.cardId);
-          await kanban.createChecklist(command.cardId, command.title?.trim() || null);
+          await kanban.createChecklist(command.cardId, command.title?.trim() || null, userId);
           break;
         }
         case "renameChecklist": {
           await guardChecklist(userId, command.checklistId);
-          await kanban.renameChecklist(command.checklistId, command.title?.trim() || null);
+          await kanban.renameChecklist(command.checklistId, command.title?.trim() || null, userId);
           break;
         }
         case "deleteChecklist": {
           await guardChecklist(userId, command.checklistId);
-          await kanban.deleteChecklist(command.checklistId);
+          await kanban.deleteChecklist(command.checklistId, userId);
           break;
         }
         case "addChecklistItem": {
           await guardChecklist(userId, command.checklistId);
           const text = command.text.trim();
           if (!text) return { ok: false, error: "Item vazio" };
-          await kanban.addChecklistItem(command.checklistId, text);
+          await kanban.addChecklistItem(command.checklistId, text, userId);
           break;
         }
         case "toggleChecklistItem": {
           await guardChecklistItem(userId, command.itemId);
-          await kanban.toggleChecklistItem(command.itemId, command.done);
+          await kanban.toggleChecklistItem(command.itemId, command.done, userId);
           break;
         }
         case "updateChecklistItem": {
           await guardChecklistItem(userId, command.itemId);
           const text = command.text.trim();
           if (!text) return { ok: false, error: "Item vazio" };
-          await kanban.updateChecklistItem(command.itemId, text);
+          await kanban.updateChecklistItem(command.itemId, text, userId);
           break;
         }
         case "deleteChecklistItem": {
           await guardChecklistItem(userId, command.itemId);
-          await kanban.deleteChecklistItem(command.itemId);
+          await kanban.deleteChecklistItem(command.itemId, userId);
           break;
         }
         case "addComment": {
@@ -238,28 +238,31 @@ export class KanbanService {
           await guardBoard(userId, command.boardId);
           const title = command.title.trim();
           if (!title) return { ok: false, error: "Título vazio" };
-          await kanban.createStory(command.boardId, title);
+          await kanban.createStory(command.boardId, title, userId);
           break;
         }
         case "updateStory": {
           await guardStory(userId, command.storyId);
           const title = command.title.trim();
           if (!title) return { ok: false, error: "Título vazio" };
-          await kanban.updateStory({
-            storyId: command.storyId,
-            title,
-            description: command.description,
-            status: command.status,
-            assignedTo: command.assignedTo,
-            dueDate: command.dueDate ? new Date(command.dueDate) : null,
-            priority: command.priority,
-            color: command.color,
-          });
+          await kanban.updateStory(
+            {
+              storyId: command.storyId,
+              title,
+              description: command.description,
+              status: command.status,
+              assignedTo: command.assignedTo,
+              dueDate: command.dueDate ? new Date(command.dueDate) : null,
+              priority: command.priority,
+              color: command.color,
+            },
+            userId,
+          );
           break;
         }
         case "deleteStory": {
           await guardStory(userId, command.storyId);
-          await kanban.deleteStory(command.storyId);
+          await kanban.deleteStory(command.storyId, userId);
           break;
         }
       }

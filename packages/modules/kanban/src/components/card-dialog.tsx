@@ -84,7 +84,7 @@ function CardSkeleton() {
 }
 
 function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) {
-  const { mutate, refresh, members, labels, cycles, stories, projectKey, fetchCardDetail } =
+  const { mutate, refresh, members, labels, cycles, stories, projectKey, fetchCardDetail, remoteRev } =
     useKanban();
   const [pending, startTransition] = useTransition();
 
@@ -122,6 +122,13 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
       active = false;
     };
   }, [fetchCardDetail, card.id]);
+
+  // Mudança remota (outro usuário): recarrega o detalhe sem o skeleton, mantendo
+  // checklists/comentários/atividade em dia enquanto o painel está aberto.
+  useEffect(() => {
+    if (remoteRev === 0) return;
+    void loadDetail();
+  }, [remoteRev, loadDetail]);
 
   // Esc fecha o painel (sem prender o foco como um modal faria).
   useEffect(() => {

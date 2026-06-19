@@ -6,6 +6,7 @@ export type KernoEventType =
   | "card:moved"
   | "card:deleted"
   | "card:assigned"
+  | "kanban:changed"
   | "message:sent"
   | "message:edited"
   | "dm:sent"
@@ -39,6 +40,16 @@ export interface CardAssignedPayload {
   boardId: string;
   assignedTo: string | null;
   title: string;
+}
+
+/**
+ * Mudança em recursos do Kanban que não têm evento próprio (story, checklist,
+ * vínculo de tarefa↔story). Sinaliza aos outros clientes do projeto p/ resync.
+ * `cardId` (quando presente) permite o painel da tarefa aberta recarregar seu detalhe.
+ */
+export interface KanbanChangedPayload {
+  boardId: string | null;
+  cardId: string | null;
 }
 
 export interface MessageSentPayload {
@@ -91,6 +102,7 @@ export interface KernoEventMap {
   "card:moved": CardMovedPayload;
   "card:deleted": CardDeletedPayload;
   "card:assigned": CardAssignedPayload;
+  "kanban:changed": KanbanChangedPayload;
   "message:sent": MessageSentPayload;
   "message:edited": MessageEditedPayload;
   "dm:sent": DirectMessagePayload;

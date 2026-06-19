@@ -1,38 +1,80 @@
 import { prisma } from "@kerno/db";
+import { eventBus, createEvent } from "@kerno/core/events";
+
+/** Resolve o contexto (board/project) de um card e publica o resync do Kanban. */
+async function notifyCard(cardId: string, actorId: string) {
+  const card = await prisma.card.findUnique({
+    where: { id: cardId },
+    select: { boardId: true, board: { select: { projectId: true } } },
+  });
+  if (!card) return;
+  eventBus.publish(
+    createEvent("kanban:changed", card.board.projectId, { boardId: card.boardId, cardId }, actorId),
+  );
+}
 
 /** Cria uma nova todolist no card, posicionada ao final. */
-export async function createChecklist(cardId: string, title: string | null) {
+export async function createChecklist(cardId: string, title: string | null, actorId: string) {
   const count = await prisma.checklist.count({ where: { cardId } });
-  return prisma.checklist.create({ data: { cardId, title: title || null, order: count } });
+  const checklist = await prisma.checklist.create({
+    data: { cardId, title: title || null, order: count },
+  });
+  await notifyCard(cardId, actorId);
+  return checklist;
 }
 
-export async function renameChecklist(checklistId: string, title: string | null) {
-  return prisma.checklist.update({
+export async function renameChecklist(checklistId: string, title: string | null, actorId: string) {
+  const checklist = await prisma.checklist.update({
     where: { id: checklistId },
     data: { title: title || null },
+    select: { cardId: true },
   });
+  await notifyCard(checklist.cardId, actorId);
 }
 
-export async function deleteChecklist(checklistId: string): Promise<void> {
-  await prisma.checklist.delete({ where: { id: checklistId } });
+export async function deleteChecklist(checklistId: string, actorId: string): Promise<void> {
+  const checklist = await prisma.checklist.delete({
+    where: { id: checklistId },
+    select: { cardId: true },
+  });
+  await notifyCard(checklist.cardId, actorId);
 }
 
 /** Adiciona um item ao final da todolist. */
-export async function addChecklistItem(checklistId: string, text: string) {
+export async function addChecklistItem(checklistId: string, text: string, actorId: string) {
   const count = await prisma.checklistItem.count({ where: { checklistId } });
-  return prisma.checklistItem.create({ data: { checklistId, text, order: count } });
+  const item = await prisma.checklistItem.create({
+    data: { checklistId, text, order: count },
+    select: { id: true, checklist: { select: { cardId: true } } },
+  });
+  await notifyCard(item.checklist.cardId, actorId);
+  return item;
 }
 
-export async function toggleChecklistItem(itemId: string, done: boolean) {
-  return prisma.checklistItem.update({ where: { id: itemId }, data: { done } });
+export async function toggleChecklistItem(itemId: string, done: boolean, actorId: string) {
+  const item = await prisma.checklistItem.update({
+    where: { id: itemId },
+    data: { done },
+    select: { checklist: { select: { cardId: true } } },
+  });
+  await notifyCard(item.checklist.cardId, actorId);
 }
 
-export async function updateChecklistItem(itemId: string, text: string) {
-  return prisma.checklistItem.update({ where: { id: itemId }, data: { text } });
+export async function updateChecklistItem(itemId: string, text: string, actorId: string) {
+  const item = await prisma.checklistItem.update({
+    where: { id: itemId },
+    data: { text },
+    select: { checklist: { select: { cardId: true } } },
+  });
+  await notifyCard(item.checklist.cardId, actorId);
 }
 
-export async function deleteChecklistItem(itemId: string): Promise<void> {
-  await prisma.checklistItem.delete({ where: { id: itemId } });
+export async function deleteChecklistItem(itemId: string, actorId: string): Promise<void> {
+  const item = await prisma.checklistItem.delete({
+    where: { id: itemId },
+    select: { checklist: { select: { cardId: true } } },
+  });
+  await notifyCard(item.checklist.cardId, actorId);
 }
 
 /** Card dono de uma checklist — usado pela camada de permissão. */

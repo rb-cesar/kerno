@@ -234,7 +234,15 @@ export function KanbanBoard({
     if (fresh) setData(fresh);
   }, [fetchSnapshot, initial.id]);
 
-  useKanbanRealtime(socket, currentUserId, refresh);
+  // Mudança remota: além de refazer o snapshot, bump `remoteRev` p/ o painel da
+  // tarefa aberta recarregar seu detalhe (checklists/comentários/atividade).
+  const [remoteRev, setRemoteRev] = useState(0);
+  const onRemoteChange = useCallback(() => {
+    setRemoteRev((r) => r + 1);
+    void refresh();
+  }, [refresh]);
+
+  useKanbanRealtime(socket, currentUserId, onRemoteChange);
 
   const onDragEnd = async (result: DropResult) => {
     if (grouped) return; // em swimlanes o arrastar fica desativado (MVP)
@@ -304,6 +312,7 @@ export function KanbanBoard({
         labels: data.labels,
         cycles: data.cycles,
         stories: data.stories,
+        remoteRev,
         openCardId,
         setOpenCardId,
       }}

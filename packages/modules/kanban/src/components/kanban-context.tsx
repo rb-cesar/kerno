@@ -20,6 +20,8 @@ type KanbanContextValue = {
   labels: LabelDTO[];
   cycles: CycleDTO[];
   stories: StoryDTO[];
+  /** Incrementa a cada mudança remota — sinaliza recarregar dados sob demanda (ex.: detalhe do card). */
+  remoteRev: number;
   /** Card aberto no momento (controlado pelo board p/ a paleta de comandos abrir cards). */
   openCardId: string | null;
   setOpenCardId: (id: string | null) => void;
