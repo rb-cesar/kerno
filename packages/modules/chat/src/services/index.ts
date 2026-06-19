@@ -3,6 +3,7 @@ export {
   getMessages,
   createChannel,
   sendMessage,
+  editMessage,
   postSystemMessage,
   projectIdOfChannel,
   defaultChannelId,

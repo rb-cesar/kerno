@@ -4,6 +4,7 @@ import { ChatPanel, type ChatData } from "@kerno/chat";
 import { useSocket } from "@/components/providers/socket-provider";
 import {
   chatCreateChannel,
+  chatEditMessage,
   chatFetchDirectMessages,
   chatFetchMessages,
   chatOpenDirect,
@@ -28,6 +29,7 @@ export function ChatClient({
       onlineUserIds={onlineUserIds}
       socket={socket}
       send={chatSendMessage}
+      editMessage={chatEditMessage}
       createChannel={chatCreateChannel}
       fetchMessages={chatFetchMessages}
       openDirect={chatOpenDirect}

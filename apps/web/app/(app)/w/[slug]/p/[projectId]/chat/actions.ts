@@ -33,6 +33,16 @@ export async function chatSendMessage(input: {
   }));
 }
 
+export async function chatEditMessage(input: {
+  messageId: string;
+  content: string;
+}): Promise<ChatResult<MessageDTO>> {
+  return apiFetch<ChatResult<MessageDTO>>(`/chat/messages/edit`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  }).catch(chatError);
+}
+
 export async function chatCreateChannel(input: {
   projectId: string;
   name: string;

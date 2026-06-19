@@ -1,14 +1,28 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { KanbanMutate, LabelDTO, MemberDTO } from "../types";
+import type {
+  CycleDTO,
+  KanbanFetchCardDetail,
+  KanbanMutate,
+  LabelDTO,
+  MemberDTO,
+  StoryDTO,
+} from "../types";
 
 type KanbanContextValue = {
   mutate: KanbanMutate;
   refresh: () => Promise<void> | void;
+  fetchCardDetail: KanbanFetchCardDetail;
   currentUserId: string;
+  projectKey: string;
   members: MemberDTO[];
   labels: LabelDTO[];
+  cycles: CycleDTO[];
+  stories: StoryDTO[];
+  /** Card aberto no momento (controlado pelo board p/ a paleta de comandos abrir cards). */
+  openCardId: string | null;
+  setOpenCardId: (id: string | null) => void;
 };
 
 const KanbanContext = createContext<KanbanContextValue | null>(null);

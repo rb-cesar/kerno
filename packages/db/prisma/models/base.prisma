@@ -55,12 +55,17 @@ model Project {
   name        String
   description String?
   workspaceId String
+  // Identidade dos cards: exibidos como `key`-`number` (ex.: KERN-123). O contador
+  // é incrementado transacionalmente ao criar cada card (numeração por projeto).
+  key         String   @default("")
+  cardCounter Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   users               ProjectUser[]
   boards              Board[]
+  cycles              Cycle[]
   channels            Channel[]
   directConversations DirectConversation[]
   events              Event[]

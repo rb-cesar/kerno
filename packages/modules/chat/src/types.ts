@@ -18,6 +18,11 @@ export type ChatSendMessage = (input: {
   replyToId?: string | null;
 }) => Promise<ChatResult<MessageDTO>>;
 
+export type ChatEditMessage = (input: {
+  messageId: string;
+  content: string;
+}) => Promise<ChatResult<MessageDTO>>;
+
 export type ChatCreateChannel = (input: {
   projectId: string;
   name: string;

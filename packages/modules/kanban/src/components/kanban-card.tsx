@@ -1,33 +1,14 @@
 "use client";
 
-import { type HTMLAttributes, useState, useTransition } from "react";
+import { type HTMLAttributes } from "react";
 import { Draggable } from "@hello-pangea/dnd";
-import {
-  Badge,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Input,
-  Label,
-  Textarea,
-  cn,
-} from "@kerno/ui";
+import { BookMarked, CalendarClock } from "lucide-react";
+import { Badge, Tooltip, TooltipContent, TooltipTrigger, cn } from "@kerno/ui";
 import type { CardDTO } from "../types";
 import { useKanban } from "./kanban-context";
+import { PRIORITY_META, formatDue, initials, isOverdue } from "./meta";
 
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .map((p) => p[0] ?? "")
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
-
+/** Tile do card no board. O detalhe/edição vive no CardDialog (singleton do board). */
 export function KanbanCard({
   card,
   index,
@@ -37,161 +18,86 @@ export function KanbanCard({
   index: number;
   dragDisabled?: boolean;
 }) {
-  const { mutate, refresh, members, labels } = useKanban();
-  const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const { projectKey, setOpenCardId } = useKanban();
 
-  const [title, setTitle] = useState(card.title);
-  const [description, setDescription] = useState(card.description ?? "");
-  const [assignedTo, setAssignedTo] = useState(card.assignedTo ?? "");
-  const [labelIds, setLabelIds] = useState<string[]>(card.labels.map((l) => l.id));
-
-  const toggleLabel = (id: string) =>
-    setLabelIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
-  const handleSave = () =>
-    startTransition(async () => {
-      const res = await mutate({
-        type: "updateCard",
-        cardId: card.id,
-        title: title.trim() || card.title,
-        description: description.trim() || null,
-        assignedTo: assignedTo || null,
-        labelIds,
-      });
-      if (res.ok) {
-        await refresh();
-        setOpen(false);
-      }
-    });
-
-  const handleDelete = () =>
-    startTransition(async () => {
-      const res = await mutate({ type: "deleteCard", cardId: card.id });
-      if (res.ok) {
-        await refresh();
-        setOpen(false);
-      }
-    });
+  const cardKey = `${projectKey}-${card.number}`;
+  const prio = card.priority !== "NONE" ? PRIORITY_META[card.priority] : null;
+  const overdue = card.dueDate ? isOverdue(card.dueDate) : false;
 
   return (
     <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled}>
       {(provided, snapshot) => (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <div
-              ref={provided.innerRef}
-              {...(provided.draggableProps as HTMLAttributes<HTMLDivElement>)}
-              {...provided.dragHandleProps}
-              className={cn(
-                "cursor-pointer rounded-md border bg-card p-3 text-sm shadow-sm transition-colors hover:border-foreground/30",
-                snapshot.isDragging && "ring-2 ring-ring",
-              )}
-            >
-              {card.labels.length > 0 ? (
-                <div className="mb-2 flex flex-wrap gap-1">
-                  {card.labels.map((l) => (
-                    <Badge
-                      key={l.id}
-                      style={{ backgroundColor: l.color, color: "#fff" }}
-                    >
-                      {l.name}
-                    </Badge>
-                  ))}
-                </div>
-              ) : null}
-              <div className="font-medium">{card.title}</div>
-              {card.assignee ? (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
-                    {initials(card.assignee.name)}
+        <div
+          ref={provided.innerRef}
+          {...(provided.draggableProps as HTMLAttributes<HTMLDivElement>)}
+          {...provided.dragHandleProps}
+          role="button"
+          tabIndex={0}
+          onClick={() => setOpenCardId(card.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") setOpenCardId(card.id);
+          }}
+          className={cn(
+            "cursor-pointer rounded-md border bg-card p-3 text-sm shadow-sm transition-colors hover:border-foreground/30",
+            snapshot.isDragging && "ring-2 ring-ring",
+          )}
+        >
+          <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+            {prio ? (
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: prio.color }}
+                title={`Prioridade: ${prio.label}`}
+              />
+            ) : null}
+            <span className="font-mono">{cardKey}</span>
+            {card.storyId ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center gap-0.5 text-primary" aria-label="História vinculada">
+                    <BookMarked className="h-3 w-3" />
                   </span>
-                  {card.assignee.name}
-                </div>
-              ) : null}
+                </TooltipTrigger>
+                <TooltipContent>{card.storyTitle ?? "História"}</TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
+
+          {card.labels.length > 0 ? (
+            <div className="mb-2 flex flex-wrap gap-1">
+              {card.labels.map((l) => (
+                <Badge key={l.id} style={{ backgroundColor: l.color, color: "#fff" }}>
+                  {l.name}
+                </Badge>
+              ))}
             </div>
-          </DialogTrigger>
+          ) : null}
 
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar card</DialogTitle>
-            </DialogHeader>
+          <div className="font-medium">{card.title}</div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="card-title">Título</Label>
-                <Input
-                  id="card-title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="card-desc">Descrição</Label>
-                <Textarea
-                  id="card-desc"
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="card-assignee">Responsável</Label>
-                <select
-                  id="card-assignee"
-                  value={assignedTo}
-                  onChange={(e) => setAssignedTo(e.target.value)}
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-                >
-                  <option value="">Sem responsável</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {labels.length > 0 ? (
-                <div className="space-y-2">
-                  <Label>Labels</Label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {labels.map((l) => {
-                      const active = labelIds.includes(l.id);
-                      return (
-                        <button
-                          key={l.id}
-                          type="button"
-                          onClick={() => toggleLabel(l.id)}
-                          style={
-                            active ? { backgroundColor: l.color, color: "#fff" } : undefined
-                          }
-                          className={cn(
-                            "rounded-full border px-2 py-0.5 text-xs",
-                            !active && "text-muted-foreground",
-                          )}
-                        >
-                          {l.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <DialogFooter className="sm:justify-between">
-              <Button variant="destructive" onClick={handleDelete} disabled={pending}>
-                Excluir
-              </Button>
-              <Button onClick={handleSave} disabled={pending}>
-                {pending ? "Salvando…" : "Salvar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {card.assignee ? (
+              <span className="flex items-center gap-1.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+                  {initials(card.assignee.name)}
+                </span>
+                {card.assignee.name}
+              </span>
+            ) : null}
+            {card.dueDate ? (
+              <span
+                className={cn("flex items-center gap-1", overdue && "text-destructive")}
+                title={overdue ? "Atrasado" : "Prazo"}
+              >
+                <CalendarClock className="h-3 w-3" />
+                {formatDue(card.dueDate)}
+              </span>
+            ) : null}
+            {card.estimate != null ? (
+              <span className="rounded bg-muted px-1.5 py-0.5 font-medium">{card.estimate} pt</span>
+            ) : null}
+          </div>
+        </div>
       )}
     </Draggable>
   );

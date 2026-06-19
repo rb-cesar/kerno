@@ -1,15 +1,41 @@
 import { prisma } from "@kerno/db";
 import { eventBus, createEvent } from "@kerno/core/events";
+import type { Priority } from "../types";
 
-export async function createCard(columnId: string, title: string, actorId: string) {
+export async function createCard(
+  columnId: string,
+  title: string,
+  actorId: string,
+  parentId: string | null = null,
+) {
   const column = await prisma.column.findUniqueOrThrow({
     where: { id: columnId },
-    select: { boardId: true, board: { select: { projectId: true } } },
+    select: { boardId: true, category: true, board: { select: { projectId: true } } },
   });
   const order = await prisma.card.count({ where: { columnId } });
 
-  const card = await prisma.card.create({
-    data: { columnId, boardId: column.boardId, title, order },
+  // Numera o card (sequência por projeto) e registra o estado inicial — tudo numa
+  // transação para a contagem não correr risco de duplicar sob concorrência.
+  const card = await prisma.$transaction(async (tx) => {
+    const project = await tx.project.update({
+      where: { id: column.board.projectId },
+      data: { cardCounter: { increment: 1 } },
+      select: { cardCounter: true },
+    });
+    const created = await tx.card.create({
+      data: {
+        columnId,
+        boardId: column.boardId,
+        title,
+        order,
+        number: project.cardCounter,
+        parentId,
+      },
+    });
+    await tx.cardStatusEvent.create({
+      data: { cardId: created.id, toColumnId: columnId, category: column.category, actorId },
+    });
+    return created;
   });
 
   eventBus.publish(
@@ -31,6 +57,11 @@ export async function updateCard(
     description: string | null;
     assignedTo: string | null;
     labelIds: string[];
+    priority: Priority;
+    dueDate: Date | null;
+    estimate: number | null;
+    cycleId: string | null;
+    storyId: string | null;
   },
   actorId: string,
 ) {
@@ -46,6 +77,11 @@ export async function updateCard(
         title: input.title,
         description: input.description,
         assignedTo: input.assignedTo,
+        priority: input.priority,
+        dueDate: input.dueDate,
+        estimate: input.estimate,
+        cycleId: input.cycleId,
+        storyId: input.storyId,
       },
     });
     await tx.cardLabel.deleteMany({ where: { cardId: input.cardId } });
@@ -91,6 +127,15 @@ export async function moveCard(
     select: { title: true, boardId: true, board: { select: { projectId: true } } },
   });
 
+  const changedColumn = input.fromColumnId !== input.toColumnId;
+  // Categoria do estado de destino — registrada no histórico p/ métricas (F6).
+  const toColumn = changedColumn
+    ? await prisma.column.findUniqueOrThrow({
+        where: { id: input.toColumnId },
+        select: { category: true },
+      })
+    : null;
+
   await prisma.$transaction([
     ...input.destCardIds.map((id, index) =>
       prisma.card.update({
@@ -104,6 +149,19 @@ export async function moveCard(
         data: { columnId: input.fromColumnId, order: index },
       }),
     ),
+    ...(toColumn
+      ? [
+          prisma.cardStatusEvent.create({
+            data: {
+              cardId: input.cardId,
+              fromColumnId: input.fromColumnId,
+              toColumnId: input.toColumnId,
+              category: toColumn.category,
+              actorId,
+            },
+          }),
+        ]
+      : []),
   ]);
 
   eventBus.publish(

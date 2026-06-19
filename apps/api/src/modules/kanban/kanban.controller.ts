@@ -22,6 +22,18 @@ export class KanbanController {
     return this.kanban.snapshot(user.id, boardId);
   }
 
+  /** Detalhe de um card (sub-tarefas, comentários, atividade) — sob demanda. */
+  @Get("cards/:cardId/detail")
+  cardDetail(@CurrentUser() user: RequestUser, @Param("cardId") cardId: string) {
+    return this.kanban.cardDetail(user.id, cardId);
+  }
+
+  /** Métricas de fluxo do board. */
+  @Get("boards/:boardId/metrics")
+  metrics(@CurrentUser() user: RequestUser, @Param("boardId") boardId: string) {
+    return this.kanban.metrics(user.id, boardId);
+  }
+
   /** Mutação única (command pattern). Retorna KanbanMutationResult. */
   @Post("commands")
   @HttpCode(200)

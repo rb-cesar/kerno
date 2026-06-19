@@ -37,6 +37,7 @@ type MessageRow = {
   id: string;
   content: string;
   createdAt: Date;
+  updatedAt: Date;
   isSystem: boolean;
   user: { id: string; name: string } | null;
   replyTo?: ReplyRow;
@@ -64,6 +65,10 @@ function toMessageDTO(row: MessageRow, viewerId: string): MessageDTO {
     id: row.id,
     content: row.content,
     createdAt: row.createdAt.toISOString(),
+    // updatedAt só difere de createdAt quando o conteúdo foi editado (reações e
+    // respostas vivem em tabelas próprias e não tocam a mensagem).
+    editedAt:
+      row.updatedAt.getTime() !== row.createdAt.getTime() ? row.updatedAt.toISOString() : null,
     isSystem: row.isSystem,
     author: row.user ? { id: row.user.id, name: row.user.name } : null,
     replyTo: row.replyTo
@@ -158,6 +163,53 @@ export async function sendMessage(
       "message:sent",
       channel.projectId,
       { messageId: message.id, channelId, content },
+      actorId,
+    ),
+  );
+
+  return toMessageDTO(message, actorId);
+}
+
+/**
+ * Edita o conteúdo de uma mensagem. Só o autor pode editar, e mensagens de
+ * sistema não são editáveis. Publica `message:edited` para atualizar os clientes
+ * em tempo real (canal → room do projeto; DM → rooms pessoais dos participantes).
+ */
+export async function editMessage(
+  messageId: string,
+  content: string,
+  actorId: string,
+): Promise<MessageDTO> {
+  const existing = await prisma.message.findUnique({
+    where: { id: messageId },
+    select: { userId: true, isSystem: true },
+  });
+  if (!existing) throw new Error("Mensagem não encontrada");
+  if (existing.isSystem || existing.userId !== actorId) {
+    throw new Error("Você só pode editar suas próprias mensagens");
+  }
+
+  const ctx = await messageContext(messageId);
+  if (!ctx) throw new Error("Mensagem não encontrada");
+
+  const message = await prisma.message.update({
+    where: { id: messageId },
+    data: { content },
+    include: MESSAGE_INCLUDE,
+  });
+
+  eventBus.publish(
+    createEvent(
+      "message:edited",
+      ctx.projectId,
+      {
+        messageId,
+        channelId: ctx.channelId,
+        conversationId: ctx.conversationId,
+        // só preenche participantes em DM (roteamento por room pessoal)
+        participantIds: ctx.conversationId ? ctx.participantIds : [],
+        content,
+      },
       actorId,
     ),
   );

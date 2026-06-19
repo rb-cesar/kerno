@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-helpers";
 import { createWorkspaceSchema } from "@/lib/validations";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, SessionExpiredError } from "@/lib/api-client";
 
 type FormState = { error?: string } | null;
 
@@ -25,7 +25,10 @@ export async function createWorkspaceAction(
       body: JSON.stringify({ name: parsed.data.name }),
     });
     slug = res.slug;
-  } catch {
+  } catch (error) {
+    if (error instanceof SessionExpiredError) {
+      return { error: "Sua sessão expirou. Saia e entre novamente." };
+    }
     return { error: "Não foi possível criar o workspace" };
   }
 

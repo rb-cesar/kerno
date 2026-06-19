@@ -7,6 +7,7 @@ import type {
   ChatResult,
   CreateChannelInput,
   DirectConversationDTO,
+  EditMessageInput,
   MessageDTO,
   OpenDirectInput,
   SendDirectMessageInput,
@@ -66,6 +67,27 @@ export class ChatService {
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
       const message = await chat.sendMessage(input.channelId, content, userId, input.replyToId);
+      return { ok: true, data: message };
+    } catch (error) {
+      return { ok: false, error: errorMessage(error) };
+    }
+  }
+
+  async editMessage(userId: string, input: EditMessageInput): Promise<ChatResult<MessageDTO>> {
+    try {
+      const ctx = await chat.messageContext(input.messageId);
+      if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
+
+      // Acesso ao canal/conversa da mensagem (a autoria é checada no domínio).
+      if (ctx.channelId) await guardChannel(userId, ctx.channelId);
+      else if (ctx.conversationId) await guardConversation(userId, ctx.conversationId);
+      else return { ok: false, error: "Mensagem inválida" };
+
+      const content = input.content.trim();
+      if (!content) return { ok: false, error: "Mensagem vazia" };
+      if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
+
+      const message = await chat.editMessage(input.messageId, content, userId);
       return { ok: true, data: message };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };

@@ -2,7 +2,7 @@
 
 import { KanbanBoard, type BoardData } from "@kerno/kanban";
 import { useSocket } from "@/components/providers/socket-provider";
-import { kanbanFetch, kanbanMutate } from "./actions";
+import { kanbanFetch, kanbanFetchCardDetail, kanbanFetchMetrics, kanbanMutate } from "./actions";
 
 export function KanbanClient({
   initial,
@@ -20,6 +20,8 @@ export function KanbanClient({
       socket={socket}
       mutate={kanbanMutate}
       fetchSnapshot={kanbanFetch}
+      fetchCardDetail={kanbanFetchCardDetail}
+      fetchMetrics={kanbanFetchMetrics}
     />
   );
 }

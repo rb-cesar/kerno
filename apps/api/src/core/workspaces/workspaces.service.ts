@@ -36,6 +36,12 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Erro inesperado";
 }
 
+/** Chave curta p/ os cards (ex.: "Kerno App" → "KERN"). Sem garantia de unicidade. */
+function projectKeyFromName(name: string): string {
+  const letters = name.normalize("NFD").replace(/[^a-zA-Z]/g, "").toUpperCase();
+  return letters.slice(0, 4) || "PROJ";
+}
+
 @Injectable()
 export class WorkspacesService {
   // ---------- leituras ----------
@@ -125,15 +131,19 @@ export class WorkspacesService {
         name: input.name,
         description,
         workspaceId,
+        key: projectKeyFromName(input.name),
         users: { create: { userId, role: "LEAD" } },
         boards: {
           create: {
             name: "Principal",
+            // Estados padrão (estilo Linear) com categorias semânticas.
             columns: {
               create: [
-                { name: "To Do", order: 0 },
-                { name: "In Progress", order: 1 },
-                { name: "Done", order: 2 },
+                { name: "Backlog", order: 0, category: "BACKLOG" },
+                { name: "A fazer", order: 1, category: "UNSTARTED" },
+                { name: "Em progresso", order: 2, category: "STARTED" },
+                { name: "Concluído", order: 3, category: "COMPLETED" },
+                { name: "Cancelado", order: 4, category: "CANCELED" },
               ],
             },
           },

@@ -29,6 +29,7 @@ export interface MessageDTO {
   id: string;
   content: string;
   createdAt: string; // ISO
+  editedAt: string | null; // ISO — preenchido só se a mensagem foi editada
   isSystem: boolean;
   author: MemberDTO | null;
   replyTo: MessageReplyDTO | null;
@@ -58,6 +59,12 @@ export interface SendMessageInput {
   channelId: string;
   content: string;
   replyToId?: string | null;
+}
+
+/** Edita o conteúdo de uma mensagem já enviada (só o autor pode). */
+export interface EditMessageInput {
+  messageId: string;
+  content: string;
 }
 
 export interface CreateChannelInput {

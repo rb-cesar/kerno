@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import type {
   CreateChannelInput,
+  EditMessageInput,
   OpenDirectInput,
   SendDirectMessageInput,
   SendMessageInput,
@@ -31,6 +32,12 @@ export class ChatController {
   @HttpCode(200)
   send(@CurrentUser() user: RequestUser, @Body() body: SendMessageInput) {
     return this.chat.sendMessage(user.id, body);
+  }
+
+  @Post("messages/edit")
+  @HttpCode(200)
+  editMessage(@CurrentUser() user: RequestUser, @Body() body: EditMessageInput) {
+    return this.chat.editMessage(user.id, body);
   }
 
   @Post("channels")

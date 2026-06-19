@@ -8,16 +8,22 @@ import type {
   ChannelDTO,
   ChatCreateChannel,
   ChatData,
+  ChatEditMessage,
   ChatFetchDirectMessages,
   ChatFetchMessages,
   ChatOpenDirect,
+  ChatResult,
   ChatSendDirectMessage,
   ChatSendMessage,
   ChatToggleReaction,
   DirectConversationDTO,
   MessageDTO,
 } from "../types";
-import { useChatRealtime, type ChatTarget } from "../hooks/use-chat-realtime";
+import {
+  useChatRealtime,
+  type ChatEventKind,
+  type ChatTarget,
+} from "../hooks/use-chat-realtime";
 import { ChatProvider } from "./chat-context";
 import { ChannelSidebar } from "./channel-sidebar";
 import { MessageList } from "./message-list";
@@ -58,6 +64,7 @@ export function ChatPanel({
   onlineUserIds,
   socket,
   send,
+  editMessage,
   createChannel,
   fetchMessages,
   openDirect,
@@ -70,6 +77,7 @@ export function ChatPanel({
   onlineUserIds: string[];
   socket: Socket | null;
   send: ChatSendMessage;
+  editMessage: ChatEditMessage;
   createChannel: ChatCreateChannel;
   fetchMessages: ChatFetchMessages;
   openDirect: ChatOpenDirect;
@@ -87,6 +95,7 @@ export function ChatPanel({
   const [messages, setMessages] = useState<MessageDTO[]>(initial.initialMessages);
   const [unread, setUnread] = useState<Set<string>>(new Set());
   const [replyTo, setReplyTo] = useState<MessageDTO | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const loadMessages = useCallback(
     async (target: ActiveTarget) => {
@@ -103,6 +112,7 @@ export function ChatPanel({
     (target: ActiveTarget) => {
       setActive(target);
       setReplyTo(null);
+      setEditingId(null);
       setUnread((prev) => {
         if (!prev.has(target.id)) return prev;
         const next = new Set(prev);
@@ -120,11 +130,11 @@ export function ChatPanel({
   );
 
   const onRealtime = useCallback(
-    (target: ChatTarget, fromSelf: boolean, kind: "message" | "reaction") => {
+    (target: ChatTarget, fromSelf: boolean, kind: ChatEventKind) => {
       if (fromSelf) return;
 
-      // Reação: só atualiza se for o alvo aberto (nunca marca como não-lida).
-      if (kind === "reaction") {
+      // Reação/edição: só atualiza se for o alvo aberto (nunca marca como não-lida).
+      if (kind === "reaction" || kind === "edit") {
         const asActive: ActiveTarget = { kind: target.kind, id: target.id };
         if (sameTarget(active, asActive)) void loadMessages(asActive);
         return;
@@ -170,6 +180,28 @@ export function ChatPanel({
       setReplyTo(null);
     }
   };
+
+  const handleEdit = async (
+    messageId: string,
+    content: string,
+  ): Promise<ChatResult<MessageDTO>> => {
+    const res = await editMessage({ messageId, content });
+    if (res.ok) {
+      setMessages((prev) => prev.map((m) => (m.id === res.data.id ? res.data : m)));
+    }
+    return res;
+  };
+
+  // ↑ no campo vazio: edita a última mensagem própria do alvo aberto.
+  const handleEditLast = useCallback(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i];
+      if (m && !m.isSystem && m.author?.id === currentUserId) {
+        setEditingId(m.id);
+        return;
+      }
+    }
+  }, [messages, currentUserId]);
 
   const handleChannelCreated = (channel: ChannelDTO) => {
     setChannels((prev) => [...prev, channel]);
@@ -230,13 +262,18 @@ export function ChatPanel({
               </div>
               <MessageList
                 messages={messages}
+                editingId={editingId}
+                onEditingChange={setEditingId}
                 onReply={setReplyTo}
+                onEdit={handleEdit}
                 onToggleReaction={handleToggleReaction}
               />
               {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
               <MessageComposer
                 onSend={handleSend}
                 placeholder={`Mensagem em #${activeChannel.name}`}
+                draftKey={`${initial.projectId}:channel:${activeChannel.id}`}
+                onRequestEditLast={handleEditLast}
               />
             </>
           ) : activeConversation ? (
@@ -250,13 +287,18 @@ export function ChatPanel({
               </div>
               <MessageList
                 messages={messages}
+                editingId={editingId}
+                onEditingChange={setEditingId}
                 onReply={setReplyTo}
+                onEdit={handleEdit}
                 onToggleReaction={handleToggleReaction}
               />
               {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
               <MessageComposer
                 onSend={handleSend}
                 placeholder={`Mensagem para ${activeConversation.participants[0]?.name ?? "membro"}`}
+                draftKey={`${initial.projectId}:dm:${activeConversation.id}`}
+                onRequestEditLast={handleEditLast}
               />
             </>
           ) : (

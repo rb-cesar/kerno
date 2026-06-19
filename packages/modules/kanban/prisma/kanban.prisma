@@ -1,5 +1,23 @@
 // Hub Kanban — dono das tabelas Board / Column / Card / Label.
 
+// Categoria semântica de um estado (coluna) do board — base p/ backlog/concluído,
+// detecção de "feito" e métricas de fluxo. Estilo Linear.
+enum StatusCategory {
+  BACKLOG
+  UNSTARTED
+  STARTED
+  COMPLETED
+  CANCELED
+}
+
+enum Priority {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 model Board {
   id        String   @id @default(cuid())
   name      String
@@ -11,15 +29,21 @@ model Board {
   columns Column[]
   cards   Card[]
   labels  Label[]
+  stories Story[]
 
   @@index([projectId])
 }
 
+// Uma coluna do board é também o "estado do fluxo" do card (modelo Linear: o
+// estado carrega uma categoria semântica). `wipLimit` é scaffolding (enforce F2).
 model Column {
-  id      String @id @default(cuid())
-  name    String
-  boardId String
-  order   Int
+  id       String         @id @default(cuid())
+  name     String
+  boardId  String
+  order    Int
+  category StatusCategory @default(UNSTARTED)
+  color    String?
+  wipLimit Int?
 
   board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   cards Card[]
@@ -27,25 +51,140 @@ model Column {
   @@index([boardId])
 }
 
+// Cycle/sprint: iteração com prazo, à qual cards podem ser atribuídos (estilo
+// Linear). Pertence ao projeto (reusável se houver múltiplos boards no futuro).
+model Cycle {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  startsAt  DateTime
+  endsAt    DateTime
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  cards   Card[]
+
+  @@index([projectId])
+}
+
 model Card {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
+  number      Int       @default(0)
   title       String
   description String?
   columnId    String
   boardId     String
   assignedTo  String?
+  cycleId     String?
+  storyId     String?
   order       Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  priority    Priority  @default(NONE)
+  dueDate     DateTime?
+  estimate    Int?
+  parentId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  column Column      @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  board  Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  user   User?       @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
-  labels CardLabel[]
+  column       Column            @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  board        Board             @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user         User?             @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
+  cycle        Cycle?            @relation(fields: [cycleId], references: [id], onDelete: SetNull)
+  story        Story?            @relation(fields: [storyId], references: [id], onDelete: SetNull)
+  parent       Card?             @relation("CardSubtasks", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Card[]            @relation("CardSubtasks")
+  labels       CardLabel[]
+  statusEvents CardStatusEvent[]
+  comments     CardComment[]
+  checklists   Checklist[]
 
   @@index([columnId])
   @@index([boardId])
   @@index([assignedTo])
+  @@index([cycleId])
+  @@index([storyId])
+  @@index([parentId])
+}
+
+// User Story (épico) — agrupa tarefas de um board. Card.storyId vincula uma
+// tarefa a uma story (opcional). `assignedTo` é escalar (sem FK p/ User do
+// núcleo), resolvido por consulta no snapshot — mesma convenção do CardComment.
+model Story {
+  id          String         @id @default(cuid())
+  number      Int
+  boardId     String
+  title       String
+  description String?
+  status      StatusCategory @default(BACKLOG)
+  assignedTo  String?
+  dueDate     DateTime?
+  priority    Priority       @default(NONE)
+  color       String?
+  order       Int
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@index([boardId])
+}
+
+// Histórico de mudança de estado de um card — base p/ cycle/lead time e CFD (F6).
+// Registrado na criação (estado inicial) e a cada movimentação entre colunas.
+model CardStatusEvent {
+  id           String         @id @default(cuid())
+  cardId       String
+  fromColumnId String?
+  toColumnId   String
+  category     StatusCategory
+  actorId      String?
+  at           DateTime       @default(now())
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+}
+
+// Comentário em um card (discussão). `userId` é escalar (sem FK p/ User, que vive
+// no núcleo) — mesma convenção do Reaction do chat. Body em markdown (texto).
+model CardComment {
+  id        String   @id @default(cuid())
+  cardId    String
+  userId    String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+}
+
+// Todolist (checklist) de um card — múltiplas por card, com título opcional do
+// grupo. Itens marcáveis. Estilo Trello/GitHub.
+model Checklist {
+  id        String   @id @default(cuid())
+  cardId    String
+  title     String?
+  order     Int
+  createdAt DateTime @default(now())
+
+  card  Card            @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  items ChecklistItem[]
+
+  @@index([cardId])
+}
+
+model ChecklistItem {
+  id          String  @id @default(cuid())
+  checklistId String
+  text        String
+  done        Boolean @default(false)
+  order       Int
+
+  checklist Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId])
 }
 
 model Label {

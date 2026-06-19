@@ -1,6 +1,12 @@
 "use server";
 
-import type { BoardData, KanbanCommand, KanbanMutationResult } from "@kerno/kanban/types";
+import type {
+  BoardData,
+  BoardMetricsDTO,
+  CardDetailDTO,
+  KanbanCommand,
+  KanbanMutationResult,
+} from "@kerno/kanban/types";
 import { apiFetch } from "@/lib/api-client";
 
 // BFF: a fronteira (auth + permissão + services) agora vive na API (NestJS).
@@ -8,6 +14,14 @@ import { apiFetch } from "@/lib/api-client";
 
 export async function kanbanFetch(boardId: string): Promise<BoardData | null> {
   return apiFetch<BoardData>(`/kanban/boards/${boardId}`).catch(() => null);
+}
+
+export async function kanbanFetchCardDetail(cardId: string): Promise<CardDetailDTO | null> {
+  return apiFetch<CardDetailDTO>(`/kanban/cards/${cardId}/detail`).catch(() => null);
+}
+
+export async function kanbanFetchMetrics(boardId: string): Promise<BoardMetricsDTO | null> {
+  return apiFetch<BoardMetricsDTO>(`/kanban/boards/${boardId}/metrics`).catch(() => null);
 }
 
 export async function kanbanMutate(command: KanbanCommand): Promise<KanbanMutationResult> {

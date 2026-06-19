@@ -7,6 +7,7 @@ export type KernoEventType =
   | "card:deleted"
   | "card:assigned"
   | "message:sent"
+  | "message:edited"
   | "dm:sent"
   | "reaction:changed"
   | "user:joined"
@@ -47,6 +48,19 @@ export interface MessageSentPayload {
 }
 
 /**
+ * Conteúdo de uma mensagem foi editado. Em canal vai para a room do projeto;
+ * em DM (participantIds preenchido) só para as rooms pessoais — mesmo roteamento
+ * de `reaction:changed`.
+ */
+export interface MessageEditedPayload {
+  messageId: string;
+  channelId: string | null;
+  conversationId: string | null;
+  participantIds: string[];
+  content: string;
+}
+
+/**
  * Mensagem privada. Diferente de `message:sent`, NÃO é entregue à room do
  * projeto: o dispatcher roteia só para as rooms pessoais dos `participantIds`.
  */
@@ -78,6 +92,7 @@ export interface KernoEventMap {
   "card:deleted": CardDeletedPayload;
   "card:assigned": CardAssignedPayload;
   "message:sent": MessageSentPayload;
+  "message:edited": MessageEditedPayload;
   "dm:sent": DirectMessagePayload;
   "reaction:changed": ReactionChangedPayload;
   "user:joined": UserPresencePayload;

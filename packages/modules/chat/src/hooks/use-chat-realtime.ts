@@ -14,7 +14,7 @@ export type ChatTarget =
  * indicando se o evento veio do próprio usuário (já tratado de forma otimista)
  * ou de outro. DMs chegam só pela room pessoal — ver event-dispatcher na API.
  */
-export type ChatEventKind = "message" | "reaction";
+export type ChatEventKind = "message" | "reaction" | "edit";
 
 export function useChatRealtime(
   socket: Socket | null,
@@ -38,15 +38,16 @@ export function useChatRealtime(
           fromSelf,
           "message",
         );
-      } else if (event.type === "reaction:changed") {
+      } else if (event.type === "reaction:changed" || event.type === "message:edited") {
         const p = event.payload;
+        const kind: ChatEventKind = event.type === "message:edited" ? "edit" : "reaction";
         if (p.channelId) {
-          onEvent({ kind: "channel", id: p.channelId }, fromSelf, "reaction");
+          onEvent({ kind: "channel", id: p.channelId }, fromSelf, kind);
         } else if (p.conversationId) {
           onEvent(
             { kind: "dm", id: p.conversationId, participantIds: p.participantIds },
             fromSelf,
-            "reaction",
+            kind,
           );
         }
       }

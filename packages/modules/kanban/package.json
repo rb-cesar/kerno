@@ -17,6 +17,7 @@
     "@kerno/contracts": "workspace:*",
     "@kerno/core": "workspace:*",
     "@kerno/db": "workspace:*",
+    "@kerno/editor": "workspace:*",
     "@kerno/ui": "workspace:*",
     "lucide-react": "^1.18.0"
   },

@@ -1,37 +1,57 @@
 "use client";
 
 import { cn } from "@kerno/ui";
-import type { LabelDTO, MemberDTO } from "../types";
+import type { CycleDTO, LabelDTO, MemberDTO, Priority } from "../types";
 import { LabelManager } from "./label-manager";
+import { CycleManager } from "./cycle-manager";
+import { PRIORITY_META } from "./meta";
+
+const PRIORITY_FILTERS: Exclude<Priority, "NONE">[] = ["URGENT", "HIGH", "MEDIUM", "LOW"];
 
 /**
- * Menu lateral do hub Kanban (2ª coluna do shell): filtros por responsável e
- * etiqueta + gestão de etiquetas. Os filtros são uma visão read-only — enquanto
- * houver filtro ativo, o board desabilita o arrastar (índices deixam de bater
- * com a ordem real).
+ * Menu lateral do hub Kanban (2ª coluna do shell): filtros (responsável,
+ * etiqueta, prioridade, cycle) + gestão de etiquetas e cycles. O arrastar
+ * continua funcionando com filtros ativos (o board mapeia o índice visível para
+ * a lista completa — ver moveCardByVisibleIndex).
  */
 export function KanbanSidebar({
   boardId,
   boardName,
+  projectId,
   labels,
   members,
+  cycles,
   labelFilter,
   assigneeFilter,
+  priorityFilter,
+  cycleFilter,
   onToggleLabel,
   onToggleAssignee,
+  onTogglePriority,
+  onToggleCycle,
   onClear,
 }: {
   boardId: string;
   boardName: string;
+  projectId: string;
   labels: LabelDTO[];
   members: MemberDTO[];
+  cycles: CycleDTO[];
   labelFilter: Set<string>;
   assigneeFilter: Set<string>;
+  priorityFilter: Set<Priority>;
+  cycleFilter: Set<string>;
   onToggleLabel: (id: string) => void;
   onToggleAssignee: (id: string) => void;
+  onTogglePriority: (p: Priority) => void;
+  onToggleCycle: (id: string) => void;
   onClear: () => void;
 }) {
-  const active = labelFilter.size > 0 || assigneeFilter.size > 0;
+  const active =
+    labelFilter.size > 0 ||
+    assigneeFilter.size > 0 ||
+    priorityFilter.size > 0 ||
+    cycleFilter.size > 0;
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r">
@@ -80,6 +100,30 @@ export function KanbanSidebar({
         </div>
 
         <div className="space-y-1.5">
+          <div className="text-xs text-muted-foreground">Prioridade</div>
+          <div className="flex flex-wrap gap-1">
+            {PRIORITY_FILTERS.map((p) => {
+              const meta = PRIORITY_META[p];
+              const on = priorityFilter.has(p);
+              return (
+                <button
+                  key={p}
+                  onClick={() => onTogglePriority(p)}
+                  style={
+                    on
+                      ? { backgroundColor: meta.color, borderColor: meta.color, color: "#fff" }
+                      : { borderColor: meta.color, color: meta.color }
+                  }
+                  className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+                >
+                  {meta.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
           <div className="text-xs text-muted-foreground">Etiquetas</div>
           {labels.length === 0 ? (
             <p className="text-xs text-muted-foreground">Nenhuma etiqueta.</p>
@@ -105,9 +149,35 @@ export function KanbanSidebar({
             </div>
           )}
         </div>
+
+        {cycles.length > 0 ? (
+          <div className="space-y-1.5">
+            <div className="text-xs text-muted-foreground">Cycle</div>
+            <div className="space-y-0.5">
+              {cycles.map((c) => {
+                const on = cycleFilter.has(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => onToggleCycle(c.id)}
+                    className={cn(
+                      "flex w-full items-center rounded-md px-2 py-1 text-left text-sm transition-colors",
+                      on
+                        ? "bg-secondary text-secondary-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    )}
+                  >
+                    <span className="truncate">{c.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      <div className="border-t p-3">
+      <div className="space-y-3 border-t p-3">
+        <CycleManager projectId={projectId} />
         <LabelManager boardId={boardId} />
       </div>
     </aside>

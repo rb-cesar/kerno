@@ -50,6 +50,7 @@ async function main() {
       name: projectName,
       description: "Projeto de exemplo gerado pelo seed.",
       workspaceId: workspace.id,
+      key: "ONB",
       users: {
         create: [
           { userId: ana.id, role: "LEAD" },
@@ -68,9 +69,11 @@ async function main() {
       projectId: project.id,
       columns: {
         create: [
-          { name: "To Do", order: 0 },
-          { name: "In Progress", order: 1 },
-          { name: "Done", order: 2 },
+          { name: "Backlog", order: 0, category: "BACKLOG" },
+          { name: "A fazer", order: 1, category: "UNSTARTED" },
+          { name: "Em progresso", order: 2, category: "STARTED" },
+          { name: "Concluído", order: 3, category: "COMPLETED" },
+          { name: "Cancelado", order: 4, category: "CANCELED" },
         ],
       },
     },
@@ -82,9 +85,9 @@ async function main() {
     if (!column) throw new Error(`coluna ${name} não criada`);
     return column;
   };
-  const todo = columnByName("To Do");
-  const doing = columnByName("In Progress");
-  const done = columnByName("Done");
+  const todo = columnByName("A fazer");
+  const doing = columnByName("Em progresso");
+  const done = columnByName("Concluído");
 
   const [bug, feature, docs] = await Promise.all([
     prisma.label.create({ data: { boardId: board.id, name: "bug", color: "#ef4444" } }),
@@ -92,30 +95,44 @@ async function main() {
     prisma.label.create({ data: { boardId: board.id, name: "docs", color: "#22c55e" } }),
   ]);
 
+  let cardNumber = 0;
   const card = (
-    columnId: string,
+    column: { id: string; category: string },
     order: number,
     title: string,
     assignedTo: string | null,
     labelIds: string[],
     description?: string,
-  ) =>
-    prisma.card.create({
+  ) => {
+    cardNumber += 1;
+    return prisma.card.create({
       data: {
+        number: cardNumber,
         title,
         description: description ?? null,
-        columnId,
+        columnId: column.id,
         boardId: board.id,
         order,
         assignedTo,
         labels: { create: labelIds.map((labelId) => ({ labelId })) },
+        // Estado inicial no histórico (base p/ métricas de fluxo).
+        statusEvents: {
+          create: { toColumnId: column.id, category: column.category as never },
+        },
       },
     });
+  };
 
-  await card(todo.id, 0, "Configurar ambiente local", bruno.id, [docs.id], "Node 20 + pnpm + Docker.");
-  await card(todo.id, 1, "Desenhar tela de login", ana.id, [feature.id]);
-  await card(doing.id, 0, "Corrigir drag-and-drop em telas pequenas", ana.id, [bug.id]);
-  await card(done.id, 0, "Setup do monorepo", bruno.id, [feature.id]);
+  await card(todo, 0, "Configurar ambiente local", bruno.id, [docs.id], "Node 20 + pnpm + Docker.");
+  await card(todo, 1, "Desenhar tela de login", ana.id, [feature.id]);
+  await card(doing, 0, "Corrigir drag-and-drop em telas pequenas", ana.id, [bug.id]);
+  await card(done, 0, "Setup do monorepo", bruno.id, [feature.id]);
+
+  // Sincroniza o contador de cards do projeto com os cards já criados.
+  await prisma.project.update({
+    where: { id: project.id },
+    data: { cardCounter: cardNumber },
+  });
 
   const general = await prisma.channel.findFirstOrThrow({
     where: { projectId: project.id, isDefault: true },

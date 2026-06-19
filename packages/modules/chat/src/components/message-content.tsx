@@ -74,6 +74,16 @@ type InlineRule = {
 // Ordem = prioridade. `**` antes de `*`, `__` antes de `_`.
 const INLINE_RULES: InlineRule[] = [
   {
+    // Menção: @[Nome](user:ID) → chip destacado (não é link — vem antes da regra de link).
+    regex: /@\[([^\]\n]+)\]\(user:([^)\s]+)\)/,
+    recurse: false,
+    render: (m, _c, key) => (
+      <span key={key} className="rounded bg-primary/10 px-1 font-medium text-primary">
+        @{m[1]}
+      </span>
+    ),
+  },
+  {
     regex: /`([^`\n]+)`/,
     recurse: false,
     render: (m, _c, key) => (
