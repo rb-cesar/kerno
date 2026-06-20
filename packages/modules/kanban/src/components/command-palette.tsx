@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
@@ -10,9 +10,9 @@ type Item =
   | { kind: "action"; id: string; label: string; run: () => void };
 
 /**
- * Paleta de comandos (Ctrl/Cmd+K) estilo Linear: busca cards por chave/tÃ­tulo e
- * oferece aÃ§Ãµes rÃ¡pidas. Selecionar um card abre seu detalhe; navegaÃ§Ã£o por
- * teclado (â†‘/â†“/Enter), Esc fecha.
+ * Paleta de comandos (Ctrl/Cmd+K) estilo Linear: busca cards por chave/título e
+ * oferece ações rápidas. Selecionar um card abre seu detalhe; navegação por
+ * teclado (↑/↓/Enter), Esc fecha.
  */
 export function CommandPalette({
   open,
@@ -98,7 +98,7 @@ export function CommandPalette({
                 choose(results[index]);
               }
             }}
-            placeholder="Buscar card ou aÃ§Ã£oâ€¦"
+            placeholder="Buscar card ou ação…"
             className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>

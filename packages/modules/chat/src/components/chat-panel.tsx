@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useMemo, useState } from "react";
 import { AtSign, CornerUpLeft, Hash, X } from "lucide-react";
@@ -29,7 +29,7 @@ import { ChannelSidebar } from "./channel-sidebar";
 import { MessageList } from "./message-list";
 import { MessageComposer } from "./message-composer";
 
-/** O que estÃ¡ aberto no painel principal: um canal ou uma conversa privada. */
+/** O que está aberto no painel principal: um canal ou uma conversa privada. */
 type ActiveTarget = { kind: "channel"; id: string } | { kind: "dm"; id: string };
 
 function sameTarget(a: ActiveTarget | null, b: ActiveTarget): boolean {
@@ -133,15 +133,15 @@ export function ChatPanel({
     (target: ChatTarget, fromSelf: boolean, kind: ChatEventKind) => {
       if (fromSelf) return;
 
-      // ReaÃ§Ã£o/ediÃ§Ã£o: sÃ³ atualiza se for o alvo aberto (nunca marca como nÃ£o-lida).
+      // Reação/edição: só atualiza se for o alvo aberto (nunca marca como não-lida).
       if (kind === "reaction" || kind === "edit") {
         const asActive: ActiveTarget = { kind: target.kind, id: target.id };
         if (sameTarget(active, asActive)) void loadMessages(asActive);
         return;
       }
 
-      // DM de uma conversa que ainda nÃ£o estÃ¡ na lista (criada pelo outro lado):
-      // monta o DTO a partir dos membros conhecidos e adiciona Ã  sidebar.
+      // DM de uma conversa que ainda não está na lista (criada pelo outro lado):
+      // monta o DTO a partir dos membros conhecidos e adiciona à sidebar.
       if (target.kind === "dm") {
         setConversations((prev) => {
           if (prev.some((c) => c.id === target.id)) return prev;
@@ -192,7 +192,7 @@ export function ChatPanel({
     return res;
   };
 
-  // â†‘ no campo vazio: edita a Ãºltima mensagem prÃ³pria do alvo aberto.
+  // ↑ no campo vazio: edita a última mensagem própria do alvo aberto.
   const handleEditLast = useCallback(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
       const m = messages[i];

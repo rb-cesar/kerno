@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Suspense, lazy, useCallback, useEffect, useState, useTransition } from "react";
 import { Clock, MessageSquare, Plus, Trash2, X } from "lucide-react";
@@ -21,7 +21,7 @@ import {
 } from "@kerno/ui";
 import type { CardDetailDTO, CardDTO, Priority } from "../types";
 
-// Lazy: o editor Lexical (+prism) sÃ³ baixa quando um card Ã© aberto, mantendo o
+// Lazy: o editor Lexical (+prism) só baixa quando um card é aberto, mantendo o
 // bundle inicial da rota /kanban enxuto.
 const RichTextEditor = lazy(() =>
   import("@kerno/editor").then((m) => ({ default: m.RichTextEditor })),
@@ -39,11 +39,11 @@ import {
 } from "./meta";
 
 /**
- * Shell do painel de detalhe do card. NÃƒO Ã© modal: abre como coluna lateral Ã 
- * direita, dentro da prÃ³pria tela do board (que encolhe e permanece interativo).
- * O shell monta UMA vez ao abrir (animaÃ§Ã£o slide-in); ao trocar de tarefa ele
- * permanece montado e sÃ³ o conteÃºdo interno (`CardContent`, com `key={card.id}`)
- * Ã© recriado â€” disparando a transiÃ§Ã£o skeleton/fade-in em vez de outro slide.
+ * Shell do painel de detalhe do card. NÃO é modal: abre como coluna lateral à
+ * direita, dentro da própria tela do board (que encolhe e permanece interativo).
+ * O shell monta UMA vez ao abrir (animação slide-in); ao trocar de tarefa ele
+ * permanece montado e só o conteúdo interno (`CardContent`, com `key={card.id}`)
+ * é recriado — disparando a transição skeleton/fade-in em vez de outro slide.
  */
 export function CardDialog({ card, onClose }: { card: CardDTO; onClose: () => void }) {
   return (
@@ -123,8 +123,8 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
     };
   }, [fetchCardDetail, card.id]);
 
-  // MudanÃ§a remota (outro usuÃ¡rio): recarrega o detalhe sem o skeleton, mantendo
-  // checklists/comentÃ¡rios/atividade em dia enquanto o painel estÃ¡ aberto.
+  // Mudança remota (outro usuário): recarrega o detalhe sem o skeleton, mantendo
+  // checklists/comentários/atividade em dia enquanto o painel está aberto.
   useEffect(() => {
     if (remoteRev === 0) return;
     void loadDetail();
@@ -210,7 +210,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
 
   return (
     <>
-      {/* CabeÃ§alho */}
+      {/* Cabeçalho */}
       <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
         <span className="font-mono text-sm text-muted-foreground">{cardKey}</span>
         <button
@@ -228,19 +228,19 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
       ) : (
         <Suspense fallback={<CardSkeleton />}>
           <div className="flex min-h-0 flex-1 overflow-hidden duration-200 animate-in fade-in">
-            {/* â”€â”€ Coluna principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── Coluna principal ───────────────────────────────────────── */}
             <div className="min-w-0 flex-1 space-y-5 overflow-y-auto p-5">
               <div className="space-y-2">
-                <Label htmlFor="card-title">TÃ­tulo</Label>
+                <Label htmlFor="card-title">Título</Label>
                 <Input id="card-title" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
 
               <div className="space-y-2">
-                <Label>DescriÃ§Ã£o</Label>
+                <Label>Descrição</Label>
                 <RichTextEditor
                   value={description}
                   onChange={setDescription}
-                  placeholder="Descreva a tarefaâ€¦"
+                  placeholder="Descreva a tarefa…"
                 />
               </div>
 
@@ -301,10 +301,10 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                 reload={loadDetail}
               />
 
-              {/* ComentÃ¡rios */}
+              {/* Comentários */}
               <div className="space-y-2 border-t pt-4">
                 <Label className="flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5" /> ComentÃ¡rios
+                  <MessageSquare className="h-3.5 w-3.5" /> Comentários
                 </Label>
                 {detail?.comments.length ? (
                   <ul className="space-y-2">
@@ -321,7 +321,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                               onClick={() => removeComment(c.id)}
                               disabled={pending}
                               className="ml-auto hover:text-destructive"
-                              title="Excluir comentÃ¡rio"
+                              title="Excluir comentário"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -332,13 +332,13 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Nenhum comentÃ¡rio ainda.</p>
+                  <p className="text-xs text-muted-foreground">Nenhum comentário ainda.</p>
                 )}
                 <RichTextEditor
                   key={commentKey}
                   value=""
                   onChange={setNewComment}
-                  placeholder="Escreva um comentÃ¡rioâ€¦"
+                  placeholder="Escreva um comentário…"
                   minHeightClass="min-h-[3rem]"
                 />
                 <div className="flex justify-end">
@@ -370,7 +370,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
               ) : null}
             </div>
 
-            {/* â”€â”€ Barra de detalhes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── Barra de detalhes ──────────────────────────────────────── */}
             <div className="w-64 shrink-0 space-y-4 overflow-y-auto border-l bg-muted/20 p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Detalhes
@@ -395,14 +395,14 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
               </Field>
 
               <Field>
-                <FieldLabel>ResponsÃ¡vel</FieldLabel>
+                <FieldLabel>Responsável</FieldLabel>
                 <FieldControl>
                   <Combobox
                     value={assignedTo}
                     onChange={setAssignedTo}
-                    placeholder="Sem responsÃ¡vel"
-                    searchPlaceholder="Buscar pessoaâ€¦"
-                    emptyText="NinguÃ©m encontrado."
+                    placeholder="Sem responsável"
+                    searchPlaceholder="Buscar pessoa…"
+                    emptyText="Ninguém encontrado."
                     options={members.map((m) => ({ value: m.id, label: m.name }))}
                   />
                 </FieldControl>
@@ -435,7 +435,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                       value={cycleId}
                       onChange={setCycleId}
                       placeholder="Sem cycle"
-                      searchPlaceholder="Buscar cycleâ€¦"
+                      searchPlaceholder="Buscar cycle…"
                       emptyText="Nenhum cycle."
                       options={cycles.map((c) => ({ value: c.id, label: c.name }))}
                     />
@@ -445,17 +445,17 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
 
               {stories.length > 0 ? (
                 <Field>
-                  <FieldLabel>HistÃ³ria</FieldLabel>
+                  <FieldLabel>História</FieldLabel>
                   <FieldControl>
                     <Combobox
                       value={storyId}
                       onChange={setStoryId}
-                      placeholder="Sem histÃ³ria"
-                      searchPlaceholder="Buscar histÃ³riaâ€¦"
-                      emptyText="Nenhuma histÃ³ria."
+                      placeholder="Sem história"
+                      searchPlaceholder="Buscar história…"
+                      emptyText="Nenhuma história."
                       options={stories.map((s) => ({
                         value: s.id,
-                        label: `${workspaceKey}-S${s.number} Â· ${s.title}`,
+                        label: `${workspaceKey}-S${s.number} · ${s.title}`,
                       }))}
                     />
                   </FieldControl>
@@ -491,13 +491,13 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
         </Suspense>
       )}
 
-      {/* RodapÃ© */}
+      {/* Rodapé */}
       <div className="flex items-center justify-between gap-2 border-t px-4 py-2">
         <Button variant="destructive" onClick={handleDelete} disabled={pending}>
           Excluir
         </Button>
         <Button onClick={handleSave} disabled={pending}>
-          {pending ? "Salvandoâ€¦" : "Salvar"}
+          {pending ? "Salvando…" : "Salvar"}
         </Button>
       </div>
     </>

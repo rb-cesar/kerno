@@ -134,7 +134,8 @@ async function main() {
   for (const s of specs) {
     const column = col(s.column);
     counter += 1;
-    const order = orderByCol[column.id]++;
+    const order = orderByCol[column.id] ?? 0;
+    orderByCol[column.id] = order + 1;
     await prisma.card.create({
       data: {
         number: counter,

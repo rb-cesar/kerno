@@ -1,4 +1,4 @@
-﻿import type { Server as HttpServer } from "node:http";
+import type { Server as HttpServer } from "node:http";
 import { JwtService } from "@nestjs/jwt";
 import { Server as IOServer } from "socket.io";
 import { initEventDispatcher } from "../composition/event-dispatcher";
@@ -11,7 +11,7 @@ interface SocketData {
 /**
  * Sobe o Socket.io anexado ao HTTP server da API e liga o event bus ao realtime.
  * Migrado de apps/web/server.ts. Handshake autenticado por JWT (mesmo AUTH_SECRET):
- * o userId vem do token, nÃ£o mais do cliente.
+ * o userId vem do token, não mais do cliente.
  */
 export function initRealtime(httpServer: HttpServer): IOServer {
   const jwt = new JwtService({ secret: process.env.AUTH_SECRET });
@@ -21,7 +21,7 @@ export function initRealtime(httpServer: HttpServer): IOServer {
     { cors: { origin: process.env.WEB_ORIGIN ?? "http://localhost:3000", credentials: true } },
   );
 
-  // AutenticaÃ§Ã£o do handshake â€” rejeita conexÃ£o sem token vÃ¡lido.
+  // Autenticação do handshake — rejeita conexão sem token válido.
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token as string | undefined;
     if (!token) return next(new Error("unauthorized"));
@@ -34,7 +34,7 @@ export function initRealtime(httpServer: HttpServer): IOServer {
     }
   });
 
-  // workspaceId -> (userId -> nÂº de conexÃµes abertas)
+  // workspaceId -> (userId -> nº de conexões abertas)
   const roomUsers = new Map<string, Map<string, number>>();
   const presenceList = (workspaceId: string): string[] => {
     const users = roomUsers.get(workspaceId);
@@ -45,8 +45,8 @@ export function initRealtime(httpServer: HttpServer): IOServer {
     const userId = socket.data.userId;
     let joined: string | null = null;
 
-    // Room pessoal: destino das mensagens diretas (DM), entregues sÃ³ aos
-    // participantes â€” nunca Ã  room do projeto. Ver event-dispatcher.
+    // Room pessoal: destino das mensagens diretas (DM), entregues só aos
+    // participantes — nunca à room do projeto. Ver event-dispatcher.
     socket.join(`user:${userId}`);
 
     const leave = () => {
@@ -84,6 +84,6 @@ export function initRealtime(httpServer: HttpServer): IOServer {
 
   initEventDispatcher(io);
   initKanbanChatIntegration();
-  console.log("â–¸ Realtime (Socket.io) inicializado na API");
+  console.log("▸ Realtime (Socket.io) inicializado na API");
   return io;
 }

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Suspense, lazy, useEffect, useState, useTransition } from "react";
 import { BookMarked, Plus, Trash2 } from "lucide-react";
@@ -22,7 +22,7 @@ import type { CardDTO, Priority, StatusCategory, StoryDTO } from "../types";
 import { useKanban } from "./kanban-context";
 import { CATEGORY_COLOR, PRIORITY_LABEL, PRIORITY_ORDER, toDateInput } from "./meta";
 
-// Lazy: o editor Lexical sÃ³ baixa ao abrir uma histÃ³ria (mantÃ©m a aba leve).
+// Lazy: o editor Lexical só baixa ao abrir uma história (mantém a aba leve).
 const RichTextEditor = lazy(() =>
   import("@kerno/editor").then((m) => ({ default: m.RichTextEditor })),
 );
@@ -38,13 +38,13 @@ const STATUS_LABEL: Record<StatusCategory, string> = {
   BACKLOG: "Backlog",
   UNSTARTED: "A fazer",
   STARTED: "Em progresso",
-  COMPLETED: "ConcluÃ­do",
+  COMPLETED: "Concluído",
   CANCELED: "Cancelado",
 };
 
 const SWATCHES = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#a855f7"];
 
-/** Aba "HistÃ³rias": lista de User Stories (esquerda) + editor inline (direita). */
+/** Aba "Histórias": lista de User Stories (esquerda) + editor inline (direita). */
 export function StoriesView({
   boardId,
   stories,
@@ -64,7 +64,7 @@ export function StoriesView({
 
   const createStory = () =>
     startTransition(async () => {
-      const res = await mutate({ type: "createStory", boardId, title: "Nova histÃ³ria" });
+      const res = await mutate({ type: "createStory", boardId, title: "Nova história" });
       if (res.ok) await refresh();
     });
 
@@ -73,7 +73,7 @@ export function StoriesView({
       {/* Lista */}
       <div className="flex w-80 shrink-0 flex-col border-r">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-sm font-medium">HistÃ³rias</span>
+          <span className="text-sm font-medium">Histórias</span>
           <Button size="sm" variant="outline" disabled={pending} onClick={createStory}>
             <Plus /> Nova
           </Button>
@@ -81,7 +81,7 @@ export function StoriesView({
         <ul className="flex-1 overflow-y-auto p-2">
           {stories.length === 0 ? (
             <p className="px-1 py-6 text-center text-sm text-muted-foreground">
-              Nenhuma histÃ³ria ainda.
+              Nenhuma história ainda.
             </p>
           ) : (
             stories.map((s) => (
@@ -99,7 +99,7 @@ export function StoriesView({
                     <span className="font-mono text-xs text-muted-foreground">
                       {workspaceKey}-S{s.number}
                     </span>
-                    <span className="ml-auto text-xs text-muted-foreground">{s.taskCount} ðŸ—‚</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{s.taskCount} 🗂</span>
                   </div>
                   <div className="mt-0.5 truncate text-sm">{s.title}</div>
                 </button>
@@ -121,7 +121,7 @@ export function StoriesView({
           />
         ) : (
           <div className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
-            Selecione ou crie uma histÃ³ria.
+            Selecione ou crie uma história.
           </div>
         )}
       </div>
@@ -151,7 +151,7 @@ function StoryEditor({
   const [priority, setPriority] = useState<Priority>(story.priority);
   const [color, setColor] = useState<string | null>(story.color);
 
-  // MantÃ©m o formulÃ¡rio em sincronia se a story for atualizada por fora (refresh).
+  // Mantém o formulário em sincronia se a story for atualizada por fora (refresh).
   useEffect(() => {
     setTitle(story.title);
     setDescription(story.description ?? "");
@@ -195,23 +195,23 @@ function StoryEditor({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="story-title">TÃ­tulo</Label>
+          <Label htmlFor="story-title">Título</Label>
           <Input id="story-title" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
 
         <div className="space-y-2">
-          <Label>DescriÃ§Ã£o</Label>
+          <Label>Descrição</Label>
           <Suspense
             fallback={
               <div className="rounded-md border p-3 text-sm text-muted-foreground">
-                Carregando editorâ€¦
+                Carregando editor…
               </div>
             }
           >
             <RichTextEditor
               value={description}
               onChange={setDescription}
-              placeholder="Descreva a histÃ³riaâ€¦"
+              placeholder="Descreva a história…"
             />
           </Suspense>
         </div>
@@ -238,7 +238,7 @@ function StoryEditor({
             </ul>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Nenhuma tarefa vinculada. Vincule pelo painel da tarefa (campo â€œHistÃ³riaâ€).
+              Nenhuma tarefa vinculada. Vincule pelo painel da tarefa (campo “História”).
             </p>
           )}
         </div>
@@ -275,14 +275,14 @@ function StoryEditor({
         </Field>
 
         <Field>
-          <FieldLabel>ResponsÃ¡vel</FieldLabel>
+          <FieldLabel>Responsável</FieldLabel>
           <FieldControl>
             <Combobox
               value={assignedTo}
               onChange={setAssignedTo}
-              placeholder="Sem responsÃ¡vel"
-              searchPlaceholder="Buscar pessoaâ€¦"
-              emptyText="NinguÃ©m encontrado."
+              placeholder="Sem responsável"
+              searchPlaceholder="Buscar pessoa…"
+              emptyText="Ninguém encontrado."
               options={members.map((m) => ({ value: m.id, label: m.name }))}
             />
           </FieldControl>
@@ -325,7 +325,7 @@ function StoryEditor({
               )}
               title="Sem cor"
             >
-              â€”
+              —
             </button>
             {SWATCHES.map((c) => (
               <button
@@ -345,7 +345,7 @@ function StoryEditor({
             <Trash2 /> Excluir
           </Button>
           <Button size="sm" disabled={pending} onClick={save}>
-            {pending ? "Salvandoâ€¦" : "Salvar"}
+            {pending ? "Salvando…" : "Salvar"}
           </Button>
         </div>
       </div>

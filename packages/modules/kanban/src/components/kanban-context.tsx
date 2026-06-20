@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { createContext, useContext } from "react";
 import type {
@@ -20,7 +20,7 @@ type KanbanContextValue = {
   labels: LabelDTO[];
   cycles: CycleDTO[];
   stories: StoryDTO[];
-  /** Incrementa a cada mudanÃ§a remota â€” sinaliza recarregar dados sob demanda (ex.: detalhe do card). */
+  /** Incrementa a cada mudança remota — sinaliza recarregar dados sob demanda (ex.: detalhe do card). */
   remoteRev: number;
   /** Card aberto no momento (controlado pelo board p/ a paleta de comandos abrir cards). */
   openCardId: string | null;

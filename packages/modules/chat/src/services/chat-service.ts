@@ -1,4 +1,4 @@
-﻿import { prisma } from "@kerno/db";
+import { prisma } from "@kerno/db";
 import { createEvent, eventBus } from "@kerno/core/events";
 import type {
   ChannelDTO,
@@ -10,7 +10,7 @@ import type {
 
 const MESSAGE_PAGE_SIZE = 50;
 
-// Include padrÃ£o para montar um MessageDTO: autor + a mensagem citada (replyTo).
+// Include padrão para montar um MessageDTO: autor + a mensagem citada (replyTo).
 const MESSAGE_INCLUDE = {
   user: { select: { id: true, name: true } },
   replyTo: {
@@ -48,7 +48,7 @@ function makeExcerpt(content: string): string {
   return content.replace(/\s+/g, " ").trim().slice(0, 120);
 }
 
-/** Agrupa reaÃ§Ãµes por emoji, preservando a ordem de 1Âª apariÃ§Ã£o. */
+/** Agrupa reações por emoji, preservando a ordem de 1ª aparição. */
 function aggregateReactions(rows: ReactionRow[], viewerId: string): ReactionDTO[] {
   const byEmoji = new Map<string, { count: number; mine: boolean }>();
   for (const r of rows) {
@@ -65,8 +65,8 @@ function toMessageDTO(row: MessageRow, viewerId: string): MessageDTO {
     id: row.id,
     content: row.content,
     createdAt: row.createdAt.toISOString(),
-    // updatedAt sÃ³ difere de createdAt quando o conteÃºdo foi editado (reaÃ§Ãµes e
-    // respostas vivem em tabelas prÃ³prias e nÃ£o tocam a mensagem).
+    // updatedAt só difere de createdAt quando o conteúdo foi editado (reações e
+    // respostas vivem em tabelas próprias e não tocam a mensagem).
     editedAt:
       row.updatedAt.getTime() !== row.createdAt.getTime() ? row.updatedAt.toISOString() : null,
     isSystem: row.isSystem,
@@ -84,7 +84,7 @@ function toMessageDTO(row: MessageRow, viewerId: string): MessageDTO {
   };
 }
 
-/** Garante que a mensagem citada pertence ao mesmo canal (senÃ£o ignora). */
+/** Garante que a mensagem citada pertence ao mesmo canal (senão ignora). */
 async function replyIdIfInChannel(
   replyToId: string | null | undefined,
   channelId: string,
@@ -97,7 +97,7 @@ async function replyIdIfInChannel(
   return target?.channelId === channelId ? replyToId : null;
 }
 
-/** Garante que a mensagem citada pertence Ã  mesma conversa (senÃ£o ignora). */
+/** Garante que a mensagem citada pertence à mesma conversa (senão ignora). */
 async function replyIdIfInConversation(
   replyToId: string | null | undefined,
   conversationId: string,
@@ -171,9 +171,9 @@ export async function sendMessage(
 }
 
 /**
- * Edita o conteÃºdo de uma mensagem. SÃ³ o autor pode editar, e mensagens de
- * sistema nÃ£o sÃ£o editÃ¡veis. Publica `message:edited` para atualizar os clientes
- * em tempo real (canal â†’ room do projeto; DM â†’ rooms pessoais dos participantes).
+ * Edita o conteúdo de uma mensagem. Só o autor pode editar, e mensagens de
+ * sistema não são editáveis. Publica `message:edited` para atualizar os clientes
+ * em tempo real (canal → room do projeto; DM → rooms pessoais dos participantes).
  */
 export async function editMessage(
   messageId: string,
@@ -184,13 +184,13 @@ export async function editMessage(
     where: { id: messageId },
     select: { userId: true, isSystem: true },
   });
-  if (!existing) throw new Error("Mensagem nÃ£o encontrada");
+  if (!existing) throw new Error("Mensagem não encontrada");
   if (existing.isSystem || existing.userId !== actorId) {
-    throw new Error("VocÃª sÃ³ pode editar suas prÃ³prias mensagens");
+    throw new Error("Você só pode editar suas próprias mensagens");
   }
 
   const ctx = await messageContext(messageId);
-  if (!ctx) throw new Error("Mensagem nÃ£o encontrada");
+  if (!ctx) throw new Error("Mensagem não encontrada");
 
   const message = await prisma.message.update({
     where: { id: messageId },
@@ -206,7 +206,7 @@ export async function editMessage(
         messageId,
         channelId: ctx.channelId,
         conversationId: ctx.conversationId,
-        // sÃ³ preenche participantes em DM (roteamento por room pessoal)
+        // só preenche participantes em DM (roteamento por room pessoal)
         participantIds: ctx.conversationId ? ctx.participantIds : [],
         content,
       },
@@ -217,7 +217,7 @@ export async function editMessage(
   return toMessageDTO(message, actorId);
 }
 
-/** Mensagem de sistema (sem autor) â€” usada na integraÃ§Ã£o entre hubs. */
+/** Mensagem de sistema (sem autor) — usada na integração entre hubs. */
 export async function postSystemMessage(channelId: string, content: string): Promise<MessageDTO> {
   const channel = await prisma.channel.findUniqueOrThrow({
     where: { id: channelId },
@@ -258,9 +258,9 @@ export async function defaultChannelId(workspaceId: string): Promise<string | nu
   return channel?.id ?? null;
 }
 
-// â”€â”€ Mensagens diretas (DM) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Mensagens diretas (DM) ─────────────────────────────────────────────────
 
-/** Chave determinÃ­stica de um par (independe da ordem dos ids). */
+/** Chave determinística de um par (independe da ordem dos ids). */
 function pairKey(a: string, b: string): string {
   return [a, b].sort().join("__");
 }
@@ -285,7 +285,7 @@ const CONVERSATION_INCLUDE = {
   messages: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
 } as const;
 
-/** Conversas privadas de que o usuÃ¡rio participa dentro do projeto. */
+/** Conversas privadas de que o usuário participa dentro do projeto. */
 export async function listConversations(
   workspaceId: string,
   viewerId: string,
@@ -383,9 +383,9 @@ export async function conversationAccess(
   return { workspaceId: conv.workspaceId, participantIds: conv.participants.map((p) => p.userId) };
 }
 
-// â”€â”€ ReaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Reações ────────────────────────────────────────────────────────────────
 
-/** Contexto de uma mensagem (canal/conversa/projeto) â€” para guards e roteamento. */
+/** Contexto de uma mensagem (canal/conversa/projeto) — para guards e roteamento. */
 export async function messageContext(messageId: string): Promise<{
   workspaceId: string;
   channelId: string | null;
@@ -414,7 +414,7 @@ export async function messageContext(messageId: string): Promise<{
   };
 }
 
-/** Adiciona/remove a reaÃ§Ã£o (toggle) e publica `reaction:changed`. */
+/** Adiciona/remove a reação (toggle) e publica `reaction:changed`. */
 export async function toggleReaction(
   messageId: string,
   emoji: string,
@@ -440,7 +440,7 @@ export async function toggleReaction(
         messageId,
         channelId: ctx.channelId,
         conversationId: ctx.conversationId,
-        // sÃ³ preenche participantes em DM (roteamento por room pessoal)
+        // só preenche participantes em DM (roteamento por room pessoal)
         participantIds: ctx.conversationId ? ctx.participantIds : [],
       },
       userId,

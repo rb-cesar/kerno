@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useTransition } from "react";
 import { AtSign, Hash, Plus } from "lucide-react";
@@ -48,7 +48,7 @@ export function ChannelSidebar({
     });
   };
 
-  // Membros que ainda nÃ£o tÃªm uma conversa aberta (para a lista de "iniciar DM").
+  // Membros que ainda não têm uma conversa aberta (para a lista de "iniciar DM").
   const conversationUserIds = new Set(
     conversations.flatMap((c) => c.participants.map((p) => p.id)),
   );
@@ -171,7 +171,7 @@ export function ChannelSidebar({
                   />
                   <span className={cn("flex-1 truncate", !online && "text-muted-foreground")}>
                     {m.name}
-                    {self ? " (vocÃª)" : ""}
+                    {self ? " (você)" : ""}
                   </span>
                   {existing ? <AtSign className="h-3 w-3 shrink-0 text-muted-foreground" /> : null}
                 </button>

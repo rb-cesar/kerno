@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useTransition } from "react";
 import { Plus, Trash2 } from "lucide-react";
@@ -9,7 +9,7 @@ function fmt(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
-/** GestÃ£o de cycles/sprints na sidebar: criar (nome + perÃ­odo) e excluir. */
+/** Gestão de cycles/sprints na sidebar: criar (nome + período) e excluir. */
 export function CycleManager({ workspaceId }: { workspaceId: string }) {
   const { mutate, refresh, cycles } = useKanban();
   const [open, setOpen] = useState(false);
@@ -66,7 +66,7 @@ export function CycleManager({ workspaceId }: { workspaceId: string }) {
             >
               <span className="flex-1 truncate">{c.name}</span>
               <span className="shrink-0 text-[11px] text-muted-foreground">
-                {fmt(c.startsAt)}â€“{fmt(c.endsAt)}
+                {fmt(c.startsAt)}–{fmt(c.endsAt)}
               </span>
               <button
                 onClick={() => remove(c.id)}
@@ -98,7 +98,7 @@ export function CycleManager({ workspaceId }: { workspaceId: string }) {
               value={startsAt}
               disabled={pending}
               onChange={setStartsAt}
-              placeholder="InÃ­cio"
+              placeholder="Início"
               className="h-8"
             />
             <DatePicker

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useCallback,
@@ -54,12 +54,12 @@ type Lane = { key: string; label: string; columns: ColumnDTO[] };
 const PRIORITY_LANES: { p: Priority; label: string }[] = [
   { p: "URGENT", label: "Urgente" },
   { p: "HIGH", label: "Alta" },
-  { p: "MEDIUM", label: "MÃ©dia" },
+  { p: "MEDIUM", label: "Média" },
   { p: "LOW", label: "Baixa" },
   { p: "NONE", label: "Sem prioridade" },
 ];
 
-/** Recorta as colunas por faixa, mantendo sÃ³ as faixas com algum card. */
+/** Recorta as colunas por faixa, mantendo só as faixas com algum card. */
 function buildLanes(
   groupBy: GroupBy,
   columns: ColumnDTO[],
@@ -75,7 +75,7 @@ function buildLanes(
     const lanes = members
       .map((m) => lane(`a:${m.id}`, m.name, (c) => c.assignedTo === m.id))
       .filter((l): l is Lane => l !== null);
-    const unassigned = lane("a:none", "Sem responsÃ¡vel", (c) => c.assignedTo == null);
+    const unassigned = lane("a:none", "Sem responsável", (c) => c.assignedTo == null);
     return unassigned ? [...lanes, unassigned] : lanes;
   }
   // priority
@@ -86,9 +86,9 @@ function buildLanes(
 
 /**
  * Move um card entre colunas operando na lista COMPLETA, mas posicionando-o
- * conforme o Ã­ndice VISÃVEL (do DnD, que enxerga sÃ³ os cards filtrados). Isso
- * permite arrastar mesmo com filtros ativos: a remoÃ§Ã£o Ã© por id e a inserÃ§Ã£o Ã©
- * "antes do card visÃ­vel que estÃ¡ na posiÃ§Ã£o de destino" (ou no fim).
+ * conforme o índice VISÍVEL (do DnD, que enxerga só os cards filtrados). Isso
+ * permite arrastar mesmo com filtros ativos: a remoção é por id e a inserção é
+ * "antes do card visível que está na posição de destino" (ou no fim).
  */
 function moveCardByVisibleIndex(
   columns: ColumnDTO[],
@@ -106,8 +106,8 @@ function moveCardByVisibleIndex(
   if (!moved) return null;
   moved.columnId = to.id;
 
-  // `to` e `from` sÃ£o o mesmo objeto quando a coluna Ã© a mesma (o splice acima jÃ¡
-  // removeu o card de `to.cards`). visibleDest reflete o estado pÃ³s-remoÃ§Ã£o.
+  // `to` e `from` são o mesmo objeto quando a coluna é a mesma (o splice acima já
+  // removeu o card de `to.cards`). visibleDest reflete o estado pós-remoção.
   const visibleDest = to.cards.filter(isVisible);
   const anchor = visibleDest[args.destVisibleIndex];
   if (anchor) {
@@ -234,8 +234,8 @@ export function KanbanBoard({
     if (fresh) setData(fresh);
   }, [fetchSnapshot, initial.id]);
 
-  // MudanÃ§a remota: alÃ©m de refazer o snapshot, bump `remoteRev` p/ o painel da
-  // tarefa aberta recarregar seu detalhe (checklists/comentÃ¡rios/atividade).
+  // Mudança remota: além de refazer o snapshot, bump `remoteRev` p/ o painel da
+  // tarefa aberta recarregar seu detalhe (checklists/comentários/atividade).
   const [remoteRev, setRemoteRev] = useState(0);
   const onRemoteChange = useCallback(() => {
     setRemoteRev((r) => r + 1);
@@ -255,7 +255,7 @@ export function KanbanBoard({
       return;
     }
 
-    // Reordenar colunas (arrastar pela alÃ§a do cabeÃ§alho).
+    // Reordenar colunas (arrastar pela alça do cabeçalho).
     if (result.type === "column") {
       const reordered = structuredClone(data) as BoardData;
       const [movedCol] = reordered.columns.splice(source.index, 1);
@@ -272,8 +272,8 @@ export function KanbanBoard({
       return;
     }
 
-    // Move operando na lista completa, posicionando pelo Ã­ndice visÃ­vel â€” funciona
-    // mesmo com filtros ativos (o DnD enxerga sÃ³ os cards visÃ­veis).
+    // Move operando na lista completa, posicionando pelo índice visível — funciona
+    // mesmo com filtros ativos (o DnD enxerga só os cards visíveis).
     const moved = moveCardByVisibleIndex(
       data.columns,
       {
@@ -372,7 +372,7 @@ export function KanbanBoard({
                 <button
                   type="button"
                   onClick={() => setView("metrics")}
-                  title="MÃ©tricas"
+                  title="Métricas"
                   className={cn(
                     "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
                     view === "metrics"
@@ -380,12 +380,12 @@ export function KanbanBoard({
                       : "text-muted-foreground",
                   )}
                 >
-                  <BarChart3 className="h-3.5 w-3.5" /> MÃ©tricas
+                  <BarChart3 className="h-3.5 w-3.5" /> Métricas
                 </button>
                 <button
                   type="button"
                   onClick={() => setView("stories")}
-                  title="HistÃ³rias"
+                  title="Histórias"
                   className={cn(
                     "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
                     view === "stories"
@@ -393,7 +393,7 @@ export function KanbanBoard({
                       : "text-muted-foreground",
                   )}
                 >
-                  <BookMarked className="h-3.5 w-3.5" /> HistÃ³rias
+                  <BookMarked className="h-3.5 w-3.5" /> Histórias
                 </button>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -408,7 +408,7 @@ export function KanbanBoard({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
-                    <SelectItem value="assignee">ResponsÃ¡vel</SelectItem>
+                    <SelectItem value="assignee">Responsável</SelectItem>
                     <SelectItem value="priority">Prioridade</SelectItem>
                   </SelectContent>
                 </Select>
