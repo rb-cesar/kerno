@@ -29,7 +29,7 @@ export function HubRail({
   const pathname = usePathname();
 
   return (
-    <nav className="flex w-16 shrink-0 flex-col items-center border-r bg-muted/30 py-3">
+    <nav className="flex w-16 shrink-0 flex-col items-center border-r border-sidebar-border bg-sidebar py-3 text-sidebar-foreground">
       <Link
         href="/app"
         title="Kerno — meus workspaces"
@@ -39,7 +39,7 @@ export function HubRail({
         K
       </Link>
 
-      <div className="my-3 h-px w-8 bg-border" />
+      <div className="my-3 h-px w-8 bg-sidebar-border" />
 
       <div className="flex flex-1 flex-col items-center gap-2">
         {HUBS.map((hub) => {
@@ -49,7 +49,7 @@ export function HubRail({
           return (
             <div key={hub.key} className="relative flex w-full justify-center">
               {active ? (
-                <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary" />
+                <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-accent-foreground" />
               ) : null}
               <Link
                 href={href}
@@ -58,8 +58,8 @@ export function HubRail({
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-lg transition-colors",
                   active
-                    ? "bg-secondary text-secondary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -73,7 +73,7 @@ export function HubRail({
           disabled
           title="Mais hubs em breve"
           aria-label="Adicionar hub (em breve)"
-          className="flex h-11 w-11 items-center justify-center rounded-lg border border-dashed text-muted-foreground/60"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-dashed border-sidebar-border text-sidebar-foreground/40"
         >
           <Plus className="h-5 w-5" />
         </button>

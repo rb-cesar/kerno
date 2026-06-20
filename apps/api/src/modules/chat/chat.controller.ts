@@ -18,9 +18,9 @@ export class ChatController {
   constructor(private readonly chat: ChatService) {}
 
   /** Carga inicial: canais + membros + mensagens do 1º canal. */
-  @Get("projects/:projectId")
-  forProject(@CurrentUser() user: RequestUser, @Param("projectId") projectId: string) {
-    return this.chat.chatForProject(user.id, projectId);
+  @Get("workspaces/:workspaceId")
+  forWorkspace(@CurrentUser() user: RequestUser, @Param("workspaceId") workspaceId: string) {
+    return this.chat.chatForWorkspace(user.id, workspaceId);
   }
 
   @Get("channels/:channelId/messages")

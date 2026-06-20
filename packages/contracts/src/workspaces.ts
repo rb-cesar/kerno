@@ -1,5 +1,8 @@
-// Contratos do domínio núcleo: workspace / projeto / membro.
+// Contratos do domínio núcleo: workspace / membro.
 // Pacote puro: sem Next, Prisma ou React. Consumível por qualquer app cliente.
+//
+// O workspace é o único nível de contexto (a camada Project foi removida): ele é
+// dono de boards, canais e membros.
 
 import type { MemberDTO } from "./common";
 
@@ -9,7 +12,7 @@ export interface WorkspaceListItem {
   id: string;
   name: string;
   slug: string;
-  projectCount: number;
+  memberCount: number;
 }
 
 export interface WorkspaceMemberDTO {
@@ -18,50 +21,24 @@ export interface WorkspaceMemberDTO {
   role: string;
 }
 
-export interface ProjectListItem {
-  id: string;
-  name: string;
-  description: string | null;
-}
-
-/** Tela de um workspace (projetos + membros). Inclui o papel do usuário atual. */
-export interface WorkspaceDetail {
+/** Tela de um workspace (membros + papel do usuário atual). */
+export interface WorkspaceView {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
   myRole: string;
-  projects: ProjectListItem[];
   members: WorkspaceMemberDTO[];
 }
 
-export interface ProjectMemberDTO {
-  id: string;
-  name: string;
-  role: string;
-}
-
-/** Snapshot do projeto consumido pelo layout (gate de acesso + cabeçalho). */
-export interface ProjectView {
-  id: string;
-  name: string;
-  projectMembers: ProjectMemberDTO[];
-  workspaceMembers: MemberDTO[];
-  myWorkspaceRole: string | null;
-  myProjectRole: string | null;
-}
-
 export interface CreateWorkspaceInput {
-  name: string;
-}
-
-export interface CreateProjectInput {
   name: string;
   description?: string | null;
 }
 
 export interface InviteMemberInput {
   email: string;
-  role: "ADMIN" | "MEMBER";
+  role: "ADMIN" | "MEMBER" | "VIEWER";
 }
 
 /** Envelope genérico de resultado de ação (mutações com erro de negócio). */

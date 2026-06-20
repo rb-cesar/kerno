@@ -18,7 +18,7 @@ import {
   assertMember,
   guardChannel,
   guardConversation,
-  guardProject,
+  guardWorkspace,
 } from "./chat-permissions";
 
 function errorMessage(error: unknown): string {
@@ -28,14 +28,14 @@ function errorMessage(error: unknown): string {
 @Injectable()
 export class ChatService {
   /** Carga inicial da tela de chat (antes na page.tsx). */
-  async chatForProject(userId: string, projectId: string): Promise<ChatData> {
-    await assertMember(userId, projectId);
+  async chatForWorkspace(userId: string, workspaceId: string): Promise<ChatData> {
+    await assertMember(userId, workspaceId);
 
-    const [channels, conversations, projectUsers] = await Promise.all([
-      chat.listChannels(projectId),
-      chat.listConversations(projectId, userId),
-      prisma.projectUser.findMany({
-        where: { projectId },
+    const [channels, conversations, workspaceUsers] = await Promise.all([
+      chat.listChannels(workspaceId),
+      chat.listConversations(workspaceId, userId),
+      prisma.workspaceUser.findMany({
+        where: { workspaceId },
         include: { user: { select: { id: true, name: true } } },
       }),
     ]);
@@ -46,10 +46,10 @@ export class ChatService {
       : [];
 
     return {
-      projectId,
+      workspaceId,
       channels,
       conversations,
-      members: projectUsers.map((m) => ({ id: m.user.id, name: m.user.name })),
+      members: workspaceUsers.map((m) => ({ id: m.user.id, name: m.user.name })),
       initialChannelId,
       initialMessages,
     };
@@ -96,10 +96,10 @@ export class ChatService {
 
   async createChannel(userId: string, input: CreateChannelInput): Promise<ChatResult<ChannelDTO>> {
     try {
-      await guardProject(userId, input.projectId);
+      await guardWorkspace(userId, input.workspaceId);
       const name = input.name.trim().toLowerCase().replace(/\s+/g, "-");
       if (!name) return { ok: false, error: "Nome inválido" };
-      const channel = await chat.createChannel(input.projectId, name);
+      const channel = await chat.createChannel(input.workspaceId, name);
       return { ok: true, data: channel };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -108,17 +108,17 @@ export class ChatService {
 
   // ── Mensagens diretas (DM) ────────────────────────────────────────────────
 
-  /** Abre/recupera a conversa privada com outro membro do projeto. */
+  /** Abre/recupera a conversa privada com outro membro do workspace. */
   async openDirect(
     userId: string,
     input: OpenDirectInput,
   ): Promise<ChatResult<DirectConversationDTO>> {
     try {
-      await guardProject(userId, input.projectId);
+      await guardWorkspace(userId, input.workspaceId);
       if (input.userId === userId) return { ok: false, error: "Conversa inválida" };
-      // O destinatário também precisa ser membro do projeto.
-      await assertMember(input.userId, input.projectId);
-      const conversation = await chat.openDirect(input.projectId, userId, input.userId);
+      // O destinatário também precisa ser membro do workspace.
+      await assertMember(input.userId, input.workspaceId);
+      const conversation = await chat.openDirect(input.workspaceId, userId, input.userId);
       return { ok: true, data: conversation };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };

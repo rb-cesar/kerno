@@ -28,7 +28,7 @@ export interface CycleDTO {
 /** User Story (épico) à qual tarefas podem ser vinculadas. */
 export interface StoryDTO {
   id: string;
-  number: number; // exibido como `${projectKey}-S${number}`
+  number: number; // exibido como `${workspaceKey}-S${number}`
   title: string;
   description: string | null;
   status: StatusCategory;
@@ -42,7 +42,7 @@ export interface StoryDTO {
 
 export interface CardDTO {
   id: string;
-  number: number; // exibido como `${projectKey}-${number}`
+  number: number; // exibido como `${workspaceKey}-${number}`
   title: string;
   description: string | null;
   columnId: string;
@@ -72,8 +72,8 @@ export interface ColumnDTO {
 export interface BoardData {
   id: string;
   name: string;
-  projectId: string;
-  projectKey: string; // ex.: "KERN" → cards exibidos como KERN-123
+  workspaceId: string;
+  workspaceKey: string; // ex.: "KERN" → cards exibidos como KERN-123
   columns: ColumnDTO[];
   labels: LabelDTO[];
   cycles: CycleDTO[];
@@ -182,7 +182,7 @@ export type KanbanCommand =
   | { type: "deleteLabel"; labelId: string }
   | {
       type: "createCycle";
-      projectId: string;
+      workspaceId: string;
       name: string;
       startsAt: string;
       endsAt: string;

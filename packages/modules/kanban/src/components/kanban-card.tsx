@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { type HTMLAttributes } from "react";
 import { Draggable } from "@hello-pangea/dnd";
@@ -8,7 +8,7 @@ import type { CardDTO } from "../types";
 import { useKanban } from "./kanban-context";
 import { PRIORITY_META, formatDue, initials, isOverdue } from "./meta";
 
-/** Tile do card no board. O detalhe/edição vive no CardDialog (singleton do board). */
+/** Tile do card no board. O detalhe/ediÃ§Ã£o vive no CardDialog (singleton do board). */
 export function KanbanCard({
   card,
   index,
@@ -18,9 +18,9 @@ export function KanbanCard({
   index: number;
   dragDisabled?: boolean;
 }) {
-  const { projectKey, setOpenCardId } = useKanban();
+  const { workspaceKey, setOpenCardId } = useKanban();
 
-  const cardKey = `${projectKey}-${card.number}`;
+  const cardKey = `${workspaceKey}-${card.number}`;
   const prio = card.priority !== "NONE" ? PRIORITY_META[card.priority] : null;
   const overdue = card.dueDate ? isOverdue(card.dueDate) : false;
 
@@ -54,11 +54,11 @@ export function KanbanCard({
             {card.storyId ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex items-center gap-0.5 text-primary" aria-label="História vinculada">
+                  <span className="flex items-center gap-0.5 text-primary" aria-label="HistÃ³ria vinculada">
                     <BookMarked className="h-3 w-3" />
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>{card.storyTitle ?? "História"}</TooltipContent>
+                <TooltipContent>{card.storyTitle ?? "HistÃ³ria"}</TooltipContent>
               </Tooltip>
             ) : null}
           </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
@@ -10,9 +10,9 @@ type Item =
   | { kind: "action"; id: string; label: string; run: () => void };
 
 /**
- * Paleta de comandos (Ctrl/Cmd+K) estilo Linear: busca cards por chave/título e
- * oferece ações rápidas. Selecionar um card abre seu detalhe; navegação por
- * teclado (↑/↓/Enter), Esc fecha.
+ * Paleta de comandos (Ctrl/Cmd+K) estilo Linear: busca cards por chave/tÃ­tulo e
+ * oferece aÃ§Ãµes rÃ¡pidas. Selecionar um card abre seu detalhe; navegaÃ§Ã£o por
+ * teclado (â†‘/â†“/Enter), Esc fecha.
  */
 export function CommandPalette({
   open,
@@ -44,14 +44,14 @@ export function CommandPalette({
       items.push({ kind: "action", id: "clear", label: "Limpar filtros", run: onClearFilters });
     }
     for (const { card, columnName } of cards) {
-      const key = `${data.projectKey}-${card.number}`;
+      const key = `${data.workspaceKey}-${card.number}`;
       if (q === "" || `${key} ${card.title}`.toLowerCase().includes(q)) {
         items.push({ kind: "card", id: card.id, label: `${key}  ${card.title}`, sub: columnName });
       }
       if (items.length >= 50) break;
     }
     return items;
-  }, [query, cards, data.projectKey, filtersActive, onClearFilters]);
+  }, [query, cards, data.workspaceKey, filtersActive, onClearFilters]);
 
   useEffect(() => {
     setIndex(0);
@@ -98,7 +98,7 @@ export function CommandPalette({
                 choose(results[index]);
               }
             }}
-            placeholder="Buscar card ou ação…"
+            placeholder="Buscar card ou aÃ§Ã£oâ€¦"
             className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>

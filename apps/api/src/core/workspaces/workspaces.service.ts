@@ -1,25 +1,19 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { prisma } from "@kerno/db";
 import {
-  addProjectMember,
-  getProjectMembership,
-  getProjectWithMembers,
-  removeProjectMember,
-  type ProjectRole,
+  addWorkspaceMember,
+  getWorkspaceWithMembers,
+  removeWorkspaceMember,
+  type WorkspaceRole,
 } from "@kerno/core/workspaces";
 import type {
   ActionResult,
-  CreateProjectInput,
+  CreateWorkspaceInput,
   InviteMemberInput,
-  ProjectView,
-  WorkspaceDetail,
   WorkspaceListItem,
+  WorkspaceView,
 } from "@kerno/contracts/workspaces";
-import {
-  requireProjectManager,
-  requireWorkspaceAdmin,
-  requireWorkspaceMember,
-} from "./workspaces-permissions";
+import { requireWorkspaceAdmin } from "./workspaces-permissions";
 
 function slugify(input: string): string {
   const base = input
@@ -37,9 +31,9 @@ function errorMessage(error: unknown): string {
 }
 
 /** Chave curta p/ os cards (ex.: "Kerno App" → "KERN"). Sem garantia de unicidade. */
-function projectKeyFromName(name: string): string {
+function workspaceKeyFromName(name: string): string {
   const letters = name.normalize("NFD").replace(/[^a-zA-Z]/g, "").toUpperCase();
-  return letters.slice(0, 4) || "PROJ";
+  return letters.slice(0, 4) || "WORK";
 }
 
 @Injectable()
@@ -50,62 +44,45 @@ export class WorkspacesService {
     const workspaces = await prisma.workspace.findMany({
       where: { users: { some: { userId } } },
       orderBy: { createdAt: "asc" },
-      include: { _count: { select: { projects: true } } },
+      include: { _count: { select: { users: true } } },
     });
     return workspaces.map((w) => ({
       id: w.id,
       name: w.name,
       slug: w.slug,
-      projectCount: w._count.projects,
+      memberCount: w._count.users,
     }));
   }
 
-  async getBySlug(userId: string, slug: string): Promise<WorkspaceDetail> {
-    const workspace = await prisma.workspace.findUnique({
+  async getBySlug(userId: string, slug: string): Promise<WorkspaceView> {
+    const found = await prisma.workspace.findUnique({
       where: { slug },
-      include: { users: { include: { user: true }, orderBy: { role: "asc" } } },
+      select: { id: true },
     });
-    if (!workspace) throw new NotFoundException("Workspace não encontrado");
+    if (!found) throw new NotFoundException("Workspace não encontrado");
 
-    const myMembership = workspace.users.find((m) => m.userId === userId);
-    if (!myMembership) throw new ForbiddenException("Você não tem acesso a este workspace");
-
-    const projects = await prisma.project.findMany({
-      where: { workspaceId: workspace.id, users: { some: { userId } } },
-      orderBy: { createdAt: "asc" },
-    });
+    const view = await getWorkspaceWithMembers(found.id, userId);
+    if (!view) throw new NotFoundException("Workspace não encontrado");
+    if (!view.myRole) throw new ForbiddenException("Você não tem acesso a este workspace");
 
     return {
-      id: workspace.id,
-      name: workspace.name,
-      slug: workspace.slug,
-      myRole: myMembership.role,
-      projects: projects.map((p) => ({ id: p.id, name: p.name, description: p.description })),
-      members: workspace.users.map((m) => ({ id: m.user.id, name: m.user.name, role: m.role })),
-    };
-  }
-
-  async getProjectView(userId: string, projectId: string): Promise<ProjectView> {
-    const membership = await getProjectMembership(userId, projectId);
-    if (!membership) throw new NotFoundException("Projeto não encontrado");
-
-    const project = await getProjectWithMembers(projectId, userId);
-    if (!project) throw new NotFoundException("Projeto não encontrado");
-
-    return {
-      id: project.id,
-      name: project.name,
-      projectMembers: project.projectMembers,
-      workspaceMembers: project.workspaceMembers,
-      myWorkspaceRole: project.myWorkspaceRole,
-      myProjectRole: membership.role,
+      id: view.id,
+      name: view.name,
+      slug: view.slug,
+      description: view.description,
+      myRole: view.myRole,
+      members: view.members,
     };
   }
 
   // ---------- mutações ----------
 
-  async createWorkspace(userId: string, name: string): Promise<{ slug: string }> {
-    const base = slugify(name);
+  /**
+   * Cria o workspace já com seu board padrão e canal #geral (antes a criação do
+   * projeto fazia isso; ao remover a camada Project, virou criação do workspace).
+   */
+  async createWorkspace(userId: string, input: CreateWorkspaceInput): Promise<{ slug: string }> {
+    const base = slugify(input.name);
     let slug = base;
     let n = 1;
     while (await prisma.workspace.findUnique({ where: { slug } })) {
@@ -113,26 +90,12 @@ export class WorkspacesService {
     }
 
     const workspace = await prisma.workspace.create({
-      data: { name, slug, users: { create: { userId, role: "ADMIN" } } },
-    });
-    return { slug: workspace.slug };
-  }
-
-  async createProject(
-    userId: string,
-    workspaceId: string,
-    input: CreateProjectInput,
-  ): Promise<{ projectId: string }> {
-    await requireWorkspaceMember(userId, workspaceId);
-
-    const description = input.description?.trim() || null;
-    const project = await prisma.project.create({
       data: {
         name: input.name,
-        description,
-        workspaceId,
-        key: projectKeyFromName(input.name),
-        users: { create: { userId, role: "LEAD" } },
+        slug,
+        description: input.description?.trim() || null,
+        key: workspaceKeyFromName(input.name),
+        users: { create: { userId, role: "ADMIN" } },
         boards: {
           create: {
             name: "Principal",
@@ -151,7 +114,7 @@ export class WorkspacesService {
         channels: { create: { name: "geral", isDefault: true } },
       },
     });
-    return { projectId: project.id };
+    return { slug: workspace.slug };
   }
 
   async invite(userId: string, workspaceId: string, input: InviteMemberInput): Promise<ActionResult> {
@@ -171,33 +134,35 @@ export class WorkspacesService {
       });
       if (already) return { ok: false, error: "Este usuário já é membro do workspace" };
 
-      await prisma.workspaceUser.create({
-        data: { userId: target.id, workspaceId, role: input.role },
-      });
+      await addWorkspaceMember({ workspaceId, userId: target.id, role: input.role });
       return { ok: true, message: `${target.name} adicionado ao workspace` };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
     }
   }
 
-  async addMember(
+  async updateMember(
     userId: string,
-    projectId: string,
-    input: { userId: string; role?: ProjectRole },
+    workspaceId: string,
+    input: { userId: string; role?: WorkspaceRole },
   ): Promise<ActionResult> {
     try {
-      await requireProjectManager(userId, projectId);
-      await addProjectMember({ projectId, userId: input.userId, role: input.role });
+      await requireWorkspaceAdmin(userId, workspaceId);
+      await addWorkspaceMember({ workspaceId, userId: input.userId, role: input.role });
       return { ok: true };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
     }
   }
 
-  async removeMember(userId: string, projectId: string, targetUserId: string): Promise<ActionResult> {
+  async removeMember(
+    userId: string,
+    workspaceId: string,
+    targetUserId: string,
+  ): Promise<ActionResult> {
     try {
-      await requireProjectManager(userId, projectId);
-      await removeProjectMember({ projectId, userId: targetUserId });
+      await requireWorkspaceAdmin(userId, workspaceId);
+      await removeWorkspaceMember({ workspaceId, userId: targetUserId });
       return { ok: true };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };

@@ -15,14 +15,9 @@ export const createWorkspaceSchema = z.object({
   name: z.string().min(2, "Nome muito curto").max(60),
 });
 
-export const createProjectSchema = z.object({
-  name: z.string().min(2, "Nome muito curto").max(80),
-  description: z.string().max(500).optional().or(z.literal("")),
-});
-
 export const inviteMemberSchema = z.object({
   email: z.string().email("E-mail inválido"),
-  role: z.enum(["ADMIN", "MEMBER"]),
+  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { AtSign, Hash, Plus } from "lucide-react";
@@ -11,7 +11,7 @@ export function ChannelSidebar({
   conversations,
   activeId,
   unread,
-  projectId,
+  workspaceId,
   onSelectChannel,
   onSelectConversation,
   onChannelCreated,
@@ -21,7 +21,7 @@ export function ChannelSidebar({
   conversations: DirectConversationDTO[];
   activeId: string | null;
   unread: Set<string>;
-  projectId: string;
+  workspaceId: string;
   onSelectChannel: (channelId: string) => void;
   onSelectConversation: (conversationId: string) => void;
   onChannelCreated: (channel: ChannelDTO) => void;
@@ -39,7 +39,7 @@ export function ChannelSidebar({
       return;
     }
     startTransition(async () => {
-      const res = await createChannel({ projectId, name: value });
+      const res = await createChannel({ workspaceId, name: value });
       if (res.ok) {
         setName("");
         setAdding(false);
@@ -48,7 +48,7 @@ export function ChannelSidebar({
     });
   };
 
-  // Membros que ainda não têm uma conversa aberta (para a lista de "iniciar DM").
+  // Membros que ainda nÃ£o tÃªm uma conversa aberta (para a lista de "iniciar DM").
   const conversationUserIds = new Set(
     conversations.flatMap((c) => c.participants.map((p) => p.id)),
   );
@@ -171,7 +171,7 @@ export function ChannelSidebar({
                   />
                   <span className={cn("flex-1 truncate", !online && "text-muted-foreground")}>
                     {m.name}
-                    {self ? " (você)" : ""}
+                    {self ? " (vocÃª)" : ""}
                   </span>
                   {existing ? <AtSign className="h-3 w-3 shrink-0 text-muted-foreground" /> : null}
                 </button>

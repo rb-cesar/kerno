@@ -1,4 +1,4 @@
-// Núcleo — identidade + contexto (workspace / projeto / membership).
+// Núcleo — identidade + contexto (workspace / membership).
 // generator + datasource vivem aqui (precisam estar em um único arquivo).
 
 generator client {
@@ -21,21 +21,32 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   workspaces          WorkspaceUser[]
-  projectUsers        ProjectUser[]
   messages            Message[]
   directConversations DirectParticipant[]
   cards               Card[]
 }
 
+// Workspace é o único nível de contexto: dono de boards, canais, cycles, DMs e
+// eventos. (Antes havia Workspace→Project; a camada Project foi removida e o
+// projeto foi promovido a workspace.)
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  // Identidade dos cards: exibidos como `key`-`number` (ex.: KERN-123). O contador
+  // é incrementado transacionalmente ao criar cada card (numeração por workspace).
+  key         String   @default("")
+  cardCounter Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  projects Project[]
-  users    WorkspaceUser[]
+  users               WorkspaceUser[]
+  boards              Board[]
+  cycles              Cycle[]
+  channels            Channel[]
+  directConversations DirectConversation[]
+  events              Event[]
 }
 
 model WorkspaceUser {
@@ -50,48 +61,8 @@ model WorkspaceUser {
   @@unique([userId, workspaceId])
 }
 
-model Project {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  workspaceId String
-  // Identidade dos cards: exibidos como `key`-`number` (ex.: KERN-123). O contador
-  // é incrementado transacionalmente ao criar cada card (numeração por projeto).
-  key         String   @default("")
-  cardCounter Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  users               ProjectUser[]
-  boards              Board[]
-  cycles              Cycle[]
-  channels            Channel[]
-  directConversations DirectConversation[]
-  events              Event[]
-
-  @@index([workspaceId])
-}
-
-model ProjectUser {
-  id        String      @id @default(cuid())
-  userId    String
-  projectId String
-  role      ProjectRole @default(MEMBER)
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, projectId])
-}
-
 enum WorkspaceRole {
   ADMIN
-  MEMBER
-}
-
-enum ProjectRole {
-  LEAD
   MEMBER
   VIEWER
 }

@@ -26,7 +26,7 @@ export default async function WorkspacesPage() {
                 <Card className="transition-colors hover:bg-accent">
                   <CardHeader>
                     <CardTitle>{ws.name}</CardTitle>
-                    <CardDescription>{ws.projectCount} projeto(s)</CardDescription>
+                    <CardDescription>{ws.memberCount} membro(s)</CardDescription>
                   </CardHeader>
                 </Card>
               </Link>

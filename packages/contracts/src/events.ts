@@ -112,7 +112,7 @@ export interface KernoEventMap {
 }
 
 export interface KernoEventBase {
-  projectId: string;
+  workspaceId: string;
   userId?: string;
   at: string; // ISO timestamp
 }

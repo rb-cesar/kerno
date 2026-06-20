@@ -20,12 +20,12 @@ export function useSocket() {
 }
 
 export function SocketProvider({
-  projectId,
+  workspaceId,
   url,
   token,
   children,
 }: {
-  projectId: string;
+  workspaceId: string;
   /** Origem da API (sem o /api), onde o Socket.io vive. */
   url: string;
   /** JWT da sessão (BFF) — usado no handshake. */
@@ -45,17 +45,17 @@ export function SocketProvider({
     s.on("connect", () => {
       setConnected(true);
       // userId agora vem do token, validado no servidor.
-      s.emit("project:join", { projectId });
+      s.emit("workspace:join", { workspaceId });
     });
     s.on("disconnect", () => setConnected(false));
     s.on("presence:update", (ids: string[]) => setOnlineUserIds(ids));
 
     return () => {
-      s.emit("project:leave", { projectId });
+      s.emit("workspace:leave", { workspaceId });
       s.disconnect();
       setSocket(null);
     };
-  }, [projectId, url, token]);
+  }, [workspaceId, url, token]);
 
   return (
     <SocketContext.Provider value={{ socket, connected, onlineUserIds }}>

@@ -44,7 +44,7 @@ export async function chatEditMessage(input: {
 }
 
 export async function chatCreateChannel(input: {
-  projectId: string;
+  workspaceId: string;
   name: string;
 }): Promise<ChatResult<ChannelDTO>> {
   return apiFetch<ChatResult<ChannelDTO>>(`/chat/channels`, {
@@ -56,7 +56,7 @@ export async function chatCreateChannel(input: {
 // ── Mensagens diretas (DM) ───────────────────────────────────────────────────
 
 export async function chatOpenDirect(input: {
-  projectId: string;
+  workspaceId: string;
   userId: string;
 }): Promise<ChatResult<DirectConversationDTO>> {
   return apiFetch<ChatResult<DirectConversationDTO>>(`/chat/direct`, {

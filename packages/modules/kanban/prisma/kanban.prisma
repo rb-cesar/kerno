@@ -19,19 +19,19 @@ enum Priority {
 }
 
 model Board {
-  id        String   @id @default(cuid())
-  name      String
-  projectId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  columns Column[]
-  cards   Card[]
-  labels  Label[]
-  stories Story[]
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  columns   Column[]
+  cards     Card[]
+  labels    Label[]
+  stories   Story[]
 
-  @@index([projectId])
+  @@index([workspaceId])
 }
 
 // Uma coluna do board é também o "estado do fluxo" do card (modelo Linear: o
@@ -52,19 +52,19 @@ model Column {
 }
 
 // Cycle/sprint: iteração com prazo, à qual cards podem ser atribuídos (estilo
-// Linear). Pertence ao projeto (reusável se houver múltiplos boards no futuro).
+// Linear). Pertence ao workspace (reusável se houver múltiplos boards no futuro).
 model Cycle {
-  id        String   @id @default(cuid())
-  projectId String
-  name      String
-  startsAt  DateTime
-  endsAt    DateTime
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  startsAt    DateTime
+  endsAt      DateTime
+  createdAt   DateTime @default(now())
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  cards   Card[]
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  cards     Card[]
 
-  @@index([projectId])
+  @@index([workspaceId])
 }
 
 model Card {

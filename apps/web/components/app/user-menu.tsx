@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { useState } from "react";
+import { LogOut, Palette } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@kerno/ui";
 import { signOutAction } from "@/lib/auth-actions";
+import { ThemePicker } from "@/components/app/theme-picker";
 
 function initialsOf(name: string): string {
   return name
@@ -33,30 +35,47 @@ export function UserMenu({
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
 }) {
+  const [themeOpen, setThemeOpen] = useState(false);
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="rounded-full outline-none ring-ring focus-visible:ring-2">
-          <Avatar>
-            <AvatarFallback>{initialsOf(name)}</AvatarFallback>
-          </Avatar>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side={side} align={align}>
-        <DropdownMenuLabel>
-          <div>{name}</div>
-          <div className="text-xs font-normal text-muted-foreground">{email}</div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <form action={signOutAction}>
-          <DropdownMenuItem asChild>
-            <button type="submit" className="w-full">
-              <LogOut />
-              Sair
-            </button>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="rounded-full outline-none ring-ring focus-visible:ring-2">
+            <Avatar>
+              <AvatarFallback>{initialsOf(name)}</AvatarFallback>
+            </Avatar>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side={side} align={align}>
+          <DropdownMenuLabel>
+            <div>{name}</div>
+            <div className="text-xs font-normal text-muted-foreground">{email}</div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            // preventDefault: abre o dialog sem que o fechamento do menu o cancele.
+            onSelect={(e) => {
+              e.preventDefault();
+              setThemeOpen(true);
+            }}
+          >
+            <Palette />
+            Aparência
           </DropdownMenuItem>
-        </form>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuSeparator />
+          <form action={signOutAction}>
+            <DropdownMenuItem asChild>
+              <button type="submit" className="w-full">
+                <LogOut />
+                Sair
+              </button>
+            </DropdownMenuItem>
+          </form>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ThemePicker open={themeOpen} onOpenChange={setThemeOpen} />
+    </>
   );
 }

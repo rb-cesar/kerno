@@ -3,5 +3,5 @@
 // API pública do módulo; nada de fora importa os arquivos internos.
 
 export * from "./permissions";
-export * from "./project-service";
+export * from "./workspace-service";
 export * from "./member-service";

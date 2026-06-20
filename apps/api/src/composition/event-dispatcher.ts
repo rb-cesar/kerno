@@ -8,7 +8,7 @@ let initialized = false;
 /**
  * Liga o event bus in-process ao mundo externo:
  *  1) persiste cada evento na tabela `Event` (auditoria);
- *  2) repassa o evento via Socket.io — para a room do projeto, ou, no caso de
+ *  2) repassa o evento via Socket.io — para a room do workspace, ou, no caso de
  *     mensagens diretas (`dm:sent`), só para as rooms pessoais dos participantes.
  *
  * Roda no processo da API (onde os services publicam os eventos).
@@ -23,7 +23,7 @@ export function initEventDispatcher(io: IOServer): void {
         data: {
           type: event.type,
           payload: event.payload as unknown as Prisma.InputJsonValue,
-          projectId: event.projectId,
+          workspaceId: event.workspaceId,
           userId: event.userId ?? null,
         },
       });
@@ -31,7 +31,7 @@ export function initEventDispatcher(io: IOServer): void {
       console.error("[events] falha ao persistir evento", event.type, err);
     }
 
-    // DM é privada: entrega só aos participantes, não à room do projeto inteiro.
+    // DM é privada: entrega só aos participantes, não à room do workspace inteiro.
     if (event.type === "dm:sent") {
       for (const participantId of event.payload.participantIds) {
         io.to(`user:${participantId}`).emit("kerno:event", event);
@@ -50,7 +50,7 @@ export function initEventDispatcher(io: IOServer): void {
       return;
     }
 
-    io.to(`project:${event.projectId}`).emit("kerno:event", event);
+    io.to(`workspace:${event.workspaceId}`).emit("kerno:event", event);
   });
 
   console.log("▸ Event dispatcher inicializado");

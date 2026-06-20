@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/index";
 
-// Seed idempotente: usuários/workspace via upsert; o conteúdo do projeto só é
+// Seed idempotente: usuários/workspace via upsert; o conteúdo do board só é
 // criado se ainda não existir, evitando duplicação a cada execução.
 async function main() {
   const passwordHash = await bcrypt.hash("password123", 10);
@@ -20,7 +20,15 @@ async function main() {
   const workspace = await prisma.workspace.upsert({
     where: { slug: "kerno-demo" },
     update: {},
-    create: { name: "Kerno Demo", slug: "kerno-demo" },
+    create: {
+      name: "Onboarding do Kerno",
+      slug: "kerno-demo",
+      description: "Workspace de exemplo gerado pelo seed.",
+      key: "ONB",
+      channels: {
+        create: [{ name: "geral", isDefault: true }, { name: "releases" }],
+      },
+    },
   });
 
   await prisma.workspaceUser.upsert({
@@ -34,39 +42,20 @@ async function main() {
     create: { userId: bruno.id, workspaceId: workspace.id, role: "MEMBER" },
   });
 
-  const projectName = "Onboarding do Kerno";
-  const existing = await prisma.project.findFirst({
-    where: { workspaceId: workspace.id, name: projectName },
+  const existingBoard = await prisma.board.findFirst({
+    where: { workspaceId: workspace.id },
   });
-  if (existing) {
-    console.log("[seed] projeto demo já existe — nada a fazer.");
+  if (existingBoard) {
+    console.log("[seed] board demo já existe — nada a fazer.");
     console.log("[seed] login: ana@kerno.dev / password123");
     await prisma.$disconnect();
     return;
   }
 
-  const project = await prisma.project.create({
-    data: {
-      name: projectName,
-      description: "Projeto de exemplo gerado pelo seed.",
-      workspaceId: workspace.id,
-      key: "ONB",
-      users: {
-        create: [
-          { userId: ana.id, role: "LEAD" },
-          { userId: bruno.id, role: "MEMBER" },
-        ],
-      },
-      channels: {
-        create: [{ name: "geral", isDefault: true }, { name: "releases" }],
-      },
-    },
-  });
-
   const board = await prisma.board.create({
     data: {
       name: "Roadmap",
-      projectId: project.id,
+      workspaceId: workspace.id,
       columns: {
         create: [
           { name: "Backlog", order: 0, category: "BACKLOG" },
@@ -128,14 +117,14 @@ async function main() {
   await card(doing, 0, "Corrigir drag-and-drop em telas pequenas", ana.id, [bug.id]);
   await card(done, 0, "Setup do monorepo", bruno.id, [feature.id]);
 
-  // Sincroniza o contador de cards do projeto com os cards já criados.
-  await prisma.project.update({
-    where: { id: project.id },
+  // Sincroniza o contador de cards do workspace com os cards já criados.
+  await prisma.workspace.update({
+    where: { id: workspace.id },
     data: { cardCounter: cardNumber },
   });
 
   const general = await prisma.channel.findFirstOrThrow({
-    where: { projectId: project.id, isDefault: true },
+    where: { workspaceId: workspace.id, isDefault: true },
   });
   await prisma.message.createMany({
     data: [
@@ -144,7 +133,7 @@ async function main() {
     ],
   });
 
-  console.log("[seed] criado workspace 'Kerno Demo' + projeto 'Onboarding do Kerno'.");
+  console.log("[seed] criado workspace 'Onboarding do Kerno' com board + canais.");
   console.log("[seed] login: ana@kerno.dev / password123  (e bruno@kerno.dev / password123)");
   await prisma.$disconnect();
 }

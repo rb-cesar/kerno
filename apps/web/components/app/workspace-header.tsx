@@ -3,43 +3,38 @@
 import Link from "next/link";
 import { cn } from "@kerno/ui";
 import { useSocket } from "@/components/providers/socket-provider";
-import { ProjectMembersDialog } from "@/components/app/project-members-dialog";
+import { WorkspaceMembersDialog } from "@/components/app/workspace-members-dialog";
 
-type ProjectMember = { id: string; name: string; role: string };
-type WorkspaceMember = { id: string; name: string };
+type Member = { id: string; name: string; role: string };
 
-export function ProjectHeader({
-  projectName,
-  workspaceHref,
-  projectId,
+export function WorkspaceHeader({
+  workspaceName,
+  workspaceId,
   slug,
   isManager,
-  projectMembers,
-  workspaceMembers,
+  members,
 }: {
-  projectName: string;
-  workspaceHref: string;
-  projectId: string;
+  workspaceName: string;
+  workspaceId: string;
   slug: string;
   isManager: boolean;
-  projectMembers: ProjectMember[];
-  workspaceMembers: WorkspaceMember[];
+  members: Member[];
 }) {
   const { connected, onlineUserIds } = useSocket();
 
-  const online = projectMembers.filter((m) => onlineUserIds.includes(m.id));
+  const online = members.filter((m) => onlineUserIds.includes(m.id));
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4">
       <div className="flex items-center gap-3">
         <Link
-          href={workspaceHref}
-          title="Voltar ao workspace"
+          href="/app"
+          title="Voltar aos workspaces"
           className="text-sm text-muted-foreground hover:underline"
         >
           ←
         </Link>
-        <h1 className="font-semibold">{projectName}</h1>
+        <h1 className="font-semibold">{workspaceName}</h1>
       </div>
 
       <div className="flex items-center gap-3">
@@ -53,12 +48,11 @@ export function ProjectHeader({
           />
           {online.length > 0 ? `${online.length} online` : connected ? "Só você" : "Conectando…"}
         </div>
-        <ProjectMembersDialog
-          projectId={projectId}
+        <WorkspaceMembersDialog
+          workspaceId={workspaceId}
           slug={slug}
           isManager={isManager}
-          projectMembers={projectMembers}
-          workspaceMembers={workspaceMembers}
+          members={members}
         />
       </div>
     </header>

@@ -36,7 +36,7 @@ export interface MessageDTO {
   reactions: ReactionDTO[];
 }
 
-/** Conversa privada (DM) entre membros de um mesmo projeto. */
+/** Conversa privada (DM) entre membros de um mesmo workspace. */
 export interface DirectConversationDTO {
   id: string;
   /** Outros participantes além do usuário atual (no 1:1, um único membro). */
@@ -45,7 +45,7 @@ export interface DirectConversationDTO {
 }
 
 export interface ChatData {
-  projectId: string;
+  workspaceId: string;
   channels: ChannelDTO[];
   conversations: DirectConversationDTO[];
   members: MemberDTO[];
@@ -68,13 +68,13 @@ export interface EditMessageInput {
 }
 
 export interface CreateChannelInput {
-  projectId: string;
+  workspaceId: string;
   name: string;
 }
 
-/** Abre (ou recupera) a conversa privada com outro membro do projeto. */
+/** Abre (ou recupera) a conversa privada com outro membro do workspace. */
 export interface OpenDirectInput {
-  projectId: string;
+  workspaceId: string;
   userId: string;
 }
 

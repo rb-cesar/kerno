@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, lazy, useCallback, useEffect, useState, useTransition } from "react";
 import { Clock, MessageSquare, Plus, Trash2, X } from "lucide-react";
@@ -21,7 +21,7 @@ import {
 } from "@kerno/ui";
 import type { CardDetailDTO, CardDTO, Priority } from "../types";
 
-// Lazy: o editor Lexical (+prism) só baixa quando um card é aberto, mantendo o
+// Lazy: o editor Lexical (+prism) sÃ³ baixa quando um card Ã© aberto, mantendo o
 // bundle inicial da rota /kanban enxuto.
 const RichTextEditor = lazy(() =>
   import("@kerno/editor").then((m) => ({ default: m.RichTextEditor })),
@@ -39,11 +39,11 @@ import {
 } from "./meta";
 
 /**
- * Shell do painel de detalhe do card. NÃO é modal: abre como coluna lateral à
- * direita, dentro da própria tela do board (que encolhe e permanece interativo).
- * O shell monta UMA vez ao abrir (animação slide-in); ao trocar de tarefa ele
- * permanece montado e só o conteúdo interno (`CardContent`, com `key={card.id}`)
- * é recriado — disparando a transição skeleton/fade-in em vez de outro slide.
+ * Shell do painel de detalhe do card. NÃƒO Ã© modal: abre como coluna lateral Ã 
+ * direita, dentro da prÃ³pria tela do board (que encolhe e permanece interativo).
+ * O shell monta UMA vez ao abrir (animaÃ§Ã£o slide-in); ao trocar de tarefa ele
+ * permanece montado e sÃ³ o conteÃºdo interno (`CardContent`, com `key={card.id}`)
+ * Ã© recriado â€” disparando a transiÃ§Ã£o skeleton/fade-in em vez de outro slide.
  */
 export function CardDialog({ card, onClose }: { card: CardDTO; onClose: () => void }) {
   return (
@@ -84,7 +84,7 @@ function CardSkeleton() {
 }
 
 function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) {
-  const { mutate, refresh, members, labels, cycles, stories, projectKey, fetchCardDetail, remoteRev } =
+  const { mutate, refresh, members, labels, cycles, stories, workspaceKey, fetchCardDetail, remoteRev } =
     useKanban();
   const [pending, startTransition] = useTransition();
 
@@ -123,8 +123,8 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
     };
   }, [fetchCardDetail, card.id]);
 
-  // Mudança remota (outro usuário): recarrega o detalhe sem o skeleton, mantendo
-  // checklists/comentários/atividade em dia enquanto o painel está aberto.
+  // MudanÃ§a remota (outro usuÃ¡rio): recarrega o detalhe sem o skeleton, mantendo
+  // checklists/comentÃ¡rios/atividade em dia enquanto o painel estÃ¡ aberto.
   useEffect(() => {
     if (remoteRev === 0) return;
     void loadDetail();
@@ -204,13 +204,13 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
       if (res.ok) await loadDetail();
     });
 
-  const cardKey = `${projectKey}-${card.number}`;
+  const cardKey = `${workspaceKey}-${card.number}`;
   const children = detail?.children ?? [];
   const doneChildren = children.filter((c) => c.done).length;
 
   return (
     <>
-      {/* Cabeçalho */}
+      {/* CabeÃ§alho */}
       <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
         <span className="font-mono text-sm text-muted-foreground">{cardKey}</span>
         <button
@@ -228,19 +228,19 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
       ) : (
         <Suspense fallback={<CardSkeleton />}>
           <div className="flex min-h-0 flex-1 overflow-hidden duration-200 animate-in fade-in">
-            {/* ── Coluna principal ───────────────────────────────────────── */}
+            {/* â”€â”€ Coluna principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div className="min-w-0 flex-1 space-y-5 overflow-y-auto p-5">
               <div className="space-y-2">
-                <Label htmlFor="card-title">Título</Label>
+                <Label htmlFor="card-title">TÃ­tulo</Label>
                 <Input id="card-title" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
 
               <div className="space-y-2">
-                <Label>Descrição</Label>
+                <Label>DescriÃ§Ã£o</Label>
                 <RichTextEditor
                   value={description}
                   onChange={setDescription}
-                  placeholder="Descreva a tarefa…"
+                  placeholder="Descreva a tarefaâ€¦"
                 />
               </div>
 
@@ -263,7 +263,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                           style={{ backgroundColor: CATEGORY_COLOR[c.category] }}
                         />
                         <span className="font-mono text-xs text-muted-foreground">
-                          {projectKey}-{c.number}
+                          {workspaceKey}-{c.number}
                         </span>
                         <span
                           className={cn("truncate", c.done && "text-muted-foreground line-through")}
@@ -301,10 +301,10 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                 reload={loadDetail}
               />
 
-              {/* Comentários */}
+              {/* ComentÃ¡rios */}
               <div className="space-y-2 border-t pt-4">
                 <Label className="flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5" /> Comentários
+                  <MessageSquare className="h-3.5 w-3.5" /> ComentÃ¡rios
                 </Label>
                 {detail?.comments.length ? (
                   <ul className="space-y-2">
@@ -321,7 +321,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                               onClick={() => removeComment(c.id)}
                               disabled={pending}
                               className="ml-auto hover:text-destructive"
-                              title="Excluir comentário"
+                              title="Excluir comentÃ¡rio"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -332,13 +332,13 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Nenhum comentário ainda.</p>
+                  <p className="text-xs text-muted-foreground">Nenhum comentÃ¡rio ainda.</p>
                 )}
                 <RichTextEditor
                   key={commentKey}
                   value=""
                   onChange={setNewComment}
-                  placeholder="Escreva um comentário…"
+                  placeholder="Escreva um comentÃ¡rioâ€¦"
                   minHeightClass="min-h-[3rem]"
                 />
                 <div className="flex justify-end">
@@ -370,7 +370,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
               ) : null}
             </div>
 
-            {/* ── Barra de detalhes ──────────────────────────────────────── */}
+            {/* â”€â”€ Barra de detalhes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div className="w-64 shrink-0 space-y-4 overflow-y-auto border-l bg-muted/20 p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Detalhes
@@ -395,14 +395,14 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
               </Field>
 
               <Field>
-                <FieldLabel>Responsável</FieldLabel>
+                <FieldLabel>ResponsÃ¡vel</FieldLabel>
                 <FieldControl>
                   <Combobox
                     value={assignedTo}
                     onChange={setAssignedTo}
-                    placeholder="Sem responsável"
-                    searchPlaceholder="Buscar pessoa…"
-                    emptyText="Ninguém encontrado."
+                    placeholder="Sem responsÃ¡vel"
+                    searchPlaceholder="Buscar pessoaâ€¦"
+                    emptyText="NinguÃ©m encontrado."
                     options={members.map((m) => ({ value: m.id, label: m.name }))}
                   />
                 </FieldControl>
@@ -435,7 +435,7 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                       value={cycleId}
                       onChange={setCycleId}
                       placeholder="Sem cycle"
-                      searchPlaceholder="Buscar cycle…"
+                      searchPlaceholder="Buscar cycleâ€¦"
                       emptyText="Nenhum cycle."
                       options={cycles.map((c) => ({ value: c.id, label: c.name }))}
                     />
@@ -445,17 +445,17 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
 
               {stories.length > 0 ? (
                 <Field>
-                  <FieldLabel>História</FieldLabel>
+                  <FieldLabel>HistÃ³ria</FieldLabel>
                   <FieldControl>
                     <Combobox
                       value={storyId}
                       onChange={setStoryId}
-                      placeholder="Sem história"
-                      searchPlaceholder="Buscar história…"
-                      emptyText="Nenhuma história."
+                      placeholder="Sem histÃ³ria"
+                      searchPlaceholder="Buscar histÃ³riaâ€¦"
+                      emptyText="Nenhuma histÃ³ria."
                       options={stories.map((s) => ({
                         value: s.id,
-                        label: `${projectKey}-S${s.number} · ${s.title}`,
+                        label: `${workspaceKey}-S${s.number} Â· ${s.title}`,
                       }))}
                     />
                   </FieldControl>
@@ -491,13 +491,13 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
         </Suspense>
       )}
 
-      {/* Rodapé */}
+      {/* RodapÃ© */}
       <div className="flex items-center justify-between gap-2 border-t px-4 py-2">
         <Button variant="destructive" onClick={handleDelete} disabled={pending}>
           Excluir
         </Button>
         <Button onClick={handleSave} disabled={pending}>
-          {pending ? "Salvando…" : "Salvar"}
+          {pending ? "Salvandoâ€¦" : "Salvar"}
         </Button>
       </div>
     </>

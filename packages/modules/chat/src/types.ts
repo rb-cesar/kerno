@@ -24,7 +24,7 @@ export type ChatEditMessage = (input: {
 }) => Promise<ChatResult<MessageDTO>>;
 
 export type ChatCreateChannel = (input: {
-  projectId: string;
+  workspaceId: string;
   name: string;
 }) => Promise<ChatResult<ChannelDTO>>;
 
@@ -33,7 +33,7 @@ export type ChatFetchMessages = (channelId: string) => Promise<MessageDTO[]>;
 // ── Mensagens diretas (DM) ──────────────────────────────────────────────────
 
 export type ChatOpenDirect = (input: {
-  projectId: string;
+  workspaceId: string;
   userId: string;
 }) => Promise<ChatResult<DirectConversationDTO>>;
 

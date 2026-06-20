@@ -2,10 +2,10 @@ import { prisma } from "@kerno/db";
 import { eventBus, createEvent } from "@kerno/core/events";
 import type { Priority, StatusCategory } from "../types";
 
-/** Publica o resync genérico do Kanban p/ os outros clientes do projeto. */
-function notifyChanged(boardId: string, projectId: string, actorId: string) {
+/** Publica o resync genérico do Kanban p/ os outros clientes do workspace. */
+function notifyChanged(boardId: string, workspaceId: string, actorId: string) {
   eventBus.publish(
-    createEvent("kanban:changed", projectId, { boardId, cardId: null }, actorId),
+    createEvent("kanban:changed", workspaceId, { boardId, cardId: null }, actorId),
   );
 }
 
@@ -13,7 +13,7 @@ function notifyChanged(boardId: string, projectId: string, actorId: string) {
 export async function createStory(boardId: string, title: string, actorId: string) {
   const board = await prisma.board.findUniqueOrThrow({
     where: { id: boardId },
-    select: { projectId: true },
+    select: { workspaceId: true },
   });
   const story = await prisma.$transaction(async (tx) => {
     const agg = await tx.story.aggregate({
@@ -24,7 +24,7 @@ export async function createStory(boardId: string, title: string, actorId: strin
     const order = (agg._max.order ?? -1) + 1;
     return tx.story.create({ data: { boardId, title, number, order } });
   });
-  notifyChanged(boardId, board.projectId, actorId);
+  notifyChanged(boardId, board.workspaceId, actorId);
   return story;
 }
 
@@ -52,24 +52,24 @@ export async function updateStory(
       priority: input.priority,
       color: input.color,
     },
-    select: { id: true, boardId: true, board: { select: { projectId: true } } },
+    select: { id: true, boardId: true, board: { select: { workspaceId: true } } },
   });
-  notifyChanged(story.boardId, story.board.projectId, actorId);
+  notifyChanged(story.boardId, story.board.workspaceId, actorId);
 }
 
 export async function deleteStory(storyId: string, actorId: string): Promise<void> {
   const story = await prisma.story.delete({
     where: { id: storyId },
-    select: { boardId: true, board: { select: { projectId: true } } },
+    select: { boardId: true, board: { select: { workspaceId: true } } },
   });
-  notifyChanged(story.boardId, story.board.projectId, actorId);
+  notifyChanged(story.boardId, story.board.workspaceId, actorId);
 }
 
-/** Projeto dono de uma story — usado pela camada de permissão. */
-export async function projectIdOfStory(storyId: string): Promise<string | null> {
+/** Workspace dono de uma story — usado pela camada de permissão. */
+export async function workspaceIdOfStory(storyId: string): Promise<string | null> {
   const story = await prisma.story.findUnique({
     where: { id: storyId },
-    select: { board: { select: { projectId: true } } },
+    select: { board: { select: { workspaceId: true } } },
   });
-  return story?.board.projectId ?? null;
+  return story?.board.workspaceId ?? null;
 }

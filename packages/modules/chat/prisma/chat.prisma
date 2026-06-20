@@ -1,33 +1,33 @@
 // Hub Chat — dono das tabelas Channel / Message / DirectConversation.
 
 model Channel {
-  id        String   @id @default(cuid())
-  name      String
-  projectId String
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  workspaceId String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
-  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  messages Message[]
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  messages  Message[]
 
-  @@index([projectId])
+  @@index([workspaceId])
 }
 
-// Conversa privada (DM) entre membros de um mesmo projeto. `pairKey` é a lista
+// Conversa privada (DM) entre membros de um mesmo workspace. `pairKey` é a lista
 // ordenada dos userIds participantes, garantindo uma única conversa por par
-// dentro do projeto (upsert determinístico).
+// dentro do workspace (upsert determinístico).
 model DirectConversation {
-  id        String   @id @default(cuid())
-  projectId String
-  pairKey   String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  workspaceId String
+  pairKey     String
+  createdAt   DateTime @default(now())
 
-  project      Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   participants DirectParticipant[]
   messages     Message[]
 
-  @@unique([projectId, pairKey])
-  @@index([projectId])
+  @@unique([workspaceId, pairKey])
+  @@index([workspaceId])
 }
 
 model DirectParticipant {

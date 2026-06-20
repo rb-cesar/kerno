@@ -6,7 +6,7 @@ export async function getBoardSnapshot(boardId: string): Promise<BoardData | nul
   const board = await prisma.board.findUnique({
     where: { id: boardId },
     include: {
-      project: {
+      workspace: {
         include: {
           users: { include: { user: { select: { id: true, name: true } } } },
           cycles: { orderBy: { startsAt: "asc" } },
@@ -31,7 +31,7 @@ export async function getBoardSnapshot(boardId: string): Promise<BoardData | nul
 
   if (!board) return null;
 
-  const memberById = new Map(board.project.users.map((m) => [m.user.id, m.user]));
+  const memberById = new Map(board.workspace.users.map((m) => [m.user.id, m.user]));
   const storyTitleById = new Map(board.stories.map((s) => [s.id, s.title]));
   const taskCountByStory = new Map<string, number>();
   for (const column of board.columns) {
@@ -45,9 +45,9 @@ export async function getBoardSnapshot(boardId: string): Promise<BoardData | nul
   return {
     id: board.id,
     name: board.name,
-    projectId: board.projectId,
-    projectKey: board.project.key,
-    members: board.project.users.map((m) => ({ id: m.user.id, name: m.user.name })),
+    workspaceId: board.workspaceId,
+    workspaceKey: board.workspace.key,
+    members: board.workspace.users.map((m) => ({ id: m.user.id, name: m.user.name })),
     labels: board.labels.map((l) => ({ id: l.id, name: l.name, color: l.color })),
     stories: board.stories.map((s) => {
       const assignee = s.assignedTo ? memberById.get(s.assignedTo) : null;
@@ -65,7 +65,7 @@ export async function getBoardSnapshot(boardId: string): Promise<BoardData | nul
         taskCount: taskCountByStory.get(s.id) ?? 0,
       };
     }),
-    cycles: board.project.cycles.map((c) => ({
+    cycles: board.workspace.cycles.map((c) => ({
       id: c.id,
       name: c.name,
       startsAt: c.startsAt.toISOString(),
@@ -104,35 +104,35 @@ export async function getBoardSnapshot(boardId: string): Promise<BoardData | nul
   };
 }
 
-/** Resolve o projeto dono de um board/coluna/card — usado pela camada de permissão do app. */
-export async function projectIdOfBoard(boardId: string): Promise<string | null> {
+/** Resolve o workspace dono de um board/coluna/card — usado pela camada de permissão do app. */
+export async function workspaceIdOfBoard(boardId: string): Promise<string | null> {
   const board = await prisma.board.findUnique({
     where: { id: boardId },
-    select: { projectId: true },
+    select: { workspaceId: true },
   });
-  return board?.projectId ?? null;
+  return board?.workspaceId ?? null;
 }
 
-export async function projectIdOfColumn(columnId: string): Promise<string | null> {
+export async function workspaceIdOfColumn(columnId: string): Promise<string | null> {
   const column = await prisma.column.findUnique({
     where: { id: columnId },
-    select: { board: { select: { projectId: true } } },
+    select: { board: { select: { workspaceId: true } } },
   });
-  return column?.board.projectId ?? null;
+  return column?.board.workspaceId ?? null;
 }
 
-export async function projectIdOfCard(cardId: string): Promise<string | null> {
+export async function workspaceIdOfCard(cardId: string): Promise<string | null> {
   const card = await prisma.card.findUnique({
     where: { id: cardId },
-    select: { board: { select: { projectId: true } } },
+    select: { board: { select: { workspaceId: true } } },
   });
-  return card?.board.projectId ?? null;
+  return card?.board.workspaceId ?? null;
 }
 
-export async function projectIdOfLabel(labelId: string): Promise<string | null> {
+export async function workspaceIdOfLabel(labelId: string): Promise<string | null> {
   const label = await prisma.label.findUnique({
     where: { id: labelId },
-    select: { board: { select: { projectId: true } } },
+    select: { board: { select: { workspaceId: true } } },
   });
-  return label?.board.projectId ?? null;
+  return label?.board.workspaceId ?? null;
 }

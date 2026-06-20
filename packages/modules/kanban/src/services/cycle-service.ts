@@ -1,12 +1,12 @@
 import { prisma } from "@kerno/db";
 
 export async function createCycle(
-  projectId: string,
+  workspaceId: string,
   name: string,
   startsAt: Date,
   endsAt: Date,
 ) {
-  return prisma.cycle.create({ data: { projectId, name, startsAt, endsAt } });
+  return prisma.cycle.create({ data: { workspaceId, name, startsAt, endsAt } });
 }
 
 export async function deleteCycle(cycleId: string) {
@@ -14,10 +14,10 @@ export async function deleteCycle(cycleId: string) {
   return prisma.cycle.delete({ where: { id: cycleId } });
 }
 
-export async function projectIdOfCycle(cycleId: string): Promise<string | null> {
+export async function workspaceIdOfCycle(cycleId: string): Promise<string | null> {
   const cycle = await prisma.cycle.findUnique({
     where: { id: cycleId },
-    select: { projectId: true },
+    select: { workspaceId: true },
   });
-  return cycle?.projectId ?? null;
+  return cycle?.workspaceId ?? null;
 }

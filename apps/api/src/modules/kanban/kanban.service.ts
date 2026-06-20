@@ -27,12 +27,12 @@ function errorMessage(error: unknown): string {
 
 @Injectable()
 export class KanbanService {
-  /** Board padrão de um projeto (antes feito na page.tsx via prisma direto). */
-  async boardForProject(userId: string, projectId: string): Promise<BoardData> {
-    await assertMember(userId, projectId);
+  /** Board padrão de um workspace (antes feito na page.tsx via prisma direto). */
+  async boardForWorkspace(userId: string, workspaceId: string): Promise<BoardData> {
+    await assertMember(userId, workspaceId);
 
     const board = await prisma.board.findFirst({
-      where: { projectId },
+      where: { workspaceId },
       orderBy: { createdAt: "asc" },
       select: { id: true },
     });
@@ -217,7 +217,7 @@ export class KanbanService {
           break;
         }
         case "createCycle": {
-          await assertMember(userId, command.projectId);
+          await assertMember(userId, command.workspaceId);
           const name = command.name.trim();
           if (!name) return { ok: false, error: "Nome inválido" };
           const startsAt = new Date(command.startsAt);
@@ -226,7 +226,7 @@ export class KanbanService {
             return { ok: false, error: "Datas inválidas" };
           }
           if (endsAt < startsAt) return { ok: false, error: "Fim antes do início" };
-          await kanban.createCycle(command.projectId, name, startsAt, endsAt);
+          await kanban.createCycle(command.workspaceId, name, startsAt, endsAt);
           break;
         }
         case "deleteCycle": {

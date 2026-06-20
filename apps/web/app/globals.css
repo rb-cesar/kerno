@@ -2,8 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Temas do Kerno.
+ *
+ * Cada tema é um conjunto completo de tokens HSL (CSS variables). O next-themes
+ * aplica a classe `.<id>` no <html> e o bloco correspondente assume. Todos os
+ * componentes consomem só os tokens (nenhum `dark:` hardcoded), então trocar de
+ * tema é instantâneo e não exige mudança de componente.
+ *
+ * Além das superfícies base (background/card/...), cada tema define duas
+ * superfícies de "chrome" próprias, no modelo em camadas do Discord:
+ *   --sidebar-*  → barra de hubs (hub-rail). Costuma ser a superfície mais escura/distinta.
+ *   --header-*   → barra de topo (app-topbar).
+ *
+ * `:root` repete o tema claro como fallback de SSR / sem-JS.
+ * O catálogo (rótulos + preview) vive em `lib/themes.ts` — manter em sincronia.
+ */
 @layer base {
-  :root {
+  :root,
+  .light {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -24,6 +41,15 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --radius: 0.5rem;
+
+    --sidebar: 0 0% 96.5%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-accent: 0 0% 90%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 89.8%;
+    --header: 0 0% 100%;
+    --header-foreground: 0 0% 9%;
+    --header-border: 0 0% 89.8%;
   }
 
   .dark {
@@ -46,6 +72,874 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 9%;
+    --sidebar-foreground: 0 0% 75%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 12%;
+    --header: 0 0% 5.5%;
+    --header-foreground: 0 0% 98%;
+    --header-border: 0 0% 12%;
+  }
+
+  /* Ônix — preto puro (OLED). */
+  .onyx {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 12%;
+    --input: 0 0% 14%;
+    --ring: 0 0% 70%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 3%;
+    --sidebar-foreground: 0 0% 70%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 10%;
+    --header: 0 0% 3%;
+    --header-foreground: 0 0% 98%;
+    --header-border: 0 0% 10%;
+  }
+
+  /* Ardósia — cinza-azulado quase monocromático (menos variedade de cor). */
+  .slate {
+    --background: 215 25% 11%;
+    --foreground: 215 15% 90%;
+    --card: 215 22% 14%;
+    --card-foreground: 215 15% 90%;
+    --popover: 215 22% 14%;
+    --popover-foreground: 215 15% 90%;
+    --primary: 215 15% 88%;
+    --primary-foreground: 215 25% 12%;
+    --secondary: 215 18% 20%;
+    --secondary-foreground: 215 15% 90%;
+    --muted: 215 18% 20%;
+    --muted-foreground: 215 12% 60%;
+    --accent: 215 18% 24%;
+    --accent-foreground: 215 15% 92%;
+    --destructive: 0 50% 50%;
+    --destructive-foreground: 215 15% 95%;
+    --border: 215 16% 22%;
+    --input: 215 16% 22%;
+    --ring: 215 20% 70%;
+    --radius: 0.5rem;
+
+    --sidebar: 215 28% 8%;
+    --sidebar-foreground: 215 12% 65%;
+    --sidebar-accent: 215 20% 18%;
+    --sidebar-accent-foreground: 215 15% 92%;
+    --sidebar-border: 215 20% 13%;
+    --header: 215 25% 10%;
+    --header-foreground: 215 15% 90%;
+    --header-border: 215 18% 15%;
+  }
+
+  /* Cinza — cinza médio levemente azulado. */
+  .ash {
+    --background: 220 8% 18%;
+    --foreground: 220 14% 96%;
+    --card: 220 8% 21%;
+    --card-foreground: 220 14% 96%;
+    --popover: 220 8% 21%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 220 14% 96%;
+    --primary-foreground: 220 9% 16%;
+    --secondary: 220 7% 27%;
+    --secondary-foreground: 220 14% 96%;
+    --muted: 220 7% 27%;
+    --muted-foreground: 220 9% 70%;
+    --accent: 220 7% 30%;
+    --accent-foreground: 220 14% 96%;
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 7% 30%;
+    --input: 220 7% 32%;
+    --ring: 220 14% 80%;
+    --radius: 0.5rem;
+
+    --sidebar: 220 9% 13%;
+    --sidebar-foreground: 220 12% 78%;
+    --sidebar-accent: 220 8% 24%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 220 8% 18%;
+    --header: 220 8% 21%;
+    --header-foreground: 220 14% 96%;
+    --header-border: 220 8% 26%;
+  }
+
+  /* Meia-noite — azul-marinho com barra de hubs blurple. */
+  .midnight {
+    --background: 230 25% 9%;
+    --foreground: 220 30% 96%;
+    --card: 230 24% 12%;
+    --card-foreground: 220 30% 96%;
+    --popover: 230 24% 12%;
+    --popover-foreground: 220 30% 96%;
+    --primary: 235 86% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 20% 18%;
+    --secondary-foreground: 220 30% 96%;
+    --muted: 230 20% 18%;
+    --muted-foreground: 225 15% 68%;
+    --accent: 235 40% 22%;
+    --accent-foreground: 220 30% 96%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 20% 20%;
+    --input: 230 20% 22%;
+    --ring: 235 86% 65%;
+    --radius: 0.5rem;
+
+    --sidebar: 235 35% 12%;
+    --sidebar-foreground: 225 25% 80%;
+    --sidebar-accent: 235 70% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 235 30% 18%;
+    --header: 230 28% 11%;
+    --header-foreground: 220 30% 96%;
+    --header-border: 235 30% 18%;
+  }
+
+  /* Tokyo Night — neon de Tóquio sobre azul profundo. */
+  .tokyo {
+    --background: 235 19% 13%;
+    --foreground: 229 73% 86%;
+    --card: 235 18% 16%;
+    --card-foreground: 229 73% 86%;
+    --popover: 235 18% 16%;
+    --popover-foreground: 229 73% 86%;
+    --primary: 221 89% 72%;
+    --primary-foreground: 235 19% 10%;
+    --secondary: 229 25% 21%;
+    --secondary-foreground: 229 73% 86%;
+    --muted: 229 25% 21%;
+    --muted-foreground: 229 23% 60%;
+    --accent: 261 40% 30%;
+    --accent-foreground: 229 73% 90%;
+    --destructive: 349 89% 72%;
+    --destructive-foreground: 235 19% 10%;
+    --border: 235 18% 22%;
+    --input: 235 18% 22%;
+    --ring: 221 89% 72%;
+    --radius: 0.5rem;
+
+    --sidebar: 240 14% 10%;
+    --sidebar-foreground: 229 30% 70%;
+    --sidebar-accent: 235 22% 20%;
+    --sidebar-accent-foreground: 229 73% 90%;
+    --sidebar-border: 240 14% 15%;
+    --header: 235 18% 11%;
+    --header-foreground: 229 73% 86%;
+    --header-border: 235 18% 17%;
+  }
+
+  /* Drácula — paleta clássica (roxo/rosa). */
+  .dracula {
+    --background: 231 15% 18%;
+    --foreground: 60 30% 96%;
+    --card: 232 14% 22%;
+    --card-foreground: 60 30% 96%;
+    --popover: 232 14% 22%;
+    --popover-foreground: 60 30% 96%;
+    --primary: 265 89% 78%;
+    --primary-foreground: 231 15% 12%;
+    --secondary: 230 15% 28%;
+    --secondary-foreground: 60 30% 96%;
+    --muted: 230 15% 28%;
+    --muted-foreground: 225 27% 65%;
+    --accent: 265 30% 32%;
+    --accent-foreground: 60 30% 96%;
+    --destructive: 0 100% 67%;
+    --destructive-foreground: 60 30% 96%;
+    --border: 230 15% 30%;
+    --input: 230 15% 32%;
+    --ring: 265 89% 78%;
+    --radius: 0.5rem;
+
+    --sidebar: 232 16% 12%;
+    --sidebar-foreground: 225 25% 75%;
+    --sidebar-accent: 265 40% 30%;
+    --sidebar-accent-foreground: 60 30% 96%;
+    --sidebar-border: 232 15% 18%;
+    --header: 232 15% 16%;
+    --header-foreground: 60 30% 96%;
+    --header-border: 232 15% 22%;
+  }
+
+  /* Catppuccin (Mocha) — pastel aconchegante com acento malva. */
+  .catppuccin {
+    --background: 240 21% 15%;
+    --foreground: 226 64% 88%;
+    --card: 240 21% 18%;
+    --card-foreground: 226 64% 88%;
+    --popover: 240 21% 18%;
+    --popover-foreground: 226 64% 88%;
+    --primary: 267 84% 81%;
+    --primary-foreground: 240 21% 12%;
+    --secondary: 237 16% 23%;
+    --secondary-foreground: 226 64% 88%;
+    --muted: 237 16% 23%;
+    --muted-foreground: 228 24% 72%;
+    --accent: 240 13% 31%;
+    --accent-foreground: 226 64% 90%;
+    --destructive: 343 81% 75%;
+    --destructive-foreground: 240 21% 12%;
+    --border: 237 16% 26%;
+    --input: 237 16% 26%;
+    --ring: 267 84% 81%;
+    --radius: 0.5rem;
+
+    --sidebar: 240 23% 9%;
+    --sidebar-foreground: 228 24% 72%;
+    --sidebar-accent: 240 18% 22%;
+    --sidebar-accent-foreground: 226 64% 92%;
+    --sidebar-border: 240 21% 14%;
+    --header: 240 21% 12%;
+    --header-foreground: 226 64% 88%;
+    --header-border: 240 21% 17%;
+  }
+
+  /* Rosé Pine — rosé e ouro suaves sobre fundo violeta. */
+  .rosepine {
+    --background: 249 22% 12%;
+    --foreground: 245 50% 91%;
+    --card: 248 24% 15%;
+    --card-foreground: 245 50% 91%;
+    --popover: 248 24% 15%;
+    --popover-foreground: 245 50% 91%;
+    --primary: 267 57% 78%;
+    --primary-foreground: 249 22% 12%;
+    --secondary: 248 25% 18%;
+    --secondary-foreground: 245 50% 91%;
+    --muted: 248 25% 18%;
+    --muted-foreground: 248 15% 61%;
+    --accent: 197 48% 38%;
+    --accent-foreground: 245 50% 95%;
+    --destructive: 343 76% 68%;
+    --destructive-foreground: 249 22% 12%;
+    --border: 248 22% 22%;
+    --input: 248 22% 22%;
+    --ring: 267 57% 78%;
+    --radius: 0.5rem;
+
+    --sidebar: 249 24% 9%;
+    --sidebar-foreground: 248 15% 65%;
+    --sidebar-accent: 248 24% 18%;
+    --sidebar-accent-foreground: 245 50% 91%;
+    --sidebar-border: 248 22% 14%;
+    --header: 248 24% 13%;
+    --header-foreground: 245 50% 91%;
+    --header-border: 248 22% 17%;
+  }
+
+  /* Nord — paleta ártica fria. */
+  .nord {
+    --background: 220 16% 22%;
+    --foreground: 218 27% 94%;
+    --card: 222 16% 26%;
+    --card-foreground: 218 27% 94%;
+    --popover: 222 16% 26%;
+    --popover-foreground: 218 27% 94%;
+    --primary: 193 43% 67%;
+    --primary-foreground: 220 28% 16%;
+    --secondary: 220 17% 32%;
+    --secondary-foreground: 218 27% 94%;
+    --muted: 220 17% 32%;
+    --muted-foreground: 219 18% 74%;
+    --accent: 213 32% 52%;
+    --accent-foreground: 218 27% 94%;
+    --destructive: 354 42% 56%;
+    --destructive-foreground: 218 27% 94%;
+    --border: 220 17% 32%;
+    --input: 220 17% 34%;
+    --ring: 193 43% 67%;
+    --radius: 0.5rem;
+
+    --sidebar: 220 18% 16%;
+    --sidebar-foreground: 219 20% 80%;
+    --sidebar-accent: 213 32% 42%;
+    --sidebar-accent-foreground: 218 27% 96%;
+    --sidebar-border: 220 17% 22%;
+    --header: 222 16% 20%;
+    --header-foreground: 218 27% 94%;
+    --header-border: 220 17% 28%;
+  }
+
+  /* Floresta — verde esmeralda com barra de hubs profunda. */
+  .forest {
+    --background: 150 15% 8%;
+    --foreground: 140 20% 95%;
+    --card: 150 14% 11%;
+    --card-foreground: 140 20% 95%;
+    --popover: 150 14% 11%;
+    --popover-foreground: 140 20% 95%;
+    --primary: 142 65% 55%;
+    --primary-foreground: 150 30% 10%;
+    --secondary: 150 12% 18%;
+    --secondary-foreground: 140 20% 95%;
+    --muted: 150 12% 18%;
+    --muted-foreground: 145 12% 65%;
+    --accent: 150 25% 22%;
+    --accent-foreground: 140 20% 95%;
+    --destructive: 0 65% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 150 12% 20%;
+    --input: 150 12% 22%;
+    --ring: 142 65% 55%;
+    --radius: 0.5rem;
+
+    --sidebar: 150 22% 5%;
+    --sidebar-foreground: 145 15% 72%;
+    --sidebar-accent: 142 50% 30%;
+    --sidebar-accent-foreground: 140 30% 96%;
+    --sidebar-border: 150 18% 11%;
+    --header: 150 16% 10%;
+    --header-foreground: 140 20% 95%;
+    --header-border: 150 15% 15%;
+  }
+
+  /* Gruvbox — retrô e quente: creme, amarelo e laranja. */
+  .gruvbox {
+    --background: 24 7% 16%;
+    --foreground: 43 59% 81%;
+    --card: 24 6% 20%;
+    --card-foreground: 43 59% 81%;
+    --popover: 24 6% 20%;
+    --popover-foreground: 43 59% 81%;
+    --primary: 43 95% 58%;
+    --primary-foreground: 24 10% 12%;
+    --secondary: 20 5% 26%;
+    --secondary-foreground: 43 59% 81%;
+    --muted: 20 5% 26%;
+    --muted-foreground: 40 11% 60%;
+    --accent: 27 55% 30%;
+    --accent-foreground: 43 59% 88%;
+    --destructive: 6 96% 59%;
+    --destructive-foreground: 43 59% 92%;
+    --border: 20 6% 28%;
+    --input: 20 6% 28%;
+    --ring: 43 95% 58%;
+    --radius: 0.5rem;
+
+    --sidebar: 195 8% 12%;
+    --sidebar-foreground: 43 35% 70%;
+    --sidebar-accent: 27 60% 32%;
+    --sidebar-accent-foreground: 43 59% 90%;
+    --sidebar-border: 24 7% 18%;
+    --header: 24 8% 13%;
+    --header-foreground: 43 59% 81%;
+    --header-border: 24 7% 20%;
+  }
+
+  /* Synthwave — neon vibrante, barra de hubs roxa, header magenta. */
+  .synthwave {
+    --background: 252 44% 12%;
+    --foreground: 285 25% 92%;
+    --card: 255 40% 16%;
+    --card-foreground: 285 25% 92%;
+    --popover: 255 40% 16%;
+    --popover-foreground: 285 25% 92%;
+    --primary: 330 100% 62%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 260 35% 22%;
+    --secondary-foreground: 285 25% 92%;
+    --muted: 260 30% 22%;
+    --muted-foreground: 285 25% 72%;
+    --accent: 190 95% 55%;
+    --accent-foreground: 252 44% 12%;
+    --destructive: 350 90% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 280 40% 26%;
+    --input: 280 40% 26%;
+    --ring: 330 100% 62%;
+    --radius: 0.5rem;
+
+    --sidebar: 280 55% 18%;
+    --sidebar-foreground: 300 50% 85%;
+    --sidebar-accent: 330 85% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 280 50% 28%;
+    --header: 315 55% 16%;
+    --header-foreground: 300 50% 92%;
+    --header-border: 315 50% 26%;
+  }
+
+  /* One Dark (Atom) — slate-azulado com acentos multicoloridos suaves. */
+  .onedark {
+    --background: 220 13% 18%;
+    --foreground: 219 14% 71%;
+    --card: 220 13% 21%;
+    --card-foreground: 219 14% 71%;
+    --popover: 220 13% 21%;
+    --popover-foreground: 219 14% 71%;
+    --primary: 207 82% 66%;
+    --primary-foreground: 220 13% 14%;
+    --secondary: 222 12% 26%;
+    --secondary-foreground: 219 14% 80%;
+    --muted: 222 12% 26%;
+    --muted-foreground: 220 9% 55%;
+    --accent: 286 40% 30%;
+    --accent-foreground: 286 60% 85%;
+    --destructive: 355 65% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 222 12% 26%;
+    --input: 222 12% 26%;
+    --ring: 207 82% 66%;
+    --radius: 0.5rem;
+
+    --sidebar: 216 14% 14%;
+    --sidebar-foreground: 219 12% 65%;
+    --sidebar-accent: 207 82% 60%;
+    --sidebar-accent-foreground: 220 13% 12%;
+    --sidebar-border: 220 13% 20%;
+    --header: 220 13% 16%;
+    --header-foreground: 219 14% 71%;
+    --header-border: 220 13% 22%;
+  }
+
+  /* Palenight (Material) — índigo profundo com pastéis violeta e azul. */
+  .palenight {
+    --background: 229 20% 20%;
+    --foreground: 229 33% 73%;
+    --card: 229 20% 24%;
+    --card-foreground: 229 33% 73%;
+    --popover: 229 20% 24%;
+    --popover-foreground: 229 33% 73%;
+    --primary: 276 68% 75%;
+    --primary-foreground: 230 22% 14%;
+    --secondary: 230 19% 28%;
+    --secondary-foreground: 229 33% 80%;
+    --muted: 230 19% 28%;
+    --muted-foreground: 229 18% 60%;
+    --accent: 220 45% 35%;
+    --accent-foreground: 220 80% 88%;
+    --destructive: 356 82% 65%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 230 19% 28%;
+    --input: 230 19% 28%;
+    --ring: 276 68% 75%;
+    --radius: 0.5rem;
+
+    --sidebar: 230 22% 14%;
+    --sidebar-foreground: 229 25% 68%;
+    --sidebar-accent: 276 55% 55%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 229 20% 18%;
+    --header: 229 21% 17%;
+    --header-foreground: 229 33% 73%;
+    --header-border: 229 20% 23%;
+  }
+
+  /* Kanagawa — tinta japonesa (sumi) com acentos dessaturados. */
+  .kanagawa {
+    --background: 240 13% 14%;
+    --foreground: 48 30% 79%;
+    --card: 240 13% 17%;
+    --card-foreground: 48 30% 79%;
+    --popover: 240 13% 17%;
+    --popover-foreground: 48 30% 79%;
+    --primary: 220 50% 67%;
+    --primary-foreground: 240 13% 12%;
+    --secondary: 240 13% 22%;
+    --secondary-foreground: 48 30% 79%;
+    --muted: 240 13% 22%;
+    --muted-foreground: 50 8% 58%;
+    --accent: 263 26% 35%;
+    --accent-foreground: 263 35% 85%;
+    --destructive: 359 51% 51%;
+    --destructive-foreground: 48 30% 90%;
+    --border: 240 13% 24%;
+    --input: 240 13% 24%;
+    --ring: 220 50% 67%;
+    --radius: 0.5rem;
+
+    --sidebar: 240 14% 10%;
+    --sidebar-foreground: 50 12% 65%;
+    --sidebar-accent: 220 40% 45%;
+    --sidebar-accent-foreground: 48 30% 92%;
+    --sidebar-border: 240 13% 16%;
+    --header: 240 13% 12%;
+    --header-foreground: 48 30% 79%;
+    --header-border: 240 13% 18%;
+  }
+
+  /* Âmbar — preto neutro, acento amarelo de alto contraste. */
+  .amber-dark {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 7.5%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 7.5%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 48 96% 53%;
+    --primary-foreground: 48 90% 8%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 45 12% 66%;
+    --accent: 48 80% 16%;
+    --accent-foreground: 48 96% 78%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 48 96% 53%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 8%;
+    --sidebar-foreground: 45 10% 72%;
+    --sidebar-accent: 48 96% 53%;
+    --sidebar-accent-foreground: 48 90% 10%;
+    --sidebar-border: 0 0% 12%;
+    --header: 0 0% 7%;
+    --header-foreground: 0 0% 96%;
+    --header-border: 0 0% 13%;
+  }
+
+  /* Carmim — preto/branco com acento vermelho intenso. */
+  .crimson {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 7.5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 7.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 84% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 8% 66%;
+    --accent: 0 55% 18%;
+    --accent-foreground: 0 80% 82%;
+    --destructive: 0 84% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 0 84% 55%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 8%;
+    --sidebar-foreground: 0 5% 72%;
+    --sidebar-accent: 0 84% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 12%;
+    --header: 0 0% 7%;
+    --header-foreground: 0 0% 98%;
+    --header-border: 0 0% 13%;
+  }
+
+  /* Lima — preto neutro com acento verde vivo. */
+  .lime-dark {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 7.5%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 7.5%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 142 70% 48%;
+    --primary-foreground: 144 80% 8%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 140 10% 66%;
+    --accent: 142 50% 14%;
+    --accent-foreground: 142 70% 80%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 142 70% 48%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 8%;
+    --sidebar-foreground: 140 8% 72%;
+    --sidebar-accent: 142 70% 45%;
+    --sidebar-accent-foreground: 144 80% 8%;
+    --sidebar-border: 0 0% 12%;
+    --header: 0 0% 7%;
+    --header-foreground: 0 0% 96%;
+    --header-border: 0 0% 13%;
+  }
+
+  /* Aurora — claro creme quente com acento rosé. */
+  .dawn {
+    --background: 30 40% 98%;
+    --foreground: 20 14% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 16%;
+    --primary: 346 77% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 30% 94%;
+    --secondary-foreground: 20 14% 20%;
+    --muted: 30 25% 94%;
+    --muted-foreground: 25 10% 45%;
+    --accent: 346 60% 95%;
+    --accent-foreground: 346 60% 30%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 20% 88%;
+    --input: 30 20% 86%;
+    --ring: 346 77% 50%;
+    --radius: 0.5rem;
+
+    --sidebar: 30 35% 93%;
+    --sidebar-foreground: 25 12% 35%;
+    --sidebar-accent: 346 60% 90%;
+    --sidebar-accent-foreground: 346 70% 35%;
+    --sidebar-border: 30 22% 86%;
+    --header: 0 0% 100%;
+    --header-foreground: 20 14% 16%;
+    --header-border: 30 20% 88%;
+  }
+
+  /* Solar — Solarized Light. */
+  .solarized {
+    --background: 44 87% 94%;
+    --foreground: 192 14% 26%;
+    --card: 45 60% 97%;
+    --card-foreground: 192 14% 26%;
+    --popover: 45 60% 97%;
+    --popover-foreground: 192 14% 26%;
+    --primary: 205 69% 49%;
+    --primary-foreground: 44 87% 96%;
+    --secondary: 46 42% 88%;
+    --secondary-foreground: 192 14% 26%;
+    --muted: 46 42% 88%;
+    --muted-foreground: 180 7% 46%;
+    --accent: 175 59% 40%;
+    --accent-foreground: 44 87% 96%;
+    --destructive: 1 71% 52%;
+    --destructive-foreground: 44 87% 96%;
+    --border: 46 30% 82%;
+    --input: 46 30% 80%;
+    --ring: 205 69% 49%;
+    --radius: 0.5rem;
+
+    --sidebar: 44 33% 86%;
+    --sidebar-foreground: 192 12% 32%;
+    --sidebar-accent: 205 60% 82%;
+    --sidebar-accent-foreground: 205 69% 30%;
+    --sidebar-border: 46 28% 80%;
+    --header: 45 60% 97%;
+    --header-foreground: 192 14% 26%;
+    --header-border: 46 30% 82%;
+  }
+
+  /* Café — claro creme com chrome marrom espresso (header/sidebar escuros). */
+  .coffee {
+    --background: 35 40% 96%;
+    --foreground: 25 30% 18%;
+    --card: 36 45% 99%;
+    --card-foreground: 25 30% 18%;
+    --popover: 36 45% 99%;
+    --popover-foreground: 25 30% 18%;
+    --primary: 25 65% 42%;
+    --primary-foreground: 40 50% 96%;
+    --secondary: 35 35% 90%;
+    --secondary-foreground: 25 30% 22%;
+    --muted: 35 30% 90%;
+    --muted-foreground: 28 18% 42%;
+    --accent: 20 50% 88%;
+    --accent-foreground: 25 50% 30%;
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 34 25% 84%;
+    --input: 34 25% 84%;
+    --ring: 25 65% 42%;
+    --radius: 0.5rem;
+
+    --sidebar: 25 35% 16%;
+    --sidebar-foreground: 35 30% 82%;
+    --sidebar-accent: 25 45% 28%;
+    --sidebar-accent-foreground: 35 40% 94%;
+    --sidebar-border: 25 30% 22%;
+    --header: 25 35% 20%;
+    --header-foreground: 35 35% 92%;
+    --header-border: 25 30% 26%;
+  }
+
+  /* Âmbar Claro — branco neutro, acento amarelo de alto contraste. */
+  .amber-light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 43 96% 45%;
+    --primary-foreground: 45 100% 8%;
+    --secondary: 48 60% 94%;
+    --secondary-foreground: 0 0% 12%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 48 95% 88%;
+    --accent-foreground: 45 90% 22%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 43 96% 45%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 97%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-accent: 45 95% 55%;
+    --sidebar-accent-foreground: 45 100% 10%;
+    --sidebar-border: 0 0% 89%;
+    --header: 0 0% 100%;
+    --header-foreground: 0 0% 10%;
+    --header-border: 0 0% 89%;
+  }
+
+  /* Lima Claro — branco neutro com acento verde vivo. */
+  .lime-light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 142 72% 34%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 140 40% 95%;
+    --secondary-foreground: 0 0% 12%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 142 60% 90%;
+    --accent-foreground: 142 72% 22%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 142 72% 34%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 97%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-accent: 142 65% 42%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 89%;
+    --header: 0 0% 100%;
+    --header-foreground: 0 0% 10%;
+    --header-border: 0 0% 89%;
+  }
+
+  /* Carmim Claro — branco neutro com acento vermelho intenso. */
+  .carmim-light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+    --primary: 0 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 12%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 80% 95%;
+    --accent-foreground: 0 75% 38%;
+    --destructive: 0 80% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 0 80% 50%;
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 97%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-accent: 0 80% 52%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 89%;
+    --header: 0 0% 100%;
+    --header-foreground: 0 0% 12%;
+    --header-border: 0 0% 89%;
+  }
+
+  /* Latte (Catppuccin) — claro pastel multicolorido e suave. */
+  .latte {
+    --background: 220 23% 95%;
+    --foreground: 234 16% 35%;
+    --card: 220 23% 97%;
+    --card-foreground: 234 16% 35%;
+    --popover: 220 23% 97%;
+    --popover-foreground: 234 16% 35%;
+    --primary: 266 85% 58%;
+    --primary-foreground: 220 23% 97%;
+    --secondary: 223 16% 88%;
+    --secondary-foreground: 234 16% 35%;
+    --muted: 223 16% 88%;
+    --muted-foreground: 233 10% 47%;
+    --accent: 220 60% 90%;
+    --accent-foreground: 220 91% 40%;
+    --destructive: 347 87% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 223 16% 83%;
+    --input: 223 16% 83%;
+    --ring: 266 85% 58%;
+    --radius: 0.5rem;
+
+    --sidebar: 220 22% 92%;
+    --sidebar-foreground: 233 12% 42%;
+    --sidebar-accent: 266 70% 62%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 21% 87%;
+    --header: 220 23% 97%;
+    --header-foreground: 234 16% 35%;
+    --header-border: 220 21% 88%;
+  }
+
+  /* Tokyo Day — versão clara do Tokyo Night, azul vibrante. */
+  .tokyoday {
+    --background: 225 12% 90%;
+    --foreground: 230 26% 28%;
+    --card: 225 20% 95%;
+    --card-foreground: 230 26% 28%;
+    --popover: 225 20% 95%;
+    --popover-foreground: 230 26% 28%;
+    --primary: 214 82% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 223 22% 84%;
+    --secondary-foreground: 230 26% 28%;
+    --muted: 223 22% 84%;
+    --muted-foreground: 231 18% 50%;
+    --accent: 266 60% 90%;
+    --accent-foreground: 266 85% 45%;
+    --destructive: 342 80% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 223 18% 80%;
+    --input: 223 18% 80%;
+    --ring: 214 82% 55%;
+    --radius: 0.5rem;
+
+    --sidebar: 223 26% 85%;
+    --sidebar-foreground: 230 20% 38%;
+    --sidebar-accent: 214 82% 55%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 223 18% 80%;
+    --header: 225 20% 95%;
+    --header-foreground: 230 26% 28%;
+    --header-border: 223 18% 82%;
   }
 }
 

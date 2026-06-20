@@ -5,7 +5,7 @@ export {
   sendMessage,
   editMessage,
   postSystemMessage,
-  projectIdOfChannel,
+  workspaceIdOfChannel,
   defaultChannelId,
   listConversations,
   openDirect,

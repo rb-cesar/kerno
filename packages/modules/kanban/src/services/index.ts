@@ -1,9 +1,9 @@
 export {
   getBoardSnapshot,
-  projectIdOfBoard,
-  projectIdOfColumn,
-  projectIdOfCard,
-  projectIdOfLabel,
+  workspaceIdOfBoard,
+  workspaceIdOfColumn,
+  workspaceIdOfCard,
+  workspaceIdOfLabel,
 } from "./board-service";
 export {
   createColumn,
@@ -32,6 +32,6 @@ export {
   cardIdOfChecklistItem,
 } from "./checklist-service";
 export { createLabel, deleteLabel } from "./label-service";
-export { createCycle, deleteCycle, projectIdOfCycle } from "./cycle-service";
-export { createStory, updateStory, deleteStory, projectIdOfStory } from "./story-service";
+export { createCycle, deleteCycle, workspaceIdOfCycle } from "./cycle-service";
+export { createStory, updateStory, deleteStory, workspaceIdOfStory } from "./story-service";
 export { getBoardMetrics } from "./metrics-service";

@@ -1,15 +1,15 @@
 import { prisma } from "@kerno/db";
 import { eventBus, createEvent } from "@kerno/core/events";
 
-/** Resolve o contexto (board/project) de um card e publica o resync do Kanban. */
+/** Resolve o contexto (board/workspace) de um card e publica o resync do Kanban. */
 async function notifyCard(cardId: string, actorId: string) {
   const card = await prisma.card.findUnique({
     where: { id: cardId },
-    select: { boardId: true, board: { select: { projectId: true } } },
+    select: { boardId: true, board: { select: { workspaceId: true } } },
   });
   if (!card) return;
   eventBus.publish(
-    createEvent("kanban:changed", card.board.projectId, { boardId: card.boardId, cardId }, actorId),
+    createEvent("kanban:changed", card.board.workspaceId, { boardId: card.boardId, cardId }, actorId),
   );
 }
 

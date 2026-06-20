@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { cn } from "@kerno/ui";
 import type { CycleDTO, LabelDTO, MemberDTO, Priority } from "../types";
@@ -9,15 +9,15 @@ import { PRIORITY_META } from "./meta";
 const PRIORITY_FILTERS: Exclude<Priority, "NONE">[] = ["URGENT", "HIGH", "MEDIUM", "LOW"];
 
 /**
- * Menu lateral do hub Kanban (2ª coluna do shell): filtros (responsável,
- * etiqueta, prioridade, cycle) + gestão de etiquetas e cycles. O arrastar
- * continua funcionando com filtros ativos (o board mapeia o índice visível para
- * a lista completa — ver moveCardByVisibleIndex).
+ * Menu lateral do hub Kanban (2Âª coluna do shell): filtros (responsÃ¡vel,
+ * etiqueta, prioridade, cycle) + gestÃ£o de etiquetas e cycles. O arrastar
+ * continua funcionando com filtros ativos (o board mapeia o Ã­ndice visÃ­vel para
+ * a lista completa â€” ver moveCardByVisibleIndex).
  */
 export function KanbanSidebar({
   boardId,
   boardName,
-  projectId,
+  workspaceId,
   labels,
   members,
   cycles,
@@ -33,7 +33,7 @@ export function KanbanSidebar({
 }: {
   boardId: string;
   boardName: string;
-  projectId: string;
+  workspaceId: string;
   labels: LabelDTO[];
   members: MemberDTO[];
   cycles: CycleDTO[];
@@ -73,7 +73,7 @@ export function KanbanSidebar({
         </div>
 
         <div className="space-y-1.5">
-          <div className="text-xs text-muted-foreground">Responsável</div>
+          <div className="text-xs text-muted-foreground">ResponsÃ¡vel</div>
           {members.length === 0 ? (
             <p className="text-xs text-muted-foreground">Nenhum membro.</p>
           ) : (
@@ -177,7 +177,7 @@ export function KanbanSidebar({
       </div>
 
       <div className="space-y-3 border-t p-3">
-        <CycleManager projectId={projectId} />
+        <CycleManager workspaceId={workspaceId} />
         <LabelManager boardId={boardId} />
       </div>
     </aside>

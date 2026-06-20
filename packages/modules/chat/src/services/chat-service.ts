@@ -1,4 +1,4 @@
-import { prisma } from "@kerno/db";
+﻿import { prisma } from "@kerno/db";
 import { createEvent, eventBus } from "@kerno/core/events";
 import type {
   ChannelDTO,
@@ -10,7 +10,7 @@ import type {
 
 const MESSAGE_PAGE_SIZE = 50;
 
-// Include padrão para montar um MessageDTO: autor + a mensagem citada (replyTo).
+// Include padrÃ£o para montar um MessageDTO: autor + a mensagem citada (replyTo).
 const MESSAGE_INCLUDE = {
   user: { select: { id: true, name: true } },
   replyTo: {
@@ -48,7 +48,7 @@ function makeExcerpt(content: string): string {
   return content.replace(/\s+/g, " ").trim().slice(0, 120);
 }
 
-/** Agrupa reações por emoji, preservando a ordem de 1ª aparição. */
+/** Agrupa reaÃ§Ãµes por emoji, preservando a ordem de 1Âª apariÃ§Ã£o. */
 function aggregateReactions(rows: ReactionRow[], viewerId: string): ReactionDTO[] {
   const byEmoji = new Map<string, { count: number; mine: boolean }>();
   for (const r of rows) {
@@ -65,8 +65,8 @@ function toMessageDTO(row: MessageRow, viewerId: string): MessageDTO {
     id: row.id,
     content: row.content,
     createdAt: row.createdAt.toISOString(),
-    // updatedAt só difere de createdAt quando o conteúdo foi editado (reações e
-    // respostas vivem em tabelas próprias e não tocam a mensagem).
+    // updatedAt sÃ³ difere de createdAt quando o conteÃºdo foi editado (reaÃ§Ãµes e
+    // respostas vivem em tabelas prÃ³prias e nÃ£o tocam a mensagem).
     editedAt:
       row.updatedAt.getTime() !== row.createdAt.getTime() ? row.updatedAt.toISOString() : null,
     isSystem: row.isSystem,
@@ -84,7 +84,7 @@ function toMessageDTO(row: MessageRow, viewerId: string): MessageDTO {
   };
 }
 
-/** Garante que a mensagem citada pertence ao mesmo canal (senão ignora). */
+/** Garante que a mensagem citada pertence ao mesmo canal (senÃ£o ignora). */
 async function replyIdIfInChannel(
   replyToId: string | null | undefined,
   channelId: string,
@@ -97,7 +97,7 @@ async function replyIdIfInChannel(
   return target?.channelId === channelId ? replyToId : null;
 }
 
-/** Garante que a mensagem citada pertence à mesma conversa (senão ignora). */
+/** Garante que a mensagem citada pertence Ã  mesma conversa (senÃ£o ignora). */
 async function replyIdIfInConversation(
   replyToId: string | null | undefined,
   conversationId: string,
@@ -110,9 +110,9 @@ async function replyIdIfInConversation(
   return target?.conversationId === conversationId ? replyToId : null;
 }
 
-export async function listChannels(projectId: string): Promise<ChannelDTO[]> {
+export async function listChannels(workspaceId: string): Promise<ChannelDTO[]> {
   const channels = await prisma.channel.findMany({
-    where: { projectId },
+    where: { workspaceId },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
   });
   return channels.map((c) => ({ id: c.id, name: c.name, isDefault: c.isDefault }));
@@ -132,8 +132,8 @@ export async function getMessages(
   return rows.reverse().map((row) => toMessageDTO(row, viewerId));
 }
 
-export async function createChannel(projectId: string, name: string): Promise<ChannelDTO> {
-  const channel = await prisma.channel.create({ data: { projectId, name } });
+export async function createChannel(workspaceId: string, name: string): Promise<ChannelDTO> {
+  const channel = await prisma.channel.create({ data: { workspaceId, name } });
   return { id: channel.id, name: channel.name, isDefault: channel.isDefault };
 }
 
@@ -145,7 +145,7 @@ export async function sendMessage(
 ): Promise<MessageDTO> {
   const channel = await prisma.channel.findUniqueOrThrow({
     where: { id: channelId },
-    select: { projectId: true },
+    select: { workspaceId: true },
   });
 
   const message = await prisma.message.create({
@@ -161,7 +161,7 @@ export async function sendMessage(
   eventBus.publish(
     createEvent(
       "message:sent",
-      channel.projectId,
+      channel.workspaceId,
       { messageId: message.id, channelId, content },
       actorId,
     ),
@@ -171,9 +171,9 @@ export async function sendMessage(
 }
 
 /**
- * Edita o conteúdo de uma mensagem. Só o autor pode editar, e mensagens de
- * sistema não são editáveis. Publica `message:edited` para atualizar os clientes
- * em tempo real (canal → room do projeto; DM → rooms pessoais dos participantes).
+ * Edita o conteÃºdo de uma mensagem. SÃ³ o autor pode editar, e mensagens de
+ * sistema nÃ£o sÃ£o editÃ¡veis. Publica `message:edited` para atualizar os clientes
+ * em tempo real (canal â†’ room do projeto; DM â†’ rooms pessoais dos participantes).
  */
 export async function editMessage(
   messageId: string,
@@ -184,13 +184,13 @@ export async function editMessage(
     where: { id: messageId },
     select: { userId: true, isSystem: true },
   });
-  if (!existing) throw new Error("Mensagem não encontrada");
+  if (!existing) throw new Error("Mensagem nÃ£o encontrada");
   if (existing.isSystem || existing.userId !== actorId) {
-    throw new Error("Você só pode editar suas próprias mensagens");
+    throw new Error("VocÃª sÃ³ pode editar suas prÃ³prias mensagens");
   }
 
   const ctx = await messageContext(messageId);
-  if (!ctx) throw new Error("Mensagem não encontrada");
+  if (!ctx) throw new Error("Mensagem nÃ£o encontrada");
 
   const message = await prisma.message.update({
     where: { id: messageId },
@@ -201,12 +201,12 @@ export async function editMessage(
   eventBus.publish(
     createEvent(
       "message:edited",
-      ctx.projectId,
+      ctx.workspaceId,
       {
         messageId,
         channelId: ctx.channelId,
         conversationId: ctx.conversationId,
-        // só preenche participantes em DM (roteamento por room pessoal)
+        // sÃ³ preenche participantes em DM (roteamento por room pessoal)
         participantIds: ctx.conversationId ? ctx.participantIds : [],
         content,
       },
@@ -217,11 +217,11 @@ export async function editMessage(
   return toMessageDTO(message, actorId);
 }
 
-/** Mensagem de sistema (sem autor) — usada na integração entre hubs. */
+/** Mensagem de sistema (sem autor) â€” usada na integraÃ§Ã£o entre hubs. */
 export async function postSystemMessage(channelId: string, content: string): Promise<MessageDTO> {
   const channel = await prisma.channel.findUniqueOrThrow({
     where: { id: channelId },
-    select: { projectId: true },
+    select: { workspaceId: true },
   });
 
   const message = await prisma.message.create({
@@ -231,7 +231,7 @@ export async function postSystemMessage(channelId: string, content: string): Pro
 
   // Emite para que clientes conectados vejam a mensagem de sistema em tempo real.
   eventBus.publish(
-    createEvent("message:sent", channel.projectId, {
+    createEvent("message:sent", channel.workspaceId, {
       messageId: message.id,
       channelId,
       content,
@@ -241,26 +241,26 @@ export async function postSystemMessage(channelId: string, content: string): Pro
   return toMessageDTO(message, "");
 }
 
-export async function projectIdOfChannel(channelId: string): Promise<string | null> {
+export async function workspaceIdOfChannel(channelId: string): Promise<string | null> {
   const channel = await prisma.channel.findUnique({
     where: { id: channelId },
-    select: { projectId: true },
+    select: { workspaceId: true },
   });
-  return channel?.projectId ?? null;
+  return channel?.workspaceId ?? null;
 }
 
-export async function defaultChannelId(projectId: string): Promise<string | null> {
+export async function defaultChannelId(workspaceId: string): Promise<string | null> {
   const channel = await prisma.channel.findFirst({
-    where: { projectId },
+    where: { workspaceId },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
     select: { id: true },
   });
   return channel?.id ?? null;
 }
 
-// ── Mensagens diretas (DM) ─────────────────────────────────────────────────
+// â”€â”€ Mensagens diretas (DM) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-/** Chave determinística de um par (independe da ordem dos ids). */
+/** Chave determinÃ­stica de um par (independe da ordem dos ids). */
 function pairKey(a: string, b: string): string {
   return [a, b].sort().join("__");
 }
@@ -285,13 +285,13 @@ const CONVERSATION_INCLUDE = {
   messages: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
 } as const;
 
-/** Conversas privadas de que o usuário participa dentro do projeto. */
+/** Conversas privadas de que o usuÃ¡rio participa dentro do projeto. */
 export async function listConversations(
-  projectId: string,
+  workspaceId: string,
   viewerId: string,
 ): Promise<DirectConversationDTO[]> {
   const convs = await prisma.directConversation.findMany({
-    where: { projectId, participants: { some: { userId: viewerId } } },
+    where: { workspaceId, participants: { some: { userId: viewerId } } },
     include: CONVERSATION_INCLUDE,
     orderBy: { createdAt: "desc" },
   });
@@ -302,15 +302,15 @@ export async function listConversations(
 
 /** Abre (ou cria) a conversa 1:1 entre dois membros do projeto. */
 export async function openDirect(
-  projectId: string,
+  workspaceId: string,
   viewerId: string,
   otherUserId: string,
 ): Promise<DirectConversationDTO> {
   const key = pairKey(viewerId, otherUserId);
   const conv = await prisma.directConversation.upsert({
-    where: { projectId_pairKey: { projectId, pairKey: key } },
+    where: { workspaceId_pairKey: { workspaceId, pairKey: key } },
     create: {
-      projectId,
+      workspaceId,
       pairKey: key,
       participants: { create: [{ userId: viewerId }, { userId: otherUserId }] },
     },
@@ -342,7 +342,7 @@ export async function sendDirectMessage(
 ): Promise<MessageDTO> {
   const conv = await prisma.directConversation.findUniqueOrThrow({
     where: { id: conversationId },
-    select: { projectId: true, participants: { select: { userId: true } } },
+    select: { workspaceId: true, participants: { select: { userId: true } } },
   });
 
   const message = await prisma.message.create({
@@ -358,7 +358,7 @@ export async function sendDirectMessage(
   eventBus.publish(
     createEvent(
       "dm:sent",
-      conv.projectId,
+      conv.workspaceId,
       {
         messageId: message.id,
         conversationId,
@@ -374,20 +374,20 @@ export async function sendDirectMessage(
 /** Para os guards da API: projeto + participantes de uma conversa. */
 export async function conversationAccess(
   conversationId: string,
-): Promise<{ projectId: string; participantIds: string[] } | null> {
+): Promise<{ workspaceId: string; participantIds: string[] } | null> {
   const conv = await prisma.directConversation.findUnique({
     where: { id: conversationId },
-    select: { projectId: true, participants: { select: { userId: true } } },
+    select: { workspaceId: true, participants: { select: { userId: true } } },
   });
   if (!conv) return null;
-  return { projectId: conv.projectId, participantIds: conv.participants.map((p) => p.userId) };
+  return { workspaceId: conv.workspaceId, participantIds: conv.participants.map((p) => p.userId) };
 }
 
-// ── Reações ────────────────────────────────────────────────────────────────
+// â”€â”€ ReaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-/** Contexto de uma mensagem (canal/conversa/projeto) — para guards e roteamento. */
+/** Contexto de uma mensagem (canal/conversa/projeto) â€” para guards e roteamento. */
 export async function messageContext(messageId: string): Promise<{
-  projectId: string;
+  workspaceId: string;
   channelId: string | null;
   conversationId: string | null;
   participantIds: string[];
@@ -397,24 +397,24 @@ export async function messageContext(messageId: string): Promise<{
     select: {
       channelId: true,
       conversationId: true,
-      channel: { select: { projectId: true } },
+      channel: { select: { workspaceId: true } },
       conversation: {
-        select: { projectId: true, participants: { select: { userId: true } } },
+        select: { workspaceId: true, participants: { select: { userId: true } } },
       },
     },
   });
   if (!msg) return null;
-  const projectId = msg.channel?.projectId ?? msg.conversation?.projectId;
-  if (!projectId) return null;
+  const workspaceId = msg.channel?.workspaceId ?? msg.conversation?.workspaceId;
+  if (!workspaceId) return null;
   return {
-    projectId,
+    workspaceId,
     channelId: msg.channelId,
     conversationId: msg.conversationId,
     participantIds: msg.conversation?.participants.map((p) => p.userId) ?? [],
   };
 }
 
-/** Adiciona/remove a reação (toggle) e publica `reaction:changed`. */
+/** Adiciona/remove a reaÃ§Ã£o (toggle) e publica `reaction:changed`. */
 export async function toggleReaction(
   messageId: string,
   emoji: string,
@@ -435,12 +435,12 @@ export async function toggleReaction(
   eventBus.publish(
     createEvent(
       "reaction:changed",
-      ctx.projectId,
+      ctx.workspaceId,
       {
         messageId,
         channelId: ctx.channelId,
         conversationId: ctx.conversationId,
-        // só preenche participantes em DM (roteamento por room pessoal)
+        // sÃ³ preenche participantes em DM (roteamento por room pessoal)
         participantIds: ctx.conversationId ? ctx.participantIds : [],
       },
       userId,

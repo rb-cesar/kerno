@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { CalendarClock } from "lucide-react";
 import { Badge, cn } from "@kerno/ui";
@@ -6,9 +6,9 @@ import type { ColumnDTO } from "../types";
 import { useKanban } from "./kanban-context";
 import { CATEGORY_COLOR, PRIORITY_META, formatDue, initials, isOverdue } from "./meta";
 
-/** Visão em lista: cards agrupados por estado (coluna), em linhas clicáveis. */
+/** VisÃ£o em lista: cards agrupados por estado (coluna), em linhas clicÃ¡veis. */
 export function KanbanList({ columns }: { columns: ColumnDTO[] }) {
-  const { projectKey, setOpenCardId } = useKanban();
+  const { workspaceKey, setOpenCardId } = useKanban();
   const visible = columns.filter((c) => c.cards.length > 0);
 
   if (visible.length === 0) {
@@ -51,7 +51,7 @@ export function KanbanList({ columns }: { columns: ColumnDTO[] }) {
                         title={prio ? `Prioridade: ${prio.label}` : "Sem prioridade"}
                       />
                       <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">
-                        {projectKey}-{card.number}
+                        {workspaceKey}-{card.number}
                       </span>
                       <span className="flex-1 truncate">{card.title}</span>
                       {card.labels.map((l) => (

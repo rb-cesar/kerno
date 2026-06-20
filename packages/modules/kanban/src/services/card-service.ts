@@ -10,15 +10,15 @@ export async function createCard(
 ) {
   const column = await prisma.column.findUniqueOrThrow({
     where: { id: columnId },
-    select: { boardId: true, category: true, board: { select: { projectId: true } } },
+    select: { boardId: true, category: true, board: { select: { workspaceId: true } } },
   });
   const order = await prisma.card.count({ where: { columnId } });
 
-  // Numera o card (sequência por projeto) e registra o estado inicial — tudo numa
+  // Numera o card (sequência por workspace) e registra o estado inicial — tudo numa
   // transação para a contagem não correr risco de duplicar sob concorrência.
   const card = await prisma.$transaction(async (tx) => {
-    const project = await tx.project.update({
-      where: { id: column.board.projectId },
+    const workspace = await tx.workspace.update({
+      where: { id: column.board.workspaceId },
       data: { cardCounter: { increment: 1 } },
       select: { cardCounter: true },
     });
@@ -28,7 +28,7 @@ export async function createCard(
         boardId: column.boardId,
         title,
         order,
-        number: project.cardCounter,
+        number: workspace.cardCounter,
         parentId,
       },
     });
@@ -41,7 +41,7 @@ export async function createCard(
   eventBus.publish(
     createEvent(
       "card:created",
-      column.board.projectId,
+      column.board.workspaceId,
       { cardId: card.id, boardId: column.boardId, columnId, title: card.title },
       actorId,
     ),
@@ -67,7 +67,7 @@ export async function updateCard(
 ) {
   const existing = await prisma.card.findUniqueOrThrow({
     where: { id: input.cardId },
-    select: { boardId: true, assignedTo: true, board: { select: { projectId: true } } },
+    select: { boardId: true, assignedTo: true, board: { select: { workspaceId: true } } },
   });
 
   const card = await prisma.$transaction(async (tx) => {
@@ -97,7 +97,7 @@ export async function updateCard(
     eventBus.publish(
       createEvent(
         "card:assigned",
-        existing.board.projectId,
+        existing.board.workspaceId,
         {
           cardId: input.cardId,
           boardId: existing.boardId,
@@ -113,7 +113,7 @@ export async function updateCard(
   eventBus.publish(
     createEvent(
       "kanban:changed",
-      existing.board.projectId,
+      existing.board.workspaceId,
       { boardId: existing.boardId, cardId: input.cardId },
       actorId,
     ),
@@ -134,7 +134,7 @@ export async function moveCard(
 ) {
   const card = await prisma.card.findUniqueOrThrow({
     where: { id: input.cardId },
-    select: { title: true, boardId: true, board: { select: { projectId: true } } },
+    select: { title: true, boardId: true, board: { select: { workspaceId: true } } },
   });
 
   const changedColumn = input.fromColumnId !== input.toColumnId;
@@ -177,7 +177,7 @@ export async function moveCard(
   eventBus.publish(
     createEvent(
       "card:moved",
-      card.board.projectId,
+      card.board.workspaceId,
       {
         cardId: input.cardId,
         boardId: card.boardId,
@@ -193,7 +193,7 @@ export async function moveCard(
 export async function deleteCard(cardId: string, actorId: string) {
   const card = await prisma.card.findUniqueOrThrow({
     where: { id: cardId },
-    select: { title: true, boardId: true, board: { select: { projectId: true } } },
+    select: { title: true, boardId: true, board: { select: { workspaceId: true } } },
   });
 
   await prisma.card.delete({ where: { id: cardId } });
@@ -201,7 +201,7 @@ export async function deleteCard(cardId: string, actorId: string) {
   eventBus.publish(
     createEvent(
       "card:deleted",
-      card.board.projectId,
+      card.board.workspaceId,
       { cardId, boardId: card.boardId, title: card.title },
       actorId,
     ),

@@ -50,7 +50,7 @@ export function initKanbanChatIntegration(): void {
     try {
       const text = await describe(event);
       if (!text) return;
-      const channelId = await defaultChannelId(event.projectId);
+      const channelId = await defaultChannelId(event.workspaceId);
       if (!channelId) return;
       await postSystemMessage(channelId, text);
     } catch (err) {

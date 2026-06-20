@@ -10,10 +10,10 @@ import { KanbanService } from "./kanban.service";
 export class KanbanController {
   constructor(private readonly kanban: KanbanService) {}
 
-  /** Board padrão do projeto — carga inicial da tela. */
-  @Get("projects/:projectId/board")
-  boardForProject(@CurrentUser() user: RequestUser, @Param("projectId") projectId: string) {
-    return this.kanban.boardForProject(user.id, projectId);
+  /** Board padrão do workspace — carga inicial da tela. */
+  @Get("workspaces/:workspaceId/board")
+  boardForWorkspace(@CurrentUser() user: RequestUser, @Param("workspaceId") workspaceId: string) {
+    return this.kanban.boardForWorkspace(user.id, workspaceId);
   }
 
   /** Snapshot de um board — refetch após eventos. */

@@ -1,15 +1,21 @@
 import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
+import { THEME_IDS } from "./lib/themes";
 
 export default {
   darkMode: "class",
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
     "../../packages/editor/src/**/*.{ts,tsx}",
     "../../packages/modules/*/src/**/*.{ts,tsx}",
   ],
+  // As classes de tema são aplicadas dinamicamente pelo next-themes (nunca como
+  // literal no JSX), então o Tailwind faria tree-shaking dos blocos `.<tema>` do
+  // globals.css. O safelist garante que todas permaneçam no CSS final.
+  safelist: [...THEME_IDS],
   theme: {
     extend: {
       colors: {
@@ -45,6 +51,19 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        // Superfícies de "chrome" com cor própria por tema (modelo Discord).
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+        },
+        header: {
+          DEFAULT: "hsl(var(--header))",
+          foreground: "hsl(var(--header-foreground))",
+          border: "hsl(var(--header-border))",
         },
       },
       borderRadius: {

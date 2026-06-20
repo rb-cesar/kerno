@@ -1,10 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import type {
-  CreateProjectInput,
   CreateWorkspaceInput,
   InviteMemberInput,
 } from "@kerno/contracts/workspaces";
-import type { ProjectRole } from "@kerno/core/workspaces";
+import type { WorkspaceRole } from "@kerno/core/workspaces";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import type { RequestUser } from "../auth/jwt.strategy";
@@ -27,16 +26,7 @@ export class WorkspacesController {
 
   @Post("workspaces")
   create(@CurrentUser() user: RequestUser, @Body() body: CreateWorkspaceInput) {
-    return this.workspaces.createWorkspace(user.id, body.name);
-  }
-
-  @Post("workspaces/:workspaceId/projects")
-  createProject(
-    @CurrentUser() user: RequestUser,
-    @Param("workspaceId") workspaceId: string,
-    @Body() body: CreateProjectInput,
-  ) {
-    return this.workspaces.createProject(user.id, workspaceId, body);
+    return this.workspaces.createWorkspace(user.id, body);
   }
 
   @Post("workspaces/:workspaceId/members")
@@ -49,27 +39,22 @@ export class WorkspacesController {
     return this.workspaces.invite(user.id, workspaceId, body);
   }
 
-  @Get("projects/:projectId/view")
-  projectView(@CurrentUser() user: RequestUser, @Param("projectId") projectId: string) {
-    return this.workspaces.getProjectView(user.id, projectId);
-  }
-
-  @Post("projects/:projectId/members")
+  @Post("workspaces/:workspaceId/members/update")
   @HttpCode(200)
-  addMember(
+  updateMember(
     @CurrentUser() user: RequestUser,
-    @Param("projectId") projectId: string,
-    @Body() body: { userId: string; role?: ProjectRole },
+    @Param("workspaceId") workspaceId: string,
+    @Body() body: { userId: string; role?: WorkspaceRole },
   ) {
-    return this.workspaces.addMember(user.id, projectId, body);
+    return this.workspaces.updateMember(user.id, workspaceId, body);
   }
 
-  @Delete("projects/:projectId/members/:userId")
+  @Delete("workspaces/:workspaceId/members/:userId")
   removeMember(
     @CurrentUser() user: RequestUser,
-    @Param("projectId") projectId: string,
+    @Param("workspaceId") workspaceId: string,
     @Param("userId") targetUserId: string,
   ) {
-    return this.workspaces.removeMember(user.id, projectId, targetUserId);
+    return this.workspaces.removeMember(user.id, workspaceId, targetUserId);
   }
 }

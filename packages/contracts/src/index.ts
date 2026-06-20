@@ -26,12 +26,8 @@ export type {
 export type {
   WorkspaceListItem,
   WorkspaceMemberDTO,
-  ProjectListItem,
-  WorkspaceDetail,
-  ProjectMemberDTO,
-  ProjectView,
+  WorkspaceView,
   CreateWorkspaceInput,
-  CreateProjectInput,
   InviteMemberInput,
   ActionResult,
 } from "./workspaces";
