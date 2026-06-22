@@ -4,14 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Skeleton, TooltipProvider } from "@kerno/ui";
 import type { BoardData, KanbanFetch, KanbanFetchCardDetail, KanbanMutate } from "../types";
 import { KanbanProvider } from "./kanban-context";
-import { CardDialog } from "./card-dialog";
+import { CardPanelContent } from "./card-dialog";
 
 /**
- * Painel lateral de uma tarefa, REUTILIZÁVEL fora do board (ex.: ao lado do chat
- * quando se clica numa menção `!`). É self-contained: busca o snapshot do board que
- * contém o card + monta um contexto Kanban compatível e renderiza o mesmo
- * `CardDialog` do board (máximo reuso). As chamadas à API chegam por props (a
- * composição com o app evita o hub Chat importar o hub Kanban).
+ * Conteúdo de uma tarefa para uso FORA do board (ex.: como aba do dock no chat).
+ * Self-contained: busca o snapshot do board que contém o card + monta um contexto
+ * Kanban compatível e renderiza o mesmo `CardPanelContent` do board (máximo reuso).
+ * Não tem shell próprio — quem provê a moldura (borda/abas/largura) é o dock.
  */
 export function TaskSidePanel({
   cardId,
@@ -33,14 +32,14 @@ export function TaskSidePanel({
   onClose: () => void;
 }) {
   const [data, setData] = useState<BoardData | null>(null);
-  const [openCardId, setOpenCardId] = useState<string | null>(cardId);
+  const [shownCardId, setShownCardId] = useState<string>(cardId);
   const [remoteRev, setRemoteRev] = useState(0);
 
-  // Carrega o board do card ao abrir / trocar de tarefa.
+  // Carrega o board do card ao montar / trocar de tarefa.
   useEffect(() => {
     let active = true;
     setData(null);
-    setOpenCardId(cardId);
+    setShownCardId(cardId);
     void fetchCardBoard(cardId).then((board) => {
       if (active && board) setData(board);
     });
@@ -58,27 +57,30 @@ export function TaskSidePanel({
     }
   }, [data, fetchSnapshot]);
 
+  // Navegação interna (ex.: clicar numa sub-tarefa) troca o card mostrado nesta aba.
+  const openCard = useCallback((id: string) => setShownCardId(id), []);
+
   if (!data) {
     return (
-      <aside className="flex h-full w-[44rem] min-w-[28rem] max-w-[60vw] shrink-0 flex-col gap-4 border-l bg-background p-5">
+      <div className="flex h-full flex-col gap-4 p-5">
         <Skeleton className="h-9 w-3/4" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-16 w-full" />
-      </aside>
+      </div>
     );
   }
 
-  const card = data.columns.flatMap((c) => c.cards).find((c) => c.id === openCardId) ?? null;
+  const card = data.columns.flatMap((c) => c.cards).find((c) => c.id === shownCardId) ?? null;
 
   if (!card) {
     return (
-      <aside className="flex h-full w-[28rem] shrink-0 flex-col items-center justify-center gap-3 border-l bg-background p-5 text-sm text-muted-foreground">
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-5 text-sm text-muted-foreground">
         Tarefa não encontrada.
         <button type="button" onClick={onClose} className="text-primary underline">
           Fechar
         </button>
-      </aside>
+      </div>
     );
   }
 
@@ -95,12 +97,12 @@ export function TaskSidePanel({
         cycles: data.cycles,
         stories: data.stories,
         remoteRev,
-        openCardId,
-        setOpenCardId,
+        openCard,
+        activeCardId: shownCardId,
       }}
     >
       <TooltipProvider delayDuration={200}>
-        <CardDialog card={card} onClose={onClose} />
+        <CardPanelContent key={card.id} card={card} onClose={onClose} />
       </TooltipProvider>
     </KanbanProvider>
   );

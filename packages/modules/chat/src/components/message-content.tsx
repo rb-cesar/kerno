@@ -6,7 +6,9 @@ import { Check, Copy, Hash } from "lucide-react";
 
 // onOpenTask flui por contexto para que as regras inline (estáticas) possam abrir
 // a tarefa sem receber o handler por parâmetro em toda a recursão de parsing.
-const OpenTaskContext = createContext<((cardId: string) => void) | undefined>(undefined);
+const OpenTaskContext = createContext<((cardId: string, label?: string) => void) | undefined>(
+  undefined,
+);
 
 /** Chip clicável de menção de tarefa (`!task[...]`); abre o painel da tarefa. */
 function TaskMentionChip({ cardId, label }: { cardId: string; label: string }) {
@@ -15,7 +17,7 @@ function TaskMentionChip({ cardId, label }: { cardId: string; label: string }) {
     <button
       type="button"
       disabled={!onOpenTask}
-      onClick={() => onOpenTask?.(cardId)}
+      onClick={() => onOpenTask?.(cardId, label)}
       className="rounded bg-amber-500/15 px-1 font-medium text-amber-600 transition-colors hover:bg-amber-500/25 disabled:cursor-default disabled:hover:bg-amber-500/15 dark:text-amber-400"
     >
       <Hash className="mb-0.5 mr-0.5 inline h-3 w-3" />
@@ -228,7 +230,7 @@ export function MessageContent({
   onOpenTask,
 }: {
   content: string;
-  onOpenTask?: (cardId: string) => void;
+  onOpenTask?: (cardId: string, label?: string) => void;
 }): ReactNode {
   const lines = content.split("\n");
   const at = (idx: number): string => lines[idx] ?? "";

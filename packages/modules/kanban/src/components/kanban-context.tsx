@@ -22,9 +22,10 @@ type KanbanContextValue = {
   stories: StoryDTO[];
   /** Incrementa a cada mudança remota — sinaliza recarregar dados sob demanda (ex.: detalhe do card). */
   remoteRev: number;
-  /** Card aberto no momento (controlado pelo board p/ a paleta de comandos abrir cards). */
-  openCardId: string | null;
-  setOpenCardId: (id: string | null) => void;
+  /** Abre o card no dock de abas. `pin` força aba fixada (senão preview). */
+  openCard: (cardId: string, opts?: { pin?: boolean }) => void;
+  /** Card da aba ativa no dock (p/ destacar o tile correspondente). */
+  activeCardId: string | null;
 };
 
 const KanbanContext = createContext<KanbanContextValue | null>(null);

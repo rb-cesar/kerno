@@ -140,7 +140,7 @@ function StoryEditor({
   linkedTasks: CardDTO[];
   onDeleted: () => void;
 }) {
-  const { mutate, refresh, members, setOpenCardId, currentUserId } = useKanban();
+  const { mutate, refresh, members, openCard, currentUserId } = useKanban();
   const [pending, startTransition] = useTransition();
 
   const [title, setTitle] = useState(story.title);
@@ -230,7 +230,8 @@ function StoryEditor({
                 <li key={c.id}>
                   <button
                     type="button"
-                    onClick={() => setOpenCardId(c.id)}
+                    onClick={() => openCard(c.id)}
+                    onDoubleClick={() => openCard(c.id, { pin: true })}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent"
                   >
                     <span className="font-mono text-xs text-muted-foreground">

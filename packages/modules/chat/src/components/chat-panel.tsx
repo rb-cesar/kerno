@@ -89,8 +89,8 @@ export function ChatPanel({
   toggleReaction: ChatToggleReaction;
   /** Busca tarefas p/ a menção `!` (opcional). */
   searchTasks?: ChatSearchTasks;
-  /** Abre o painel de uma tarefa mencionada (opcional). */
-  onOpenTask?: (cardId: string) => void;
+  /** Abre o painel de uma tarefa mencionada (opcional). `label` = KERN-N p/ a aba. */
+  onOpenTask?: (cardId: string, label?: string) => void;
 }) {
   const [channels, setChannels] = useState<ChannelDTO[]>(initial.channels);
   const [conversations, setConversations] = useState<DirectConversationDTO[]>(

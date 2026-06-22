@@ -9,7 +9,7 @@ import {
   type HTMLAttributes,
 } from "react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { BarChart3, BookMarked, LayoutGrid, List, Map, Search } from "lucide-react";
+import { BarChart3, BookMarked, LayoutGrid, List, Map as MapIcon, Search } from "lucide-react";
 import type { Socket } from "socket.io-client";
 import {
   Select,
@@ -17,8 +17,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TabDock,
   TooltipProvider,
   cn,
+  useDockTabs,
+  type DockTab,
 } from "@kerno/ui";
 import type {
   BoardData,
@@ -34,13 +37,14 @@ import { KanbanProvider } from "./kanban-context";
 import { KanbanColumn } from "./kanban-column";
 import { KanbanList } from "./kanban-list";
 import { KanbanMetrics } from "./kanban-metrics";
-import { CardDialog } from "./card-dialog";
+import { CardPanelContent } from "./card-dialog";
+import { CATEGORY_COLOR } from "./meta";
 import { BoardSwitcher } from "./board-switcher";
 import { AddColumn } from "./add-column";
 import { KanbanSidebar } from "./kanban-sidebar";
 import { CommandPalette } from "./command-palette";
 import { StoriesView } from "./stories-view";
-import { ColumnMinimap } from "./column-minimap";
+import { BoardMinimap } from "./column-minimap";
 
 function toggleInSet(prev: Set<string>, id: string): Set<string> {
   const next = new Set(prev);
@@ -151,7 +155,7 @@ export function KanbanBoard({
   const [assigneeFilter, setAssigneeFilter] = useState<Set<string>>(new Set());
   const [priorityFilter, setPriorityFilter] = useState<Set<Priority>>(new Set());
   const [cycleFilter, setCycleFilter] = useState<Set<string>>(new Set());
-  const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const dock = useDockTabs();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [view, setView] = useState<"board" | "list" | "metrics" | "stories">("board");
@@ -169,11 +173,6 @@ export function KanbanBoard({
       localStorage.setItem(minimapKey, next ? "1" : "0");
       return next;
     });
-
-  const jumpToColumn = (columnId: string) => {
-    const el = boardScrollRef.current?.querySelector<HTMLElement>(`[data-col-id="${columnId}"]`);
-    el?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-  };
 
   const filtersActive =
     labelFilter.size > 0 ||
@@ -225,9 +224,54 @@ export function KanbanBoard({
     [grouped, groupBy, visibleColumns, data.members],
   );
 
-  const openCard = useMemo(
-    () => (openCardId ? data.columns.flatMap((c) => c.cards).find((c) => c.id === openCardId) ?? null : null),
-    [openCardId, data.columns],
+  // Mapas por id de card: o objeto (p/ renderizar o conteúdo) e metadados da aba.
+  const cardsById = useMemo(() => {
+    const m = new Map<string, ColumnDTO["cards"][number]>();
+    for (const col of data.columns) for (const c of col.cards) m.set(c.id, c);
+    return m;
+  }, [data.columns]);
+
+  const cardTabMeta = useMemo(() => {
+    const m = new Map<string, { title: string; color: string }>();
+    for (const col of data.columns) {
+      const color = col.color ?? CATEGORY_COLOR[col.category];
+      for (const c of col.cards) m.set(c.id, { title: `${data.workspaceKey}-${c.number}`, color });
+    }
+    return m;
+  }, [data.columns, data.workspaceKey]);
+
+  const openCard = useCallback(
+    (cardId: string, opts?: { pin?: boolean }) => {
+      const meta = cardTabMeta.get(cardId);
+      const tab: DockTab = {
+        id: cardId,
+        title: meta?.title ?? cardId,
+        icon: (
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: meta?.color ?? "#94a3b8" }}
+          />
+        ),
+      };
+      if (opts?.pin) dock.openPinned(tab);
+      else dock.openPreview(tab);
+    },
+    [cardTabMeta, dock],
+  );
+
+  const renderTab = useCallback(
+    (tab: DockTab) => {
+      const card = cardsById.get(tab.id);
+      if (!card) {
+        return (
+          <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+            Tarefa removida.
+          </div>
+        );
+      }
+      return <CardPanelContent key={card.id} card={card} onClose={() => dock.close(tab.id)} />;
+    },
+    [cardsById, dock],
   );
 
   // Id do board ativo via ref → `refresh` permanece estável mesmo trocando de board.
@@ -249,7 +293,7 @@ export function KanbanBoard({
       const fresh = await fetchSnapshot(boardId);
       if (!fresh) return;
       setData(fresh);
-      setOpenCardId(null);
+      dock.closeAll();
       clearFilters();
       try {
         localStorage.setItem(activeBoardKey, boardId);
@@ -257,7 +301,7 @@ export function KanbanBoard({
         /* localStorage indisponível — ignora */
       }
     },
-    [fetchSnapshot, activeBoardKey, clearFilters],
+    [fetchSnapshot, activeBoardKey, clearFilters, dock],
   );
 
   // Restaura o último board ativo (por workspace) na montagem.
@@ -387,8 +431,8 @@ export function KanbanBoard({
         cycles: data.cycles,
         stories: data.stories,
         remoteRev,
-        openCardId,
-        setOpenCardId,
+        openCard,
+        activeCardId: dock.activeId,
       }}
     >
       <TooltipProvider delayDuration={200}>
@@ -516,7 +560,7 @@ export function KanbanBoard({
                   )}
                   title="Minimapa de colunas"
                 >
-                  <Map className="h-3.5 w-3.5" />
+                  <MapIcon className="h-3.5 w-3.5" />
                   Minimapa
                 </button>
               ) : null}
@@ -574,7 +618,7 @@ export function KanbanBoard({
             ) : (
               <>
                 {minimapOpen ? (
-                  <ColumnMinimap columns={visibleColumns} onJump={jumpToColumn} />
+                  <BoardMinimap columns={visibleColumns} scrollRef={boardScrollRef} />
                 ) : null}
                 <Droppable droppableId="board" direction="horizontal" type="column">
                   {(dropProvided) => (
@@ -613,16 +657,22 @@ export function KanbanBoard({
           </DragDropContext>
           )}
         </div>
-        {openCard ? (
-          <CardDialog card={openCard} onClose={() => setOpenCardId(null)} />
-        ) : null}
+        <TabDock
+          tabs={dock.tabs}
+          activeId={dock.activeId}
+          onActivate={dock.activate}
+          onClose={dock.close}
+          onPin={dock.pin}
+          renderContent={renderTab}
+          storageKey="kerno:dock:board:width"
+        />
       </div>
 
       <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
         data={data}
-        onOpenCard={setOpenCardId}
+        onOpenCard={(id) => openCard(id, { pin: true })}
         filtersActive={filtersActive}
         onClearFilters={clearFilters}
       />

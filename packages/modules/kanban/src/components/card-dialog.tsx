@@ -38,26 +38,6 @@ import {
   toDateInput,
 } from "./meta";
 
-/**
- * Shell do painel de detalhe do card. NÃO é modal: abre como coluna lateral à
- * direita, dentro da própria tela do board (que encolhe e permanece interativo).
- * O shell monta UMA vez ao abrir (animação slide-in); ao trocar de tarefa ele
- * permanece montado e só o conteúdo interno (`CardContent`, com `key={card.id}`)
- * é recriado — disparando a transição skeleton/fade-in em vez de outro slide.
- */
-export function CardDialog({ card, onClose }: { card: CardDTO; onClose: () => void }) {
-  return (
-    <aside
-      className={cn(
-        "flex h-full w-[44rem] min-w-[28rem] max-w-[60vw] shrink-0 flex-col border-l bg-background",
-        "duration-300 animate-in slide-in-from-right",
-      )}
-    >
-      <CardContent key={card.id} card={card} onClose={onClose} />
-    </aside>
-  );
-}
-
 /** Esqueleto exibido enquanto o detalhe do card carrega (e na troca de tarefa). */
 function CardSkeleton() {
   return (
@@ -83,7 +63,13 @@ function CardSkeleton() {
   );
 }
 
-function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) {
+/**
+ * Conteúdo do painel de detalhe do card (sem shell próprio — o shell é o dock de
+ * abas). Header + coluna principal (título/descrição/sub-tarefas/checklists/
+ * comentários/atividade) + barra de detalhes + rodapé. Usado pelo board e, via
+ * `TaskSidePanel`, pelo chat.
+ */
+export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: () => void }) {
   const { mutate, refresh, members, labels, cycles, stories, workspaceKey, fetchCardDetail, remoteRev, currentUserId } =
     useKanban();
   const [pending, startTransition] = useTransition();

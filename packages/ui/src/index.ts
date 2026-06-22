@@ -88,3 +88,5 @@ export {
   SheetDescription,
 } from "./components/sheet";
 export { Skeleton } from "./components/skeleton";
+export { TabDock } from "./components/tab-dock";
+export { useDockTabs, type DockTab, type DockController } from "./hooks/use-dock-tabs";

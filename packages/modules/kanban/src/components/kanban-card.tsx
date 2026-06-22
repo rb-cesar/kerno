@@ -8,7 +8,7 @@ import type { CardDTO } from "../types";
 import { useKanban } from "./kanban-context";
 import { PRIORITY_META, formatDue, initials, isOverdue } from "./meta";
 
-/** Tile do card no board. O detalhe/edição vive no CardDialog (singleton do board). */
+/** Tile do card no board. Clique abre em aba preview; duplo-clique/Enter fixa. */
 export function KanbanCard({
   card,
   index,
@@ -18,11 +18,12 @@ export function KanbanCard({
   index: number;
   dragDisabled?: boolean;
 }) {
-  const { workspaceKey, setOpenCardId } = useKanban();
+  const { workspaceKey, openCard, activeCardId } = useKanban();
 
   const cardKey = `${workspaceKey}-${card.number}`;
   const prio = card.priority !== "NONE" ? PRIORITY_META[card.priority] : null;
   const overdue = card.dueDate ? isOverdue(card.dueDate) : false;
+  const active = activeCardId === card.id;
 
   return (
     <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled}>
@@ -33,12 +34,14 @@ export function KanbanCard({
           {...provided.dragHandleProps}
           role="button"
           tabIndex={0}
-          onClick={() => setOpenCardId(card.id)}
+          onClick={() => openCard(card.id)}
+          onDoubleClick={() => openCard(card.id, { pin: true })}
           onKeyDown={(e) => {
-            if (e.key === "Enter") setOpenCardId(card.id);
+            if (e.key === "Enter") openCard(card.id, { pin: true });
           }}
           className={cn(
             "cursor-pointer rounded-md border bg-card p-3 text-sm shadow-sm transition-colors hover:border-foreground/30",
+            active && "border-primary ring-1 ring-primary",
             snapshot.isDragging && "ring-2 ring-ring",
           )}
         >

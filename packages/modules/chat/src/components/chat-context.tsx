@@ -24,8 +24,8 @@ type ChatContextValue = {
   onlineUserIds: string[];
   /** Busca tarefas p/ a menção `!` (opcional — só quando o kanban está disponível). */
   searchTasks?: ChatSearchTasks;
-  /** Abre o painel de uma tarefa mencionada (opcional). */
-  onOpenTask?: (cardId: string) => void;
+  /** Abre o painel de uma tarefa mencionada (opcional). `label` = KERN-N p/ a aba. */
+  onOpenTask?: (cardId: string, label?: string) => void;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);

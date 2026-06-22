@@ -8,7 +8,7 @@ import { CATEGORY_COLOR, PRIORITY_META, formatDue, initials, isOverdue } from ".
 
 /** Visão em lista: cards agrupados por estado (coluna), em linhas clicáveis. */
 export function KanbanList({ columns }: { columns: ColumnDTO[] }) {
-  const { workspaceKey, setOpenCardId } = useKanban();
+  const { workspaceKey, openCard } = useKanban();
   const visible = columns.filter((c) => c.cards.length > 0);
 
   if (visible.length === 0) {
@@ -42,7 +42,8 @@ export function KanbanList({ columns }: { columns: ColumnDTO[] }) {
                   <li key={card.id}>
                     <button
                       type="button"
-                      onClick={() => setOpenCardId(card.id)}
+                      onClick={() => openCard(card.id)}
+                      onDoubleClick={() => openCard(card.id, { pin: true })}
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent/50"
                     >
                       <span
