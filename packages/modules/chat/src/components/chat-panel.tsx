@@ -13,6 +13,7 @@ import type {
   ChatFetchMessages,
   ChatOpenDirect,
   ChatResult,
+  ChatSearchTasks,
   ChatSendDirectMessage,
   ChatSendMessage,
   ChatToggleReaction,
@@ -71,6 +72,8 @@ export function ChatPanel({
   sendDirect,
   fetchDirectMessages,
   toggleReaction,
+  searchTasks,
+  onOpenTask,
 }: {
   initial: ChatData;
   currentUserId: string;
@@ -84,6 +87,10 @@ export function ChatPanel({
   sendDirect: ChatSendDirectMessage;
   fetchDirectMessages: ChatFetchDirectMessages;
   toggleReaction: ChatToggleReaction;
+  /** Busca tarefas p/ a menção `!` (opcional). */
+  searchTasks?: ChatSearchTasks;
+  /** Abre o painel de uma tarefa mencionada (opcional). */
+  onOpenTask?: (cardId: string) => void;
 }) {
   const [channels, setChannels] = useState<ChannelDTO[]>(initial.channels);
   const [conversations, setConversations] = useState<DirectConversationDTO[]>(
@@ -239,6 +246,8 @@ export function ChatPanel({
         currentUserId,
         members: initial.members,
         onlineUserIds,
+        searchTasks,
+        onOpenTask,
       }}
     >
       <div className="flex h-full">

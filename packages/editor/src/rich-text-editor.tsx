@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bold, Braces, Code, Italic, List, ListOrdered, Quote, Strikethrough } from "lucide-react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -12,7 +12,11 @@ import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { $convertFromMarkdownString, $convertToMarkdownString } from "@lexical/markdown";
+import {
+  $convertFromMarkdownString,
+  $convertToMarkdownString,
+  type Transformer,
+} from "@lexical/markdown";
 import { $createQuoteNode, QuoteNode } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
 import {
@@ -40,6 +44,22 @@ import {
 } from "lexical";
 import { cn } from "@kerno/ui";
 import { TRANSFORMERS, URL_MATCHER, editorTheme } from "./config";
+import {
+  MENTION_TRANSFORMER,
+  MentionNode,
+  MentionTypeaheadPlugin,
+  type MentionMember,
+} from "./plugins/mention";
+import {
+  ActiveFormatsPlugin,
+  EmojiShortcutPlugin,
+  NO_FORMATS,
+  PasteMarkdownPlugin,
+  SubmitOnCtrlEnterPlugin,
+  type ActiveFormats,
+} from "./plugins/behaviors";
+import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./plugins/emoji";
+import { SlashCommandPlugin } from "./plugins/slash";
 
 const LINK_MATCHERS = [
   createLinkMatcherWithRegExp(URL_MATCHER, (text) =>
@@ -47,7 +67,7 @@ const LINK_MATCHERS = [
   ),
 ];
 
-const EDITOR_NODES = [QuoteNode, ListNode, ListItemNode, LinkNode, AutoLinkNode, CodeNode, CodeHighlightNode];
+const BASE_NODES = [QuoteNode, ListNode, ListItemNode, LinkNode, AutoLinkNode, CodeNode, CodeHighlightNode];
 
 function CodeHighlightPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -56,11 +76,17 @@ function CodeHighlightPlugin() {
 }
 
 /** Carrega o markdown inicial uma única vez (montagem). */
-function InitialMarkdownPlugin({ markdown }: { markdown: string }) {
+function InitialMarkdownPlugin({
+  markdown,
+  transformers,
+}: {
+  markdown: string;
+  transformers: Transformer[];
+}) {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     editor.update(() => {
-      if (markdown) $convertFromMarkdownString(markdown, TRANSFORMERS);
+      if (markdown) $convertFromMarkdownString(markdown, transformers);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
@@ -68,28 +94,36 @@ function InitialMarkdownPlugin({ markdown }: { markdown: string }) {
 }
 
 /** Serializa para markdown a cada alteração e propaga via onChange. */
-function OnChangeMarkdownPlugin({ onChange }: { onChange: (markdown: string) => void }) {
+function OnChangeMarkdownPlugin({
+  onChange,
+  transformers,
+}: {
+  onChange: (markdown: string) => void;
+  transformers: Transformer[];
+}) {
   const [editor] = useLexicalComposerContext();
   useEffect(
     () =>
       editor.registerUpdateListener(({ editorState }) => {
         let markdown = "";
         editorState.read(() => {
-          markdown = $convertToMarkdownString(TRANSFORMERS);
+          markdown = $convertToMarkdownString(transformers);
         });
         onChange(markdown);
       }),
-    [editor, onChange],
+    [editor, onChange, transformers],
   );
   return null;
 }
 
 function ToolbarButton({
   title,
+  active,
   onClick,
   children,
 }: {
   title: string;
+  active?: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -97,16 +131,28 @@ function ToolbarButton({
     <button
       type="button"
       title={title}
+      aria-pressed={active}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      className={cn(
+        "rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+        active && "bg-accent text-accent-foreground",
+      )}
     >
       {children}
     </button>
   );
 }
 
-function Toolbar({ editor }: { editor: LexicalEditor }) {
+function Toolbar({
+  editor,
+  active,
+  showEmoji,
+}: {
+  editor: LexicalEditor;
+  active: ActiveFormats;
+  showEmoji?: boolean;
+}) {
   const toggleCodeBlock = () =>
     editor.update(() => {
       const selection = $getSelection();
@@ -157,31 +203,37 @@ function Toolbar({ editor }: { editor: LexicalEditor }) {
 
   return (
     <div className="flex items-center gap-0.5 border-b px-1.5 py-1">
-      <ToolbarButton title="Negrito (Ctrl+B)" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}>
+      <ToolbarButton title="Negrito (Ctrl+B)" active={active.bold} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}>
         <Bold className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Itálico (Ctrl+I)" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}>
+      <ToolbarButton title="Itálico (Ctrl+I)" active={active.italic} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}>
         <Italic className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Tachado" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}>
+      <ToolbarButton title="Tachado" active={active.strikethrough} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}>
         <Strikethrough className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Código" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}>
+      <ToolbarButton title="Código" active={active.code} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}>
         <Code className="h-3.5 w-3.5" />
       </ToolbarButton>
       <span className="mx-1 h-4 w-px bg-border" />
-      <ToolbarButton title="Lista" onClick={() => toggleList(false)}>
+      <ToolbarButton title="Lista" active={active.ul} onClick={() => toggleList(false)}>
         <List className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Lista numerada" onClick={() => toggleList(true)}>
+      <ToolbarButton title="Lista numerada" active={active.ol} onClick={() => toggleList(true)}>
         <ListOrdered className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Citação" onClick={setQuote}>
+      <ToolbarButton title="Citação" active={active.quote} onClick={setQuote}>
         <Quote className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Bloco de código" onClick={toggleCodeBlock}>
+      <ToolbarButton title="Bloco de código" active={active.codeblock} onClick={toggleCodeBlock}>
         <Braces className="h-3.5 w-3.5" />
       </ToolbarButton>
+      {showEmoji ? (
+        <>
+          <span className="mx-1 h-4 w-px bg-border" />
+          <EmojiPickerButton />
+        </>
+      ) : null}
     </div>
   );
 }
@@ -189,14 +241,17 @@ function Toolbar({ editor }: { editor: LexicalEditor }) {
 function EditorInner({
   placeholder,
   minHeightClass,
+  showEmoji,
 }: {
   placeholder: string;
   minHeightClass: string;
+  showEmoji?: boolean;
 }) {
   const [editor] = useLexicalComposerContext();
+  const [active, setActive] = useState<ActiveFormats>(NO_FORMATS);
   return (
     <>
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} active={active} showEmoji={showEmoji} />
       <div className="relative">
         <RichTextPlugin
           contentEditable={
@@ -216,45 +271,85 @@ function EditorInner({
           ErrorBoundary={LexicalErrorBoundary}
         />
       </div>
+      <ActiveFormatsPlugin onChange={setActive} />
     </>
   );
 }
 
 /**
  * Editor de texto rico genérico (markdown) — reusável por qualquer hub. `value` é
- * o markdown INICIAL (carregado uma vez); edições subsequentes saem por `onChange`
- * (não é totalmente controlado, padrão recomendado do Lexical).
+ * o markdown INICIAL (carregado uma vez); edições subsequentes saem por `onChange`.
+ *
+ * Tratamentos opcionais (paridade com o campo do chat): `mentions` (@membro),
+ * `enableEmojiShortcodes` (:smile:), `enablePasteMarkdown` (colar markdown) e
+ * `onSubmit` (Ctrl/Cmd+Enter). A toolbar destaca os formatos ativos.
  */
 export function RichTextEditor({
   value = "",
   onChange,
   placeholder = "Escreva…",
   minHeightClass = "min-h-[5rem]",
+  mentions,
+  enableEmojiShortcodes = false,
+  enableEmojiPicker = false,
+  enableSlashCommands = false,
+  enablePasteMarkdown = false,
+  onSubmit,
 }: {
   value?: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
   minHeightClass?: string;
+  /** Habilita a menção `@membro` com a lista de membros fornecida. */
+  mentions?: { members: MentionMember[]; currentUserId?: string };
+  enableEmojiShortcodes?: boolean;
+  /** Botão de emoji na toolbar + autocomplete `:nome:` (picker emoji-mart, lazy). */
+  enableEmojiPicker?: boolean;
+  /** Menu `/comandos` estilo Notion. */
+  enableSlashCommands?: boolean;
+  enablePasteMarkdown?: boolean;
+  /** Ctrl/Cmd+Enter dispara isto (ex.: enviar comentário). */
+  onSubmit?: () => void;
 }) {
+  const transformers = useMemo(
+    () => (mentions ? [...TRANSFORMERS, MENTION_TRANSFORMER] : TRANSFORMERS),
+    [mentions],
+  );
+
   const initialConfig = {
     namespace: "kerno-editor",
     theme: editorTheme,
-    nodes: EDITOR_NODES,
+    nodes: mentions ? [...BASE_NODES, MentionNode] : BASE_NODES,
     onError: (error: Error) => console.error("[rich-text-editor] erro:", error),
   };
 
   return (
     <div className="rounded-md border focus-within:ring-1 focus-within:ring-ring">
       <LexicalComposer initialConfig={initialConfig}>
-        <EditorInner placeholder={placeholder} minHeightClass={minHeightClass} />
+        <EditorInner
+          placeholder={placeholder}
+          minHeightClass={minHeightClass}
+          showEmoji={enableEmojiPicker}
+        />
         <HistoryPlugin />
         <ListPlugin />
         <LinkPlugin />
         <AutoLinkPlugin matchers={LINK_MATCHERS} />
         <CodeHighlightPlugin />
-        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-        <InitialMarkdownPlugin markdown={value} />
-        <OnChangeMarkdownPlugin onChange={onChange} />
+        <MarkdownShortcutPlugin transformers={transformers} />
+        <InitialMarkdownPlugin markdown={value} transformers={transformers} />
+        <OnChangeMarkdownPlugin onChange={onChange} transformers={transformers} />
+        {mentions ? (
+          <MentionTypeaheadPlugin
+            members={mentions.members}
+            currentUserId={mentions.currentUserId}
+          />
+        ) : null}
+        {enableEmojiShortcodes ? <EmojiShortcutPlugin /> : null}
+        {enableEmojiPicker ? <EmojiTypeaheadPlugin /> : null}
+        {enableSlashCommands ? <SlashCommandPlugin /> : null}
+        {enablePasteMarkdown ? <PasteMarkdownPlugin transformers={transformers} /> : null}
+        {onSubmit ? <SubmitOnCtrlEnterPlugin onSubmit={onSubmit} /> : null}
       </LexicalComposer>
     </div>
   );

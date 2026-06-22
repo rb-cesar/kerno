@@ -6,6 +6,7 @@ import type {
   CardDetailDTO,
   KanbanCommand,
   KanbanMutationResult,
+  TaskRefDTO,
 } from "@kerno/kanban/types";
 import { apiFetch } from "@/lib/api-client";
 
@@ -32,4 +33,20 @@ export async function kanbanMutate(command: KanbanCommand): Promise<KanbanMutati
     ok: false,
     error: error instanceof Error ? error.message : "Erro inesperado",
   }));
+}
+
+/** Busca tarefas do workspace p/ a menção `!` no chat. */
+export async function kanbanSearchTasks(
+  workspaceId: string,
+  query: string,
+): Promise<TaskRefDTO[]> {
+  const q = encodeURIComponent(query ?? "");
+  return apiFetch<TaskRefDTO[]>(
+    `/kanban/workspaces/${workspaceId}/cards/search?q=${q}`,
+  ).catch(() => []);
+}
+
+/** Snapshot do board que contém um card — abre o painel da tarefa no chat. */
+export async function kanbanFetchCardBoard(cardId: string): Promise<BoardData | null> {
+  return apiFetch<BoardData>(`/kanban/cards/${cardId}/board`).catch(() => null);
 }

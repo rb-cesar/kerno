@@ -3,9 +3,9 @@ import type { BoardData } from "@kerno/kanban/types";
 import type { WorkspaceView } from "@kerno/contracts/workspaces";
 import { requireUser } from "@/lib/auth-helpers";
 import { apiFetch } from "@/lib/api-client";
-import { KanbanClient } from "./kanban-client";
+import { BoardsClient } from "./boards-client";
 
-export default async function KanbanPage({
+export default async function BoardsPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -23,5 +23,5 @@ export default async function KanbanPage({
   ).catch(() => null);
   if (!board) notFound();
 
-  return <KanbanClient initial={board} currentUserId={user.id} />;
+  return <BoardsClient initial={board} currentUserId={user.id} />;
 }

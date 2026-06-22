@@ -13,6 +13,7 @@ import type {
   WorkspaceListItem,
   WorkspaceView,
 } from "@kerno/contracts/workspaces";
+import { DEFAULT_BOARD_COLUMNS } from "@kerno/contracts/kanban";
 import { requireWorkspaceAdmin } from "./workspaces-permissions";
 
 function slugify(input: string): string {
@@ -99,16 +100,8 @@ export class WorkspacesService {
         boards: {
           create: {
             name: "Principal",
-            // Estados padrão (estilo Linear) com categorias semânticas.
-            columns: {
-              create: [
-                { name: "Backlog", order: 0, category: "BACKLOG" },
-                { name: "A fazer", order: 1, category: "UNSTARTED" },
-                { name: "Em progresso", order: 2, category: "STARTED" },
-                { name: "Concluído", order: 3, category: "COMPLETED" },
-                { name: "Cancelado", order: 4, category: "CANCELED" },
-              ],
-            },
+            // Estados padrão (fonte única em @kerno/contracts) — mesmos do createBoard.
+            columns: { create: [...DEFAULT_BOARD_COLUMNS] },
           },
         },
         channels: { create: { name: "geral", isDefault: true } },

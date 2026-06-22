@@ -11,8 +11,35 @@ export interface LabelDTO {
   color: string;
 }
 
+/** Resumo de um board do workspace — usado pelo seletor de boards. */
+export interface BoardSummaryDTO {
+  id: string;
+  name: string;
+}
+
+/** Referência leve a uma tarefa — usada na menção de task no chat (`!`). */
+export interface TaskRefDTO {
+  id: string;
+  number: number;
+  title: string;
+  workspaceKey: string; // p/ exibir `KERN-12`
+}
+
 /** Categoria semântica do estado (coluna). Espelha o enum StatusCategory do schema. */
 export type StatusCategory = "BACKLOG" | "UNSTARTED" | "STARTED" | "COMPLETED" | "CANCELED";
+
+/**
+ * Estados padrão (estilo Linear) criados em todo board novo. Fonte ÚNICA, num
+ * pacote puro: reusada pela criação do workspace (core) e pela criação de boards
+ * (hub Kanban) sem acoplar um ao outro.
+ */
+export const DEFAULT_BOARD_COLUMNS: { name: string; order: number; category: StatusCategory }[] = [
+  { name: "Backlog", order: 0, category: "BACKLOG" },
+  { name: "A fazer", order: 1, category: "UNSTARTED" },
+  { name: "Em progresso", order: 2, category: "STARTED" },
+  { name: "Concluído", order: 3, category: "COMPLETED" },
+  { name: "Cancelado", order: 4, category: "CANCELED" },
+];
 
 /** Prioridade do card. Espelha o enum Priority do schema. */
 export type Priority = "NONE" | "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -74,6 +101,7 @@ export interface BoardData {
   name: string;
   workspaceId: string;
   workspaceKey: string; // ex.: "KERN" → cards exibidos como KERN-123
+  boards: BoardSummaryDTO[]; // todos os boards do workspace (seletor)
   columns: ColumnDTO[];
   labels: LabelDTO[];
   cycles: CycleDTO[];
@@ -134,6 +162,9 @@ export interface CardDetailDTO {
 // Comando único de mutação (command pattern) — um payload serializável cobre
 // todas as operações de escrita do board, com type-safety via união.
 export type KanbanCommand =
+  | { type: "createBoard"; workspaceId: string; name: string }
+  | { type: "renameBoard"; boardId: string; name: string }
+  | { type: "deleteBoard"; boardId: string }
   | { type: "createColumn"; boardId: string; name: string; category?: StatusCategory }
   | { type: "renameColumn"; columnId: string; name: string }
   | {

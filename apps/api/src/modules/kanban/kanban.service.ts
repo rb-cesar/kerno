@@ -7,6 +7,7 @@ import type {
   CardDetailDTO,
   KanbanCommand,
   KanbanMutationResult,
+  TaskRefDTO,
 } from "@kerno/contracts/kanban";
 import {
   assertMember,
@@ -63,6 +64,20 @@ export class KanbanService {
     return kanban.getBoardMetrics(boardId);
   }
 
+  /** Busca tarefas do workspace (menção `!` no chat). */
+  async searchCards(userId: string, workspaceId: string, query: string): Promise<TaskRefDTO[]> {
+    await assertMember(userId, workspaceId);
+    return kanban.searchCards(workspaceId, query ?? "");
+  }
+
+  /** Snapshot do board que contém um card — abre o painel da tarefa no chat. */
+  async cardBoard(userId: string, cardId: string): Promise<BoardData> {
+    await guardCard(userId, cardId);
+    const snapshot = await kanban.getBoardSnapshotOfCard(cardId);
+    if (!snapshot) throw new NotFoundException("Board não encontrado");
+    return snapshot;
+  }
+
   /**
    * Espelha o antigo kanbanMutate (apps/web/.../kanban/actions.ts): cada caso
    * checa a permissão certa e chama o service. Erros (permissão/domínio) viram
@@ -71,6 +86,23 @@ export class KanbanService {
   async runCommand(userId: string, command: KanbanCommand): Promise<KanbanMutationResult> {
     try {
       switch (command.type) {
+        case "createBoard": {
+          await assertMember(userId, command.workspaceId);
+          const name = command.name.trim();
+          if (!name) return { ok: false, error: "Nome inválido" };
+          await kanban.createBoard(command.workspaceId, name);
+          break;
+        }
+        case "renameBoard": {
+          await guardBoard(userId, command.boardId);
+          await kanban.renameBoard(command.boardId, command.name);
+          break;
+        }
+        case "deleteBoard": {
+          await guardBoard(userId, command.boardId);
+          await kanban.deleteBoard(command.boardId);
+          break;
+        }
         case "createColumn": {
           await guardBoard(userId, command.boardId);
           await kanban.createColumn(command.boardId, command.name, command.category);

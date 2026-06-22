@@ -1,5 +1,9 @@
 import { prisma } from "@kerno/db";
-import type { BoardData } from "../types";
+import { DEFAULT_BOARD_COLUMNS } from "@kerno/contracts/kanban";
+import type { BoardData, TaskRefDTO } from "../types";
+
+/** Máximo de boards por workspace. */
+export const MAX_BOARDS = 5;
 
 /** Carrega o board completo (colunas, cards, labels, membros) já no formato de DTO. */
 export async function getBoardSnapshot(boardId: string): Promise<BoardData | null> {
@@ -10,6 +14,7 @@ export async function getBoardSnapshot(boardId: string): Promise<BoardData | nul
         include: {
           users: { include: { user: { select: { id: true, name: true } } } },
           cycles: { orderBy: { startsAt: "asc" } },
+          boards: { select: { id: true, name: true }, orderBy: { createdAt: "asc" } },
         },
       },
       labels: { orderBy: { name: "asc" } },
@@ -47,6 +52,7 @@ export async function getBoardSnapshot(boardId: string): Promise<BoardData | nul
     name: board.name,
     workspaceId: board.workspaceId,
     workspaceKey: board.workspace.key,
+    boards: board.workspace.boards.map((b) => ({ id: b.id, name: b.name })),
     members: board.workspace.users.map((m) => ({ id: m.user.id, name: m.user.name })),
     labels: board.labels.map((l) => ({ id: l.id, name: l.name, color: l.color })),
     stories: board.stories.map((s) => {
@@ -135,4 +141,87 @@ export async function workspaceIdOfLabel(labelId: string): Promise<string | null
     select: { board: { select: { workspaceId: true } } },
   });
   return label?.board.workspaceId ?? null;
+}
+
+// ── Boards (CRUD) ─────────────────────────────────────────────────────────────
+
+/** Cria um board já com as colunas/estados padrão. Fonte única do seed. */
+export async function createBoardWithDefaults(workspaceId: string, name: string) {
+  return prisma.board.create({
+    data: {
+      workspaceId,
+      name: name.trim() || "Novo board",
+      columns: { create: [...DEFAULT_BOARD_COLUMNS] },
+    },
+    select: { id: true },
+  });
+}
+
+/** Cria um board respeitando o limite de MAX_BOARDS por workspace. */
+export async function createBoard(workspaceId: string, name: string) {
+  const count = await prisma.board.count({ where: { workspaceId } });
+  if (count >= MAX_BOARDS) {
+    throw new Error(`Limite de ${MAX_BOARDS} boards por workspace atingido.`);
+  }
+  return createBoardWithDefaults(workspaceId, name);
+}
+
+export async function renameBoard(boardId: string, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Nome inválido");
+  await prisma.board.update({ where: { id: boardId }, data: { name: trimmed } });
+}
+
+/** Exclui um board; recusa excluir o último board do workspace. */
+export async function deleteBoard(boardId: string) {
+  const board = await prisma.board.findUniqueOrThrow({
+    where: { id: boardId },
+    select: { workspaceId: true },
+  });
+  const count = await prisma.board.count({ where: { workspaceId: board.workspaceId } });
+  if (count <= 1) throw new Error("Não é possível excluir o único board do workspace.");
+  await prisma.board.delete({ where: { id: boardId } });
+}
+
+// ── Suporte à menção de task no chat (Frente 4) ───────────────────────────────
+
+/** Busca tarefas do workspace por número (KERN-N) ou título — p/ o typeahead `!`. */
+export async function searchCards(workspaceId: string, query: string): Promise<TaskRefDTO[]> {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { key: true },
+  });
+  if (!workspace) return [];
+
+  const q = query.trim();
+  const asNumber = Number.parseInt(q.replace(/^\D+/, ""), 10);
+  const cards = await prisma.card.findMany({
+    where: {
+      board: { workspaceId },
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        ...(Number.isFinite(asNumber) ? [{ number: asNumber }] : []),
+      ],
+    },
+    select: { id: true, number: true, title: true },
+    orderBy: { number: "desc" },
+    take: 8,
+  });
+
+  return cards.map((c) => ({
+    id: c.id,
+    number: c.number,
+    title: c.title,
+    workspaceKey: workspace.key,
+  }));
+}
+
+/** Snapshot do board que contém um card — usado pelo painel lateral do chat. */
+export async function getBoardSnapshotOfCard(cardId: string): Promise<BoardData | null> {
+  const card = await prisma.card.findUnique({
+    where: { id: cardId },
+    select: { boardId: true },
+  });
+  if (!card) return null;
+  return getBoardSnapshot(card.boardId);
 }

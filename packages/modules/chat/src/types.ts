@@ -10,6 +10,14 @@ import type {
   MessageDTO,
   ChatResult,
 } from "@kerno/contracts/chat";
+// Referência de tarefa (menção `!` no chat). Vem do contrato puro do kanban — é só
+// um tipo compartilhado (não acopla o hub Chat ao hub Kanban).
+import type { TaskRefDTO } from "@kerno/contracts/kanban";
+
+export type { TaskRefDTO };
+
+/** Busca tarefas do workspace p/ o typeahead `!` (injetada pelo app, opcional). */
+export type ChatSearchTasks = (query: string) => Promise<TaskRefDTO[]>;
 
 /** Server actions injetadas pelo app no componente do hub. */
 export type ChatSendMessage = (input: {

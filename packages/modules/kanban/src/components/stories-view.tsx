@@ -140,7 +140,7 @@ function StoryEditor({
   linkedTasks: CardDTO[];
   onDeleted: () => void;
 }) {
-  const { mutate, refresh, members, setOpenCardId } = useKanban();
+  const { mutate, refresh, members, setOpenCardId, currentUserId } = useKanban();
   const [pending, startTransition] = useTransition();
 
   const [title, setTitle] = useState(story.title);
@@ -211,7 +211,12 @@ function StoryEditor({
             <RichTextEditor
               value={description}
               onChange={setDescription}
-              placeholder="Descreva a história…"
+              placeholder="Descreva a história…  (/ abre comandos)"
+              mentions={{ members, currentUserId }}
+              enableEmojiShortcodes
+              enableEmojiPicker
+              enableSlashCommands
+              enablePasteMarkdown
             />
           </Suspense>
         </div>

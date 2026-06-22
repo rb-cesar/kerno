@@ -50,6 +50,7 @@ function AddCard({ columnId }: { columnId: string }) {
   const { mutate, refresh } = useKanban();
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const submit = () => {
@@ -62,7 +63,10 @@ function AddCard({ columnId }: { columnId: string }) {
       const res = await mutate({ type: "createCard", columnId, title: value });
       if (res.ok) {
         setTitle("");
+        setError(null);
         await refresh();
+      } else {
+        setError(res.error ?? "Não foi possível criar o card.");
       }
     });
   };
@@ -81,18 +85,29 @@ function AddCard({ columnId }: { columnId: string }) {
   }
 
   return (
-    <Input
-      autoFocus
-      value={title}
-      placeholder="Título do card"
-      disabled={pending}
-      onChange={(e) => setTitle(e.target.value)}
-      onBlur={submit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") submit();
-        if (e.key === "Escape") setAdding(false);
-      }}
-    />
+    <div className="space-y-1">
+      <Input
+        autoFocus
+        value={title}
+        placeholder="Título do card"
+        disabled={pending}
+        onChange={(e) => {
+          setTitle(e.target.value);
+          if (error) setError(null);
+        }}
+        onBlur={() => {
+          if (!error) submit();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") submit();
+          if (e.key === "Escape") {
+            setAdding(false);
+            setError(null);
+          }
+        }}
+      />
+      {error ? <p className="px-1 text-xs text-destructive">{error}</p> : null}
+    </div>
   );
 }
 

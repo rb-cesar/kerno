@@ -9,7 +9,7 @@ import { UserMenu } from "@/components/app/user-menu";
 type Hub = { key: string; label: string; icon: LucideIcon };
 
 const HUBS: Hub[] = [
-  { key: "kanban", label: "Kanban", icon: LayoutGrid },
+  { key: "boards", label: "Boards", icon: LayoutGrid },
   { key: "chat", label: "Chat", icon: MessageSquare },
 ];
 

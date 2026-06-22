@@ -84,7 +84,7 @@ function CardSkeleton() {
 }
 
 function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) {
-  const { mutate, refresh, members, labels, cycles, stories, workspaceKey, fetchCardDetail, remoteRev } =
+  const { mutate, refresh, members, labels, cycles, stories, workspaceKey, fetchCardDetail, remoteRev, currentUserId } =
     useKanban();
   const [pending, startTransition] = useTransition();
 
@@ -240,7 +240,12 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                 <RichTextEditor
                   value={description}
                   onChange={setDescription}
-                  placeholder="Descreva a tarefa…"
+                  placeholder="Descreva a tarefa…  (/ abre comandos)"
+                  mentions={{ members, currentUserId }}
+                  enableEmojiShortcodes
+                  enableEmojiPicker
+                  enableSlashCommands
+                  enablePasteMarkdown
                 />
               </div>
 
@@ -338,8 +343,14 @@ function CardContent({ card, onClose }: { card: CardDTO; onClose: () => void }) 
                   key={commentKey}
                   value=""
                   onChange={setNewComment}
-                  placeholder="Escreva um comentário…"
+                  placeholder="Escreva um comentário…  (Ctrl+Enter envia)"
                   minHeightClass="min-h-[3rem]"
+                  mentions={{ members, currentUserId }}
+                  enableEmojiShortcodes
+                  enableEmojiPicker
+                  enableSlashCommands
+                  enablePasteMarkdown
+                  onSubmit={addComment}
                 />
                 <div className="flex justify-end">
                   <Button variant="outline" disabled={pending} onClick={addComment}>

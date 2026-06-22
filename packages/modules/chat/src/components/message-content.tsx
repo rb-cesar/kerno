@@ -1,8 +1,28 @@
 "use client";
 
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, createContext, useContext, useState, type ReactNode } from "react";
 import { Highlight, themes } from "prism-react-renderer";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Hash } from "lucide-react";
+
+// onOpenTask flui por contexto para que as regras inline (estáticas) possam abrir
+// a tarefa sem receber o handler por parâmetro em toda a recursão de parsing.
+const OpenTaskContext = createContext<((cardId: string) => void) | undefined>(undefined);
+
+/** Chip clicável de menção de tarefa (`!task[...]`); abre o painel da tarefa. */
+function TaskMentionChip({ cardId, label }: { cardId: string; label: string }) {
+  const onOpenTask = useContext(OpenTaskContext);
+  return (
+    <button
+      type="button"
+      disabled={!onOpenTask}
+      onClick={() => onOpenTask?.(cardId)}
+      className="rounded bg-amber-500/15 px-1 font-medium text-amber-600 transition-colors hover:bg-amber-500/25 disabled:cursor-default disabled:hover:bg-amber-500/15 dark:text-amber-400"
+    >
+      <Hash className="mb-0.5 mr-0.5 inline h-3 w-3" />
+      {label}
+    </button>
+  );
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -73,6 +93,12 @@ type InlineRule = {
 
 // Ordem = prioridade. `**` antes de `*`, `__` antes de `_`.
 const INLINE_RULES: InlineRule[] = [
+  {
+    // Menção de tarefa: !task[KERN-12](task:ID) → chip clicável (antes de tudo).
+    regex: /!task\[([^\]\n]+)\]\(task:([^)\s]+)\)/,
+    recurse: false,
+    render: (m, _c, key) => <TaskMentionChip key={key} label={m[1] ?? ""} cardId={m[2] ?? ""} />,
+  },
   {
     // Menção: @[Nome](user:ID) → chip destacado (não é link — vem antes da regra de link).
     regex: /@\[([^\]\n]+)\]\(user:([^)\s]+)\)/,
@@ -197,7 +223,13 @@ function renderParagraph(lines: string[], key: string): ReactNode {
 const UNORDERED = /^\s*[-*]\s+/;
 const ORDERED = /^\s*\d+\.\s+/;
 
-export function MessageContent({ content }: { content: string }): ReactNode {
+export function MessageContent({
+  content,
+  onOpenTask,
+}: {
+  content: string;
+  onOpenTask?: (cardId: string) => void;
+}): ReactNode {
   const lines = content.split("\n");
   const at = (idx: number): string => lines[idx] ?? "";
   const blocks: ReactNode[] = [];
@@ -281,5 +313,9 @@ export function MessageContent({ content }: { content: string }): ReactNode {
     blocks.push(renderParagraph(para, `p.${i}`));
   }
 
-  return <div className="space-y-2 text-sm leading-relaxed">{blocks}</div>;
+  return (
+    <OpenTaskContext.Provider value={onOpenTask}>
+      <div className="space-y-2 text-sm leading-relaxed">{blocks}</div>
+    </OpenTaskContext.Provider>
+  );
 }

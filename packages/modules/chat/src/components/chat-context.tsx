@@ -6,6 +6,7 @@ import type {
   ChatFetchDirectMessages,
   ChatFetchMessages,
   ChatOpenDirect,
+  ChatSearchTasks,
   ChatSendDirectMessage,
   ChatSendMessage,
   MemberDTO,
@@ -21,6 +22,10 @@ type ChatContextValue = {
   currentUserId: string;
   members: MemberDTO[];
   onlineUserIds: string[];
+  /** Busca tarefas p/ a menção `!` (opcional — só quando o kanban está disponível). */
+  searchTasks?: ChatSearchTasks;
+  /** Abre o painel de uma tarefa mencionada (opcional). */
+  onOpenTask?: (cardId: string) => void;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);

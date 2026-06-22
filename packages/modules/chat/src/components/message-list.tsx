@@ -42,7 +42,7 @@ export function MessageList({
   onEdit: (messageId: string, content: string) => Promise<ChatResult<MessageDTO>>;
   onToggleReaction: (messageId: string, emoji: string) => void;
 }) {
-  const { currentUserId } = useChat();
+  const { currentUserId, onOpenTask } = useChat();
   const bottomRef = useRef<HTMLDivElement>(null);
   // Mapa id→elemento da bolha, para rolar até a mensagem citada ao clicar na resposta.
   const bubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -214,7 +214,7 @@ export function MessageList({
                     highlightedId === message.id && "ring-2 ring-sky-400/80",
                   )}
                 >
-                  <MessageContent content={message.content} />
+                  <MessageContent content={message.content} onOpenTask={onOpenTask} />
                 </div>
               )}
 

@@ -35,6 +35,7 @@ import { KanbanColumn } from "./kanban-column";
 import { KanbanList } from "./kanban-list";
 import { KanbanMetrics } from "./kanban-metrics";
 import { CardDialog } from "./card-dialog";
+import { BoardSwitcher } from "./board-switcher";
 import { AddColumn } from "./add-column";
 import { KanbanSidebar } from "./kanban-sidebar";
 import { CommandPalette } from "./command-palette";
@@ -229,10 +230,83 @@ export function KanbanBoard({
     [openCardId, data.columns],
   );
 
+  // Id do board ativo via ref → `refresh` permanece estável mesmo trocando de board.
+  const boardIdRef = useRef(data.id);
+  useEffect(() => {
+    boardIdRef.current = data.id;
+  }, [data.id]);
+
+  const activeBoardKey = `kerno:boards:active:${data.workspaceId}`;
+
   const refresh = useCallback(async () => {
-    const fresh = await fetchSnapshot(initial.id);
+    const fresh = await fetchSnapshot(boardIdRef.current);
     if (fresh) setData(fresh);
-  }, [fetchSnapshot, initial.id]);
+  }, [fetchSnapshot]);
+
+  const switchBoard = useCallback(
+    async (boardId: string) => {
+      if (boardId === boardIdRef.current) return;
+      const fresh = await fetchSnapshot(boardId);
+      if (!fresh) return;
+      setData(fresh);
+      setOpenCardId(null);
+      clearFilters();
+      try {
+        localStorage.setItem(activeBoardKey, boardId);
+      } catch {
+        /* localStorage indisponível — ignora */
+      }
+    },
+    [fetchSnapshot, activeBoardKey, clearFilters],
+  );
+
+  // Restaura o último board ativo (por workspace) na montagem.
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem(activeBoardKey);
+    } catch {
+      saved = null;
+    }
+    if (saved && saved !== initial.id && initial.boards.some((b) => b.id === saved)) {
+      void switchBoard(saved);
+    }
+    // Só na montagem.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCreateBoard = useCallback(
+    async (name: string) => {
+      const prevIds = new Set(data.boards.map((b) => b.id));
+      const res = await mutate({ type: "createBoard", workspaceId: data.workspaceId, name });
+      if (!res.ok) return res;
+      const fresh = await fetchSnapshot(boardIdRef.current);
+      const created = fresh?.boards.find((b) => !prevIds.has(b.id));
+      if (created) await switchBoard(created.id);
+      else if (fresh) setData(fresh);
+      return res;
+    },
+    [data.boards, data.workspaceId, mutate, fetchSnapshot, switchBoard],
+  );
+
+  const handleRenameBoard = useCallback(
+    async (name: string) => {
+      const res = await mutate({ type: "renameBoard", boardId: boardIdRef.current, name });
+      if (res.ok) await refresh();
+      return res;
+    },
+    [mutate, refresh],
+  );
+
+  const handleDeleteBoard = useCallback(async () => {
+    const current = boardIdRef.current;
+    const res = await mutate({ type: "deleteBoard", boardId: current });
+    if (res.ok) {
+      const next = data.boards.find((b) => b.id !== current);
+      if (next) await switchBoard(next.id);
+    }
+    return res;
+  }, [mutate, data.boards, switchBoard]);
 
   // Mudança remota: além de refazer o snapshot, bump `remoteRev` p/ o painel da
   // tarefa aberta recarregar seu detalhe (checklists/comentários/atividade).
@@ -346,6 +420,15 @@ export function KanbanBoard({
         <div className="flex h-full min-w-0 flex-1 flex-col">
           <div className="flex items-center justify-between gap-2 border-b px-4 py-1.5">
             <div className="flex items-center gap-3">
+              <BoardSwitcher
+                boards={data.boards}
+                activeId={data.id}
+                activeName={data.name}
+                onSwitch={switchBoard}
+                onCreate={handleCreateBoard}
+                onRename={handleRenameBoard}
+                onDelete={handleDeleteBoard}
+              />
               <div className="flex items-center rounded-md border p-0.5">
                 <button
                   type="button"

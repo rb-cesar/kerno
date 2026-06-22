@@ -6,5 +6,5 @@ export default async function WorkspaceIndexPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  redirect(`/w/${slug}/kanban`);
+  redirect(`/w/${slug}/boards`);
 }

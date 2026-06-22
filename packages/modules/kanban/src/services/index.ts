@@ -1,9 +1,16 @@
 export {
   getBoardSnapshot,
+  getBoardSnapshotOfCard,
   workspaceIdOfBoard,
   workspaceIdOfColumn,
   workspaceIdOfCard,
   workspaceIdOfLabel,
+  createBoard,
+  createBoardWithDefaults,
+  renameBoard,
+  deleteBoard,
+  searchCards,
+  MAX_BOARDS,
 } from "./board-service";
 export {
   createColumn,

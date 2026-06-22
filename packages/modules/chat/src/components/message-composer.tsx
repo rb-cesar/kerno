@@ -93,6 +93,11 @@ import { Button, cn } from "@kerno/ui";
 import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./emoji-plugin";
 import { SlashCommandPlugin } from "./slash-plugin";
 import { MENTION_TRANSFORMER, MentionNode, MentionTypeaheadPlugin } from "./mention-plugin";
+import {
+  TASK_MENTION_TRANSFORMER,
+  TaskMentionNode,
+  TaskMentionTypeaheadPlugin,
+} from "./task-mention-plugin";
 
 // Subconjunto de transformers — markdown como atalho de digitação (símbolos somem
 // ao digitar) e formato de serialização. Sem headings (é chat).
@@ -111,6 +116,7 @@ const TRANSFORMERS: Transformer[] = [
   INLINE_CODE,
   LINK,
   MENTION_TRANSFORMER,
+  TASK_MENTION_TRANSFORMER,
 ];
 
 // Detecta URLs digitadas e as transforma em links automaticamente.
@@ -762,6 +768,7 @@ function ComposerInner({
   const emojiMenuOpen = useRef(false);
   const slashMenuOpen = useRef(false);
   const mentionMenuOpen = useRef(false);
+  const taskMentionMenuOpen = useRef(false);
   const [active, setActive] = useState<ActiveFormats>(NO_FORMATS);
 
   useEffect(() => {
@@ -857,10 +864,11 @@ function ComposerInner({
       <EmojiShortcutPlugin />
       <EmojiTypeaheadPlugin menuOpenRef={emojiMenuOpen} />
       <MentionTypeaheadPlugin menuOpenRef={mentionMenuOpen} />
+      <TaskMentionTypeaheadPlugin menuOpenRef={taskMentionMenuOpen} />
       <SlashCommandPlugin menuOpenRef={slashMenuOpen} />
       <EnterToSendPlugin
         onSubmit={submit}
-        menuOpenRefs={[emojiMenuOpen, slashMenuOpen, mentionMenuOpen]}
+        menuOpenRefs={[emojiMenuOpen, slashMenuOpen, mentionMenuOpen, taskMentionMenuOpen]}
       />
       <ExitBlockOnArrowDownPlugin />
     </div>
@@ -901,6 +909,7 @@ export function MessageComposer({
       CodeNode,
       CodeHighlightNode,
       MentionNode,
+      TaskMentionNode,
     ],
     onError: (error: Error) => {
       console.error("[chat-composer] erro no editor:", error);

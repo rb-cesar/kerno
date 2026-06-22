@@ -2,6 +2,9 @@ import { prisma } from "@kerno/db";
 import { eventBus, createEvent } from "@kerno/core/events";
 import type { Priority } from "../types";
 
+/** Máximo de tarefas (cards) por board. */
+export const MAX_CARDS_PER_BOARD = 1000;
+
 export async function createCard(
   columnId: string,
   title: string,
@@ -12,6 +15,12 @@ export async function createCard(
     where: { id: columnId },
     select: { boardId: true, category: true, board: { select: { workspaceId: true } } },
   });
+
+  const cardsInBoard = await prisma.card.count({ where: { boardId: column.boardId } });
+  if (cardsInBoard >= MAX_CARDS_PER_BOARD) {
+    throw new Error(`Limite de ${MAX_CARDS_PER_BOARD} tarefas por board atingido.`);
+  }
+
   const order = await prisma.card.count({ where: { columnId } });
 
   // Numera o card (sequência por workspace) e registra o estado inicial — tudo numa

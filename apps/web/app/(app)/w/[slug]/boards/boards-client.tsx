@@ -4,7 +4,7 @@ import { KanbanBoard, type BoardData } from "@kerno/kanban";
 import { useSocket } from "@/components/providers/socket-provider";
 import { kanbanFetch, kanbanFetchCardDetail, kanbanFetchMetrics, kanbanMutate } from "./actions";
 
-export function KanbanClient({
+export function BoardsClient({
   initial,
   currentUserId,
 }: {
