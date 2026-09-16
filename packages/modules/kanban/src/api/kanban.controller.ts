@@ -1,8 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Query, UseGuards } from "@nestjs/common";
 import type { KanbanCommand } from "@kerno/contracts/kanban";
-import { CurrentUser } from "../../core/auth/current-user.decorator";
-import { JwtAuthGuard } from "../../core/auth/jwt-auth.guard";
-import type { RequestUser } from "../../core/auth/jwt.strategy";
+import { CurrentUser, JwtAuthGuard, type RequestUser } from "@kerno/core/auth";
 import { KanbanService } from "./kanban.service";
 
 @UseGuards(JwtAuthGuard)

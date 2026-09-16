@@ -5,7 +5,7 @@ import {
   getWorkspaceWithMembers,
   removeWorkspaceMember,
   type WorkspaceRole,
-} from "@kerno/core/workspaces";
+} from "../index";
 import type {
   ActionResult,
   CreateWorkspaceInput,

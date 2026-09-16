@@ -9,7 +9,7 @@ import {
   workspaceIdOfCycle,
   workspaceIdOfLabel,
   workspaceIdOfStory,
-} from "@kerno/kanban/services";
+} from "./services";
 import { getWorkspaceMembership } from "@kerno/core/workspaces";
 
 /**

@@ -205,10 +205,37 @@ importers:
       '@kerno/db':
         specifier: workspace:*
         version: link:../db
+      '@nestjs/common':
+        specifier: ^10.4.15
+        version: 10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/jwt':
+        specifier: ^10.2.0
+        version: 10.2.0(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      '@nestjs/passport':
+        specifier: ^10.0.3
+        version: 10.0.3(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0)
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
+      class-validator:
+        specifier: ^0.14.1
+        version: 0.14.4
+      passport:
+        specifier: ^0.7.0
+        version: 0.7.0
+      passport-jwt:
+        specifier: ^4.0.1
+        version: 4.0.1
     devDependencies:
+      '@types/bcryptjs':
+        specifier: ^3.0.0
+        version: 3.0.0
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.21
+      '@types/passport-jwt':
+        specifier: ^4.0.1
+        version: 4.0.1
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -340,6 +367,9 @@ importers:
       '@lexical/selection':
         specifier: ^0.45.0
         version: 0.45.0
+      '@nestjs/common':
+        specifier: ^10.4.15
+        version: 10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       emoji-mart:
         specifier: ^5.6.0
         version: 5.6.0
@@ -395,6 +425,9 @@ importers:
       '@kerno/ui':
         specifier: workspace:*
         version: link:../../ui
+      '@nestjs/common':
+        specifier: ^10.4.15
+        version: 10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       lucide-react:
         specifier: ^1.18.0
         version: 1.18.0(react@19.2.7)

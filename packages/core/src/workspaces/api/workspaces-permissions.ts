@@ -1,5 +1,5 @@
 import { ForbiddenException } from "@nestjs/common";
-import { getWorkspaceMembership } from "@kerno/core/workspaces";
+import { getWorkspaceMembership } from "../index";
 
 /** Exige membership no workspace; devolve o papel. */
 export async function requireWorkspaceMember(userId: string, workspaceId: string): Promise<string> {

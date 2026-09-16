@@ -1,5 +1,5 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
-import { conversationAccess, workspaceIdOfChannel } from "@kerno/chat/services";
+import { conversationAccess, workspaceIdOfChannel } from "./services";
 import { getWorkspaceMembership } from "@kerno/core/workspaces";
 
 export async function assertMember(userId: string, workspaceId: string | null): Promise<void> {

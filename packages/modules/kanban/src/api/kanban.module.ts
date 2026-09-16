@@ -6,4 +6,4 @@ import { KanbanService } from "./kanban.service";
   controllers: [KanbanController],
   providers: [KanbanService],
 })
-export class KanbanModule {}
+export class KanbanApiModule {}

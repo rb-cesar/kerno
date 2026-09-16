@@ -3,10 +3,10 @@ import type {
   CreateWorkspaceInput,
   InviteMemberInput,
 } from "@kerno/contracts/workspaces";
-import type { WorkspaceRole } from "@kerno/core/workspaces";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import type { RequestUser } from "../auth/jwt.strategy";
+import type { WorkspaceRole } from "../index";
+import { CurrentUser } from "../../auth/current-user.decorator";
+import { JwtAuthGuard } from "../../auth/jwt-auth.guard";
+import type { RequestUser } from "../../auth/jwt.strategy";
 import { WorkspacesService } from "./workspaces.service";
 
 @UseGuards(JwtAuthGuard)

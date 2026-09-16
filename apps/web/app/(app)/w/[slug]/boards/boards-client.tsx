@@ -2,7 +2,13 @@
 
 import { KanbanBoard, type BoardData } from "@kerno/kanban";
 import { useSocket } from "@/components/providers/socket-provider";
-import { kanbanFetch, kanbanFetchCardDetail, kanbanFetchMetrics, kanbanMutate } from "./actions";
+import { useWorkspaceDock } from "@/components/providers/workspace-dock-provider";
+import {
+  kanbanFetch,
+  kanbanFetchCardDetail,
+  kanbanFetchMetrics,
+  kanbanMutate,
+} from "@/lib/kanban-actions";
 
 export function BoardsClient({
   initial,
@@ -12,6 +18,7 @@ export function BoardsClient({
   currentUserId: string;
 }) {
   const { socket } = useSocket();
+  const { openCard, activeCardId } = useWorkspaceDock();
 
   return (
     <KanbanBoard
@@ -22,6 +29,8 @@ export function BoardsClient({
       fetchSnapshot={kanbanFetch}
       fetchCardDetail={kanbanFetchCardDetail}
       fetchMetrics={kanbanFetchMetrics}
+      onOpenCard={openCard}
+      activeCardId={activeCardId}
     />
   );
 }

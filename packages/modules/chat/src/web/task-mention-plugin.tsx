@@ -20,7 +20,7 @@ import {
 } from "lexical";
 import { Hash } from "lucide-react";
 import { cn } from "@kerno/ui";
-import type { TaskRefDTO } from "../types";
+import type { TaskRef } from "../types";
 import { useChat } from "./chat-context";
 
 // ── Nó de menção de tarefa ──────────────────────────────────────────────────
@@ -127,7 +127,7 @@ export function TaskMentionTypeaheadPlugin({
   const [editor] = useLexicalComposerContext();
   const { searchTasks } = useChat();
   const [query, setQuery] = useState<string | null>(null);
-  const [results, setResults] = useState<TaskRefDTO[]>([]);
+  const [results, setResults] = useState<TaskRef[]>([]);
 
   useEffect(() => {
     if (query === null || !searchTasks) {

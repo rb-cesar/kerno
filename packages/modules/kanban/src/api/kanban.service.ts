@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { prisma } from "@kerno/db";
-import * as kanban from "@kerno/kanban/services";
+import * as kanban from "./services";
 import type {
   BoardData,
   BoardMetricsDTO,

@@ -24,7 +24,7 @@ import {
   useChatRealtime,
   type ChatEventKind,
   type ChatTarget,
-} from "../hooks/use-chat-realtime";
+} from "./use-chat-realtime";
 import { ChatProvider } from "./chat-context";
 import { ChannelSidebar } from "./channel-sidebar";
 import { MessageList } from "./message-list";

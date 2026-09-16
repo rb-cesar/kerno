@@ -18,8 +18,10 @@
       "@kerno/core/events": ["../../packages/core/src/events/index.ts"],
       "@kerno/core/types": ["../../packages/core/src/types/index.ts"],
       "@kerno/core/workspaces": ["../../packages/core/src/workspaces/index.ts"],
-      "@kerno/kanban/services": ["../../packages/modules/kanban/src/services/index.ts"],
-      "@kerno/chat/services": ["../../packages/modules/chat/src/services/index.ts"]
+      "@kerno/core/workspaces-api": ["../../packages/core/src/workspaces/api/index.ts"],
+      "@kerno/core/auth": ["../../packages/core/src/auth/index.ts"],
+      "@kerno/kanban/api": ["../../packages/modules/kanban/src/api/index.ts"],
+      "@kerno/chat/api": ["../../packages/modules/chat/src/api/index.ts"]
     }
   },
   "include": ["src/**/*.ts"]

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { prisma } from "@kerno/db";
-import * as chat from "@kerno/chat/services";
+import * as chat from "./services";
 import type {
   ChannelDTO,
   ChatData,

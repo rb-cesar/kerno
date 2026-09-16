@@ -17,11 +17,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  TabDock,
   TooltipProvider,
   cn,
-  useDockTabs,
-  type DockTab,
 } from "@kerno/ui";
 import type {
   BoardData,
@@ -32,13 +29,11 @@ import type {
   KanbanMutate,
   Priority,
 } from "../types";
-import { useKanbanRealtime } from "../hooks/use-kanban-realtime";
+import { useKanbanRealtime } from "./use-kanban-realtime";
 import { KanbanProvider } from "./kanban-context";
 import { KanbanColumn } from "./kanban-column";
 import { KanbanList } from "./kanban-list";
 import { KanbanMetrics } from "./kanban-metrics";
-import { CardPanelContent } from "./card-dialog";
-import { CATEGORY_COLOR } from "./meta";
 import { BoardSwitcher } from "./board-switcher";
 import { AddColumn } from "./add-column";
 import { KanbanSidebar } from "./kanban-sidebar";
@@ -141,6 +136,8 @@ export function KanbanBoard({
   fetchSnapshot,
   fetchCardDetail,
   fetchMetrics,
+  onOpenCard,
+  activeCardId = null,
 }: {
   initial: BoardData;
   currentUserId: string;
@@ -149,13 +146,16 @@ export function KanbanBoard({
   fetchSnapshot: KanbanFetch;
   fetchCardDetail: KanbanFetchCardDetail;
   fetchMetrics: KanbanFetchMetrics;
+  /** Abre a tarefa no dock do workspace (injetado pelo app). */
+  onOpenCard?: (cardId: string, opts?: { title?: string; pin?: boolean }) => void;
+  /** Tarefa ativa no dock (para destacar o tile). */
+  activeCardId?: string | null;
 }) {
   const [data, setData] = useState<BoardData>(initial);
   const [labelFilter, setLabelFilter] = useState<Set<string>>(new Set());
   const [assigneeFilter, setAssigneeFilter] = useState<Set<string>>(new Set());
   const [priorityFilter, setPriorityFilter] = useState<Set<Priority>>(new Set());
   const [cycleFilter, setCycleFilter] = useState<Set<string>>(new Set());
-  const dock = useDockTabs();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [view, setView] = useState<"board" | "list" | "metrics" | "stories">("board");
@@ -224,54 +224,20 @@ export function KanbanBoard({
     [grouped, groupBy, visibleColumns, data.members],
   );
 
-  // Mapas por id de card: o objeto (p/ renderizar o conteúdo) e metadados da aba.
-  const cardsById = useMemo(() => {
-    const m = new Map<string, ColumnDTO["cards"][number]>();
-    for (const col of data.columns) for (const c of col.cards) m.set(c.id, c);
-    return m;
-  }, [data.columns]);
-
-  const cardTabMeta = useMemo(() => {
-    const m = new Map<string, { title: string; color: string }>();
+  // Título da aba (KERN-N) por id de card — passado ao dock do workspace ao abrir.
+  const cardTitleById = useMemo(() => {
+    const m = new Map<string, string>();
     for (const col of data.columns) {
-      const color = col.color ?? CATEGORY_COLOR[col.category];
-      for (const c of col.cards) m.set(c.id, { title: `${data.workspaceKey}-${c.number}`, color });
+      for (const c of col.cards) m.set(c.id, `${data.workspaceKey}-${c.number}`);
     }
     return m;
   }, [data.columns, data.workspaceKey]);
 
   const openCard = useCallback(
     (cardId: string, opts?: { pin?: boolean }) => {
-      const meta = cardTabMeta.get(cardId);
-      const tab: DockTab = {
-        id: cardId,
-        title: meta?.title ?? cardId,
-        icon: (
-          <span
-            className="h-2 w-2 shrink-0 rounded-full"
-            style={{ backgroundColor: meta?.color ?? "#94a3b8" }}
-          />
-        ),
-      };
-      if (opts?.pin) dock.openPinned(tab);
-      else dock.openPreview(tab);
+      onOpenCard?.(cardId, { title: cardTitleById.get(cardId), pin: opts?.pin });
     },
-    [cardTabMeta, dock],
-  );
-
-  const renderTab = useCallback(
-    (tab: DockTab) => {
-      const card = cardsById.get(tab.id);
-      if (!card) {
-        return (
-          <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
-            Tarefa removida.
-          </div>
-        );
-      }
-      return <CardPanelContent key={card.id} card={card} onClose={() => dock.close(tab.id)} />;
-    },
-    [cardsById, dock],
+    [onOpenCard, cardTitleById],
   );
 
   // Id do board ativo via ref → `refresh` permanece estável mesmo trocando de board.
@@ -293,7 +259,6 @@ export function KanbanBoard({
       const fresh = await fetchSnapshot(boardId);
       if (!fresh) return;
       setData(fresh);
-      dock.closeAll();
       clearFilters();
       try {
         localStorage.setItem(activeBoardKey, boardId);
@@ -301,7 +266,7 @@ export function KanbanBoard({
         /* localStorage indisponível — ignora */
       }
     },
-    [fetchSnapshot, activeBoardKey, clearFilters, dock],
+    [fetchSnapshot, activeBoardKey, clearFilters],
   );
 
   // Restaura o último board ativo (por workspace) na montagem.
@@ -432,7 +397,7 @@ export function KanbanBoard({
         stories: data.stories,
         remoteRev,
         openCard,
-        activeCardId: dock.activeId,
+        activeCardId,
       }}
     >
       <TooltipProvider delayDuration={200}>
@@ -657,15 +622,6 @@ export function KanbanBoard({
           </DragDropContext>
           )}
         </div>
-        <TabDock
-          tabs={dock.tabs}
-          activeId={dock.activeId}
-          onActivate={dock.activate}
-          onClose={dock.close}
-          onPin={dock.pin}
-          renderContent={renderTab}
-          storageKey="kerno:dock:board:width"
-        />
       </div>
 
       <CommandPalette

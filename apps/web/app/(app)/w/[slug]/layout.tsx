@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { requireUser } from "@/lib/auth-helpers";
 import { apiFetch } from "@/lib/api-client";
 import { SocketProvider } from "@/components/providers/socket-provider";
+import { WorkspaceDockProvider } from "@/components/providers/workspace-dock-provider";
 import { HubRail } from "@/components/app/hub-rail";
 import { WorkspaceHeader } from "@/components/app/workspace-header";
 
@@ -43,7 +44,9 @@ export default async function WorkspaceLayout({
             isManager={isManager}
             members={workspace.members}
           />
-          <div className="flex-1 overflow-hidden">{children}</div>
+          <div className="flex-1 overflow-hidden">
+            <WorkspaceDockProvider currentUserId={user.id}>{children}</WorkspaceDockProvider>
+          </div>
         </div>
       </div>
     </SocketProvider>
