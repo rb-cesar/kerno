@@ -1,0 +1,61 @@
+import { prisma } from "@kerno/db";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createBoardWithDefaults } from "./board-service";
+// import { eventBus } from "@kerno/core/events";
+import { KanbanService } from "./kanban.service";
+
+const suffix = Math.random().toString(36).slice(2, 8);
+let userId: string, outsiderId: string, workspaceId: string, boardId: string;
+const kanban = new KanbanService();
+
+beforeAll(async () => {
+  const user = await prisma.user.create({
+    data: {
+      name: "t",
+      email: `test+${suffix}@example.com`,
+      passwordHash: "password123",
+    },
+  });
+
+  const outsider = await prisma.user.create({
+    data: {
+      name: "o",
+      email: `o-${suffix}@x.io`,
+      passwordHash: "x",
+    },
+  });
+
+  const workspace = await prisma.workspace.create({
+    data: {
+      name: "T",
+      slug: `t-${suffix}`,
+      users: { create: { userId: user.id, role: "ADMIN" } },
+    },
+  });
+
+  const board = await createBoardWithDefaults(workspace.id, workspace.name);
+
+  boardId = board.id;
+  userId = user.id;
+  outsiderId = outsider.id;
+  workspaceId = workspace.id;
+});
+
+afterAll(async () => {
+  await prisma.workspace.delete({ where: { id: workspaceId } });
+  await prisma.user.deleteMany({ where: { id: { in: [userId, outsiderId] } } });
+});
+
+describe("KanbanService", () => {
+  it("cria card e ele aparece no snapshot", async () => {
+    /* runCommand({type:"card:create",...}) → snapshot → expect */
+  });
+
+  it("move card e publica card:moved", async () => {
+    /* eventBus.on("card:moved") + runCommand move */
+  });
+
+  it("nega snapshot a nâo-membro", async () => {
+    await expect(kanban.snapshot(outsiderId, boardId)).rejects.toThrow();
+  });
+});
