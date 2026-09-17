@@ -1,12 +1,6 @@
-// Contratos do domínio núcleo: workspace / membro.
-// Pacote puro: sem Next, Prisma ou React. Consumível por qualquer app cliente.
-//
-// O workspace é o único nível de contexto (a camada Project foi removida): ele é
-// dono de boards, canais e membros.
-
-import type { MemberDTO } from "./common";
-
-export type { MemberDTO };
+// Contratos do domínio núcleo: workspace / membro. O workspace é o único nível
+// de contexto (a camada Project foi removida): ele é dono de boards, canais e
+// membros.
 
 export interface WorkspaceListItem {
   id: string;
@@ -31,15 +25,9 @@ export interface WorkspaceView {
   members: WorkspaceMemberDTO[];
 }
 
-export interface CreateWorkspaceInput {
-  name: string;
-  description?: string | null;
-}
-
-export interface InviteMemberInput {
-  email: string;
-  role: "ADMIN" | "MEMBER" | "VIEWER";
-}
+// CreateWorkspaceInput e InviteMemberInput (entradas validadas na fronteira
+// HTTP) vivem em ./workspace.dto — derivadas do schema zod, não redeclaradas
+// aqui.
 
 /** Envelope genérico de resultado de ação (mutações com erro de negócio). */
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };

@@ -8,7 +8,7 @@ import type {
   KanbanCommand,
   KanbanMutationResult,
   TaskRefDTO,
-} from "@kerno/contracts/kanban";
+} from "../types";
 import {
   assertMember,
   guardBoard,

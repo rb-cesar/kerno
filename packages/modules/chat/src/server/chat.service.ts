@@ -12,7 +12,7 @@ import type {
   SendDirectMessageInput,
   SendMessageInput,
   ToggleReactionInput,
-} from "@kerno/contracts/chat";
+} from "../types";
 import {
   assertMember,
   guardChannel,

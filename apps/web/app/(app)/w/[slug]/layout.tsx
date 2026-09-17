@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import type { WorkspaceView } from "@kerno/contracts/workspaces";
+import type { WorkspaceView } from "@kerno/core/workspaces";
 import { requireUser } from "@/lib/auth-helpers";
 import { container } from "@/server/container";
 import { SocketProvider } from "@/components/providers/socket-provider";

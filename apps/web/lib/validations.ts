@@ -11,14 +11,9 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Informe a senha"),
 });
 
-export const createWorkspaceSchema = z.object({
-  name: z.string().min(2, "Nome muito curto").max(60),
-});
-
-export const inviteMemberSchema = z.object({
-  email: z.string().email("E-mail inválido"),
-  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]),
-});
+// createWorkspaceInputSchema e inviteMemberInputSchema (o resto dos formulários
+// desta área) vivem em @kerno/core/workspaces — mesma validação usada pela
+// fronteira HTTP (zValidator no controller), sem duplicar a regra aqui.
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

@@ -3,5 +3,7 @@
 // é "core" (não uma feature) — vive aqui no "pai", não num módulo.
 
 export * from "./permissions";
+export * from "./types";
+export * from "./workspace.dto";
 export { WorkspaceService, createWorkspaceService, type WorkspaceRole } from "./workspace.service";
 export { createWorkspaceController } from "./workspace.controller";

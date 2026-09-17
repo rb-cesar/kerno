@@ -14,13 +14,14 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
-    "@kerno/contracts": "workspace:*",
+    "@hono/zod-validator": "^0.9.1",
     "@kerno/core": "workspace:*",
     "@kerno/db": "workspace:*",
     "@kerno/editor": "workspace:*",
     "@kerno/ui": "workspace:*",
     "hono": "^4.13.8",
-    "lucide-react": "^1.18.0"
+    "lucide-react": "^1.18.0",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "react": "^19.0.0",

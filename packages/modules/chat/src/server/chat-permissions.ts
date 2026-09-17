@@ -1,11 +1,11 @@
 import { Forbidden, NotFound } from "@kerno/core/errors";
 import { conversationAccess, workspaceIdOfChannel } from "./services";
-import { getWorkspaceMembership } from "@kerno/core/workspaces";
+import { requireWorkspaceMember } from "@kerno/core/workspaces";
 
+/** Resolve o workspace dono do recurso e exige membership (fonte única em @kerno/core/workspaces). */
 export async function assertMember(userId: string, workspaceId: string | null): Promise<void> {
   if (!workspaceId) throw new NotFound("Recurso não encontrado");
-  const membership = await getWorkspaceMembership(userId, workspaceId);
-  if (!membership) throw new Forbidden("Você não tem acesso a este workspace");
+  await requireWorkspaceMember(userId, workspaceId);
 }
 
 export const guardChannel = async (userId: string, channelId: string) =>

@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { ActionResult } from "@kerno/contracts/workspaces";
-import type { WorkspaceRole } from "@kerno/core/workspaces";
+import type { ActionResult, WorkspaceRole } from "@kerno/core/workspaces";
 import { requireUser } from "@/lib/auth-helpers";
 import { container } from "@/server/container";
 

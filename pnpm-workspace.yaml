@@ -1,6 +1,5 @@
 packages:
   - "apps/*"
-  - "packages/contracts"
   - "packages/core"
   - "packages/db"
   - "packages/editor"

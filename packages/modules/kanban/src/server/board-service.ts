@@ -1,6 +1,5 @@
 import { prisma } from "@kerno/db";
-import { DEFAULT_BOARD_COLUMNS } from "@kerno/contracts/kanban";
-import type { BoardData, TaskRefDTO } from "../types";
+import { DEFAULT_BOARD_COLUMNS, type BoardData, type TaskRefDTO } from "../types";
 
 /** Máximo de boards por workspace. */
 export const MAX_BOARDS = 5;

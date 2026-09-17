@@ -1,13 +1,8 @@
 import { prisma } from "@kerno/db";
 import { Forbidden, NotFound } from "../errors";
-import { DEFAULT_BOARD_COLUMNS } from "@kerno/contracts/kanban";
-import type {
-  ActionResult,
-  CreateWorkspaceInput,
-  InviteMemberInput,
-  WorkspaceListItem,
-  WorkspaceView,
-} from "@kerno/contracts/workspaces";
+import { DEFAULT_BOARD_COLUMNS } from "../types";
+import type { ActionResult, WorkspaceListItem, WorkspaceView } from "./types";
+import type { CreateWorkspaceInput, InviteMemberInput, UpdateMemberInput } from "./workspace.dto";
 import { requireWorkspaceAdmin } from "./permissions";
 
 const WORKSPACE_ROLES = ["ADMIN", "MEMBER", "VIEWER"] as const;
@@ -176,7 +171,7 @@ export class WorkspaceService {
         boards: {
           create: {
             name: "Principal",
-            // Estados padrão (fonte única em @kerno/contracts) — mesmos do createBoard.
+            // Estados padrão (fonte única em @kerno/core/types) — mesmos do createBoard.
             columns: { create: [...DEFAULT_BOARD_COLUMNS] },
           },
         },
@@ -213,7 +208,7 @@ export class WorkspaceService {
   async updateMember(
     userId: string,
     workspaceId: string,
-    input: { userId: string; role?: WorkspaceRole },
+    input: UpdateMemberInput,
   ): Promise<ActionResult> {
     try {
       await requireWorkspaceAdmin(userId, workspaceId);

@@ -1,64 +1,105 @@
-// Contratos do Hub Chat. Os DTOs e envelopes vivem em @kerno/contracts (pacote
-// puro, compartilhável com apps cliente). Aqui ficam só os tipos de wiring da
-// camada de entrega (as server actions injetadas pelo app).
+// Contratos do Hub Chat — DTOs (dados), envelopes de resultado e os tipos de
+// wiring da camada de entrega (as server actions/clients injetados pelo app).
 
-export * from "@kerno/contracts/chat";
+export type { MemberDTO } from "@kerno/core/types";
+import type { MemberDTO } from "@kerno/core/types";
 
+export interface ChannelDTO {
+  id: string;
+  name: string;
+  isDefault: boolean;
+}
+
+/** Resumo da mensagem citada ao responder. */
+export interface MessageReplyDTO {
+  id: string;
+  authorName: string;
+  excerpt: string;
+}
+
+/** Reações agregadas por emoji numa mensagem. */
+export interface ReactionDTO {
+  emoji: string;
+  count: number;
+  mine: boolean; // o usuário atual reagiu com este emoji
+}
+
+export interface MessageDTO {
+  id: string;
+  content: string;
+  createdAt: string; // ISO
+  editedAt: string | null; // ISO — preenchido só se a mensagem foi editada
+  isSystem: boolean;
+  author: MemberDTO | null;
+  replyTo: MessageReplyDTO | null;
+  reactions: ReactionDTO[];
+}
+
+/** Conversa privada (DM) entre membros de um mesmo workspace. */
+export interface DirectConversationDTO {
+  id: string;
+  /** Outros participantes além do usuário atual (no 1:1, um único membro). */
+  participants: MemberDTO[];
+  lastMessageAt: string | null; // ISO — para ordenar por atividade
+}
+
+export interface ChatData {
+  workspaceId: string;
+  channels: ChannelDTO[];
+  conversations: DirectConversationDTO[];
+  members: MemberDTO[];
+  initialChannelId: string | null;
+  initialMessages: MessageDTO[];
+}
+
+export type ChatResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
+// Entradas (validadas por zod na fronteira HTTP — ver ./chat.dto, cujo schema
+// só o controller usa) — o tipo é reexportado aqui porque o client do chat
+// (web) também precisa da forma do body que envia.
+export type {
+  SendMessageInput,
+  EditMessageInput,
+  CreateChannelInput,
+  OpenDirectInput,
+  SendDirectMessageInput,
+  ToggleReactionInput,
+} from "./chat.dto";
 import type {
-  ChannelDTO,
-  DirectConversationDTO,
-  MessageDTO,
-  ChatResult,
-} from "@kerno/contracts/chat";
+  SendMessageInput,
+  EditMessageInput,
+  CreateChannelInput,
+  OpenDirectInput,
+  SendDirectMessageInput,
+  ToggleReactionInput,
+} from "./chat.dto";
 
-/**
- * Referência de tarefa para a menção `!` no chat. O tipo mora em `@kerno/editor`
- * (dono do plugin de typeahead `!`), importado do subpath `/types` — puro, sem
- * JSX, para não obrigar quem só usa o tipo (ex.: o backend) a resolver os
- * componentes React do editor. O app injeta `searchTasks`, cujo retorno é
- * estruturalmente compatível. Mantém o hub Chat sem conhecimento do hub Kanban.
- */
+// ── Referência de tarefa (menção `!` no chat) ─────────────────────────────────
+// O tipo mora em `@kerno/editor` (dono do plugin de typeahead `!`), importado
+// do subpath `/types` — puro, sem JSX, para não obrigar quem só usa o tipo
+// (ex.: o backend) a resolver os componentes React do editor. O app injeta
+// `searchTasks`, cujo retorno é estruturalmente compatível. Mantém o hub Chat
+// sem conhecimento do hub Kanban.
 export type { TaskRef } from "@kerno/editor/types";
 import type { TaskRef } from "@kerno/editor/types";
 
 /** Busca tarefas do workspace p/ o typeahead `!` (injetada pelo app, opcional). */
 export type ChatSearchTasks = (query: string) => Promise<TaskRef[]>;
 
-/** Server actions injetadas pelo app no componente do hub. */
-export type ChatSendMessage = (input: {
-  channelId: string;
-  content: string;
-  replyToId?: string | null;
-}) => Promise<ChatResult<MessageDTO>>;
+// ── Wiring da camada de entrega (server actions/clients injetados pelo app) ──
 
-export type ChatEditMessage = (input: {
-  messageId: string;
-  content: string;
-}) => Promise<ChatResult<MessageDTO>>;
-
-export type ChatCreateChannel = (input: {
-  workspaceId: string;
-  name: string;
-}) => Promise<ChatResult<ChannelDTO>>;
-
+export type ChatSendMessage = (input: SendMessageInput) => Promise<ChatResult<MessageDTO>>;
+export type ChatEditMessage = (input: EditMessageInput) => Promise<ChatResult<MessageDTO>>;
+export type ChatCreateChannel = (input: CreateChannelInput) => Promise<ChatResult<ChannelDTO>>;
 export type ChatFetchMessages = (channelId: string) => Promise<MessageDTO[]>;
 
 // ── Mensagens diretas (DM) ──────────────────────────────────────────────────
 
-export type ChatOpenDirect = (input: {
-  workspaceId: string;
-  userId: string;
-}) => Promise<ChatResult<DirectConversationDTO>>;
-
-export type ChatSendDirectMessage = (input: {
-  conversationId: string;
-  content: string;
-  replyToId?: string | null;
-}) => Promise<ChatResult<MessageDTO>>;
-
+export type ChatOpenDirect = (input: OpenDirectInput) => Promise<ChatResult<DirectConversationDTO>>;
+export type ChatSendDirectMessage = (
+  input: SendDirectMessageInput,
+) => Promise<ChatResult<MessageDTO>>;
 export type ChatFetchDirectMessages = (conversationId: string) => Promise<MessageDTO[]>;
-
-export type ChatToggleReaction = (input: {
-  messageId: string;
-  emoji: string;
-}) => Promise<ChatResult<{ messageId: string }>>;
+export type ChatToggleReaction = (
+  input: ToggleReactionInput,
+) => Promise<ChatResult<{ messageId: string }>>;

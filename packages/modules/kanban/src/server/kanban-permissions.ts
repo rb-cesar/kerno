@@ -1,4 +1,4 @@
-import { Forbidden, NotFound } from "@kerno/core/errors";
+import { NotFound } from "@kerno/core/errors";
 import {
   cardIdOfChecklist,
   cardIdOfChecklistItem,
@@ -10,16 +10,15 @@ import {
   workspaceIdOfLabel,
   workspaceIdOfStory,
 } from "./services";
-import { getWorkspaceMembership } from "@kerno/core/workspaces";
+import { requireWorkspaceMember } from "@kerno/core/workspaces";
 
 /**
- * Porta da camada de permissão do app (antes em apps/web/lib/kanban-guard.ts)
- * para o backend. Resolve o workspace dono do recurso e exige membership.
+ * Resolve o workspace dono do recurso e exige membership (checagem numa fonte
+ * só, em @kerno/core/workspaces — kanban só resolve "de quem é este recurso?").
  */
 export async function assertMember(userId: string, workspaceId: string | null): Promise<void> {
   if (!workspaceId) throw new NotFound("Recurso não encontrado");
-  const membership = await getWorkspaceMembership(userId, workspaceId);
-  if (!membership) throw new Forbidden("Você não tem acesso a este workspace");
+  await requireWorkspaceMember(userId, workspaceId);
 }
 
 export const guardBoard = async (userId: string, boardId: string) =>

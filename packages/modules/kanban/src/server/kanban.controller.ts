@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import type { KanbanCommand } from "@kerno/contracts/kanban";
+import { zValidator } from "@hono/zod-validator";
+import { kanbanCommandSchema } from "../kanban.dto";
 import { requireUser, type AuthEnv } from "@kerno/core/http";
 import type { KanbanService } from "./kanban.service";
 
@@ -44,10 +45,9 @@ export function createKanbanController(kanban: KanbanService) {
   );
 
   /** Mutação única (command pattern). Retorna KanbanMutationResult. */
-  app.post("/commands", async (c) => {
-    const command = await c.req.json<KanbanCommand>();
-    return c.json(await kanban.runCommand(c.get("userId"), command));
-  });
+  app.post("/commands", zValidator("json", kanbanCommandSchema), async (c) =>
+    c.json(await kanban.runCommand(c.get("userId"), c.req.valid("json"))),
+  );
 
   return app;
 }
