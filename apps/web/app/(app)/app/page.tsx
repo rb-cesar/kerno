@@ -1,14 +1,13 @@
 import Link from "next/link";
-import type { WorkspaceListItem } from "@kerno/contracts/workspaces";
 import { Card, CardDescription, CardHeader, CardTitle } from "@kerno/ui";
 import { requireUser } from "@/lib/auth-helpers";
-import { apiFetch } from "@/lib/api-client";
+import { container } from "@/server/container";
 import { CreateWorkspaceForm } from "./create-workspace-form";
 
 export default async function WorkspacesPage() {
-  await requireUser();
+  const user = await requireUser();
 
-  const workspaces = await apiFetch<WorkspaceListItem[]>("/workspaces").catch(() => []);
+  const workspaces = await container.workspaces.listForUser(user.id).catch(() => []);
 
   return (
     <div className="mx-auto max-w-3xl space-y-10 p-6">

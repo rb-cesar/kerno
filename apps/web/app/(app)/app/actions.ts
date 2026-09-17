@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-helpers";
 import { createWorkspaceSchema } from "@/lib/validations";
-import { apiFetch, SessionExpiredError } from "@/lib/api-client";
+import { container } from "@/server/container";
 
 type FormState = { error?: string } | null;
 
@@ -11,7 +11,7 @@ export async function createWorkspaceAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireUser();
+  const user = await requireUser();
 
   const parsed = createWorkspaceSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
@@ -20,15 +20,9 @@ export async function createWorkspaceAction(
 
   let slug: string;
   try {
-    const res = await apiFetch<{ slug: string }>("/workspaces", {
-      method: "POST",
-      body: JSON.stringify({ name: parsed.data.name }),
-    });
-    slug = res.slug;
-  } catch (error) {
-    if (error instanceof SessionExpiredError) {
-      return { error: "Sua sessão expirou. Saia e entre novamente." };
-    }
+    const result = await container.workspaces.createWorkspace(user.id, { name: parsed.data.name });
+    slug = result.slug;
+  } catch {
     return { error: "Não foi possível criar o workspace" };
   }
 

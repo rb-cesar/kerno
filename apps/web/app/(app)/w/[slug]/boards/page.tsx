@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
-import type { BoardData } from "@kerno/kanban/types";
 import type { WorkspaceView } from "@kerno/contracts/workspaces";
 import { requireUser } from "@/lib/auth-helpers";
-import { apiFetch } from "@/lib/api-client";
+import { container } from "@/server/container";
 import { BoardsClient } from "./boards-client";
 
 export default async function BoardsPage({
@@ -13,14 +12,14 @@ export default async function BoardsPage({
   const { slug } = await params;
   const user = await requireUser();
 
-  // Resolve o workspace pelo slug e carrega o board via API (BFF). A permissão
-  // de membro é checada no backend.
-  const workspace = await apiFetch<WorkspaceView>(`/workspaces/${slug}`).catch(() => null);
+  // Resolve o workspace pelo slug e carrega o board direto no service (mesmo
+  // processo). A permissão de membro é checada lá dentro.
+  const workspace: WorkspaceView | null = await container.workspaces
+    .getBySlug(user.id, slug)
+    .catch(() => null);
   if (!workspace) notFound();
 
-  const board = await apiFetch<BoardData>(
-    `/kanban/workspaces/${workspace.id}/board`,
-  ).catch(() => null);
+  const board = await container.kanban.boardForWorkspace(user.id, workspace.id).catch(() => null);
   if (!board) notFound();
 
   return <BoardsClient initial={board} currentUserId={user.id} />;

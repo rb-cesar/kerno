@@ -4,9 +4,11 @@
   "private": true,
   "exports": {
     "./events": "./src/events/index.ts",
+    "./errors": "./src/errors.ts",
+    "./http": "./src/http/index.ts",
+    "./client": "./src/client/request.ts",
     "./types": "./src/types/index.ts",
     "./workspaces": "./src/workspaces/index.ts",
-    "./workspaces-api": "./src/workspaces/api/index.ts",
     "./auth": "./src/auth/index.ts"
   },
   "scripts": {
@@ -15,18 +17,13 @@
   "dependencies": {
     "@kerno/contracts": "workspace:*",
     "@kerno/db": "workspace:*",
-    "@nestjs/common": "^10.4.15",
-    "@nestjs/jwt": "^10.2.0",
-    "@nestjs/passport": "^10.0.3",
     "bcryptjs": "^3.0.3",
-    "class-validator": "^0.14.1",
-    "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1"
+    "hono": "^4.13.8",
+    "next-auth": "5.0.0-beta.31"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.10.2",
-    "@types/passport-jwt": "^4.0.1",
     "typescript": "^5.7.2"
   }
 }

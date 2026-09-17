@@ -3,13 +3,7 @@
 import { createContext, useCallback, useContext, type ReactNode } from "react";
 import { Hash } from "lucide-react";
 import { TabDock, useDockTabs } from "@kerno/ui";
-import { TaskSidePanel } from "@kerno/kanban";
-import {
-  kanbanFetch,
-  kanbanFetchCardBoard,
-  kanbanFetchCardDetail,
-  kanbanMutate,
-} from "@/lib/kanban-actions";
+import { TaskSidePanel, kanbanClient } from "@kerno/kanban";
 
 type WorkspaceDock = {
   /** Abre uma tarefa no dock do workspace. `pin` força aba fixada (senão preview). */
@@ -69,10 +63,10 @@ export function WorkspaceDockProvider({
               key={tab.id}
               cardId={tab.id}
               currentUserId={currentUserId}
-              mutate={kanbanMutate}
-              fetchCardBoard={kanbanFetchCardBoard}
-              fetchSnapshot={kanbanFetch}
-              fetchCardDetail={kanbanFetchCardDetail}
+              mutate={kanbanClient.command}
+              fetchCardBoard={kanbanClient.cardBoard}
+              fetchSnapshot={kanbanClient.snapshot}
+              fetchCardDetail={kanbanClient.cardDetail}
               onClose={() => dock.close(tab.id)}
             />
           )}

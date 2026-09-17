@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@kerno/contracts/workspaces";
 import type { WorkspaceRole } from "@kerno/core/workspaces";
-import { apiFetch } from "@/lib/api-client";
+import { requireUser } from "@/lib/auth-helpers";
+import { container } from "@/server/container";
 
 export async function inviteWorkspaceMember(input: {
   workspaceId: string;
@@ -11,10 +12,11 @@ export async function inviteWorkspaceMember(input: {
   email: string;
   role: WorkspaceRole;
 }): Promise<ActionResult> {
-  const result = await apiFetch<ActionResult>(`/workspaces/${input.workspaceId}/members`, {
-    method: "POST",
-    body: JSON.stringify({ email: input.email, role: input.role }),
-  }).catch((): ActionResult => ({ ok: false, error: "Falha ao convidar membro" }));
+  const user = await requireUser();
+  const result = await container.workspaces.invite(user.id, input.workspaceId, {
+    email: input.email,
+    role: input.role,
+  });
 
   if (result.ok) revalidatePath(`/w/${input.slug}`, "layout");
   return result;
@@ -25,10 +27,8 @@ export async function removeWorkspaceMember(input: {
   slug: string;
   userId: string;
 }): Promise<ActionResult> {
-  const result = await apiFetch<ActionResult>(
-    `/workspaces/${input.workspaceId}/members/${input.userId}`,
-    { method: "DELETE" },
-  ).catch((): ActionResult => ({ ok: false, error: "Falha ao remover membro" }));
+  const user = await requireUser();
+  const result = await container.workspaces.removeMember(user.id, input.workspaceId, input.userId);
 
   if (result.ok) revalidatePath(`/w/${input.slug}`, "layout");
   return result;

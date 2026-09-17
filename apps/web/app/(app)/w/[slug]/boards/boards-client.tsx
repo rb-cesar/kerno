@@ -1,14 +1,8 @@
 "use client";
 
-import { KanbanBoard, type BoardData } from "@kerno/kanban";
+import { KanbanBoard, kanbanClient, type BoardData } from "@kerno/kanban";
 import { useSocket } from "@/components/providers/socket-provider";
 import { useWorkspaceDock } from "@/components/providers/workspace-dock-provider";
-import {
-  kanbanFetch,
-  kanbanFetchCardDetail,
-  kanbanFetchMetrics,
-  kanbanMutate,
-} from "@/lib/kanban-actions";
 
 export function BoardsClient({
   initial,
@@ -25,10 +19,10 @@ export function BoardsClient({
       initial={initial}
       currentUserId={currentUserId}
       socket={socket}
-      mutate={kanbanMutate}
-      fetchSnapshot={kanbanFetch}
-      fetchCardDetail={kanbanFetchCardDetail}
-      fetchMetrics={kanbanFetchMetrics}
+      mutate={kanbanClient.command}
+      fetchSnapshot={kanbanClient.snapshot}
+      fetchCardDetail={kanbanClient.cardDetail}
+      fetchMetrics={kanbanClient.metrics}
       onOpenCard={openCard}
       activeCardId={activeCardId}
     />

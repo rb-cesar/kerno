@@ -1,15 +1,11 @@
 import { notFound } from "next/navigation";
 import type { WorkspaceView } from "@kerno/contracts/workspaces";
-import { auth } from "@/auth";
 import { requireUser } from "@/lib/auth-helpers";
-import { apiFetch } from "@/lib/api-client";
+import { container } from "@/server/container";
 import { SocketProvider } from "@/components/providers/socket-provider";
 import { WorkspaceDockProvider } from "@/components/providers/workspace-dock-provider";
 import { HubRail } from "@/components/app/hub-rail";
 import { WorkspaceHeader } from "@/components/app/workspace-header";
-
-// Origem da API (sem o sufixo /api) onde o Socket.io escuta.
-const SOCKET_URL = (process.env.API_URL ?? "http://localhost:3333/api").replace(/\/api\/?$/, "");
 
 export default async function WorkspaceLayout({
   params,
@@ -20,16 +16,18 @@ export default async function WorkspaceLayout({
 }) {
   const { slug } = await params;
   const user = await requireUser();
-  const session = await auth();
 
-  // Gate de acesso + dados do workspace via API (BFF). 404 se não for membro.
-  const workspace = await apiFetch<WorkspaceView>(`/workspaces/${slug}`).catch(() => null);
+  // Gate de acesso + dados do workspace — direto no service (mesmo processo),
+  // sem HTTP. 404 se não for membro.
+  const workspace: WorkspaceView | null = await container.workspaces
+    .getBySlug(user.id, slug)
+    .catch(() => null);
   if (!workspace) notFound();
 
   const isManager = workspace.myRole === "ADMIN";
 
   return (
-    <SocketProvider workspaceId={workspace.id} url={SOCKET_URL} token={session?.apiToken ?? null}>
+    <SocketProvider workspaceId={workspace.id}>
       <div className="flex h-screen overflow-hidden">
         <HubRail
           basePath={`/w/${slug}`}

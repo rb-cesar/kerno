@@ -1,7 +1,7 @@
-// @kerno/core/workspaces — domínio do núcleo (workspace / projeto / membro).
-// Serviços (regras + acesso a dados via Prisma) e autorização de membership.
-// API pública do módulo; nada de fora importa os arquivos internos.
+// @kerno/core/workspaces — domínio do núcleo (workspace / membro): autorização
+// de membership, serviço (regras + acesso a dados) e controller Hono. Workspace
+// é "core" (não uma feature) — vive aqui no "pai", não num módulo.
 
 export * from "./permissions";
-export * from "./workspace-service";
-export * from "./member-service";
+export { WorkspaceService, createWorkspaceService, type WorkspaceRole } from "./workspace.service";
+export { createWorkspaceController } from "./workspace.controller";

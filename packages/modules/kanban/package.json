@@ -6,7 +6,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./api": "./src/api/index.ts",
+    "./server": "./src/server/index.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {
@@ -19,7 +19,7 @@
     "@kerno/db": "workspace:*",
     "@kerno/editor": "workspace:*",
     "@kerno/ui": "workspace:*",
-    "@nestjs/common": "^10.4.15",
+    "hono": "^4.13.8",
     "lucide-react": "^1.18.0"
   },
   "peerDependencies": {

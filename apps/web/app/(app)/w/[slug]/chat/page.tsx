@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
-import type { ChatData } from "@kerno/chat/types";
 import type { WorkspaceView } from "@kerno/contracts/workspaces";
 import { requireUser } from "@/lib/auth-helpers";
-import { apiFetch } from "@/lib/api-client";
+import { container } from "@/server/container";
 import { ChatClient } from "./chat-client";
 
 export default async function ChatPage({
@@ -13,12 +12,14 @@ export default async function ChatPage({
   const { slug } = await params;
   const user = await requireUser();
 
-  // Resolve o workspace pelo slug e carrega o chat via API (BFF). Permissão de
-  // membro checada no backend.
-  const workspace = await apiFetch<WorkspaceView>(`/workspaces/${slug}`).catch(() => null);
+  // Resolve o workspace pelo slug e carrega o chat direto no service (mesmo
+  // processo). Permissão de membro checada lá dentro.
+  const workspace: WorkspaceView | null = await container.workspaces
+    .getBySlug(user.id, slug)
+    .catch(() => null);
   if (!workspace) notFound();
 
-  const initial = await apiFetch<ChatData>(`/chat/workspaces/${workspace.id}`).catch(() => null);
+  const initial = await container.chat.chatForWorkspace(user.id, workspace.id).catch(() => null);
   if (!initial) notFound();
 
   return <ChatClient initial={initial} currentUserId={user.id} />;

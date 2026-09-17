@@ -1,20 +1,10 @@
 "use client";
 
 import { useCallback } from "react";
-import { ChatPanel, type ChatData } from "@kerno/chat";
+import { ChatPanel, chatClient, type ChatData } from "@kerno/chat";
+import { kanbanClient } from "@kerno/kanban";
 import { useSocket } from "@/components/providers/socket-provider";
 import { useWorkspaceDock } from "@/components/providers/workspace-dock-provider";
-import { kanbanSearchTasks } from "@/lib/kanban-actions";
-import {
-  chatCreateChannel,
-  chatEditMessage,
-  chatFetchDirectMessages,
-  chatFetchMessages,
-  chatOpenDirect,
-  chatSendDirectMessage,
-  chatSendMessage,
-  chatToggleReaction,
-} from "@/lib/chat-actions";
 
 export function ChatClient({
   initial,
@@ -28,7 +18,7 @@ export function ChatClient({
 
   // Liga a menção `!` à API do kanban (busca por workspace).
   const searchTasks = useCallback(
-    (query: string) => kanbanSearchTasks(initial.workspaceId, query),
+    (query: string) => kanbanClient.searchTasks(initial.workspaceId, query),
     [initial.workspaceId],
   );
 
@@ -44,14 +34,14 @@ export function ChatClient({
       currentUserId={currentUserId}
       onlineUserIds={onlineUserIds}
       socket={socket}
-      send={chatSendMessage}
-      editMessage={chatEditMessage}
-      createChannel={chatCreateChannel}
-      fetchMessages={chatFetchMessages}
-      openDirect={chatOpenDirect}
-      sendDirect={chatSendDirectMessage}
-      fetchDirectMessages={chatFetchDirectMessages}
-      toggleReaction={chatToggleReaction}
+      send={chatClient.sendMessage}
+      editMessage={chatClient.editMessage}
+      createChannel={chatClient.createChannel}
+      fetchMessages={chatClient.fetchMessages}
+      openDirect={chatClient.openDirect}
+      sendDirect={chatClient.sendDirectMessage}
+      fetchDirectMessages={chatClient.fetchDirectMessages}
+      toggleReaction={chatClient.toggleReaction}
       searchTasks={searchTasks}
       onOpenTask={onOpenTask}
     />

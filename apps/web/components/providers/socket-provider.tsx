@@ -21,15 +21,9 @@ export function useSocket() {
 
 export function SocketProvider({
   workspaceId,
-  url,
-  token,
   children,
 }: {
   workspaceId: string;
-  /** Origem da API (sem o /api), onde o Socket.io vive. */
-  url: string;
-  /** JWT da sessão (BFF) — usado no handshake. */
-  token: string | null;
   children: React.ReactNode;
 }) {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -37,14 +31,14 @@ export function SocketProvider({
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!token) return;
-
-    const s = io(url, { auth: { token } });
+    // Mesma origem do web: o cookie de sessão vai junto sozinho, sem token
+    // explícito no handshake.
+    const s = io();
     setSocket(s);
 
     s.on("connect", () => {
       setConnected(true);
-      // userId agora vem do token, validado no servidor.
+      // userId vem da sessão (cookie), validado no servidor no handshake.
       s.emit("workspace:join", { workspaceId });
     });
     s.on("disconnect", () => setConnected(false));
@@ -55,7 +49,7 @@ export function SocketProvider({
       s.disconnect();
       setSocket(null);
     };
-  }, [workspaceId, url, token]);
+  }, [workspaceId]);
 
   return (
     <SocketContext.Provider value={{ socket, connected, onlineUserIds }}>

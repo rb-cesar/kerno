@@ -1,4 +1,5 @@
 import { prisma } from "@kerno/db";
+import { Forbidden } from "../errors";
 
 export function getWorkspaceMembership(userId: string, workspaceId: string) {
   return prisma.workspaceUser.findUnique({
@@ -6,15 +7,15 @@ export function getWorkspaceMembership(userId: string, workspaceId: string) {
   });
 }
 
-/** Lança se o usuário não for membro do workspace. Retorna a membership. */
-export async function assertWorkspaceMember(userId: string, workspaceId: string) {
+/** Exige membership no workspace; devolve o papel. */
+export async function requireWorkspaceMember(userId: string, workspaceId: string): Promise<string> {
   const membership = await getWorkspaceMembership(userId, workspaceId);
-  if (!membership) throw new Error("Você não tem acesso a este workspace");
-  return membership;
+  if (!membership) throw new Forbidden("Você não tem acesso a este workspace");
+  return membership.role;
 }
 
-/** Pode gerenciar o workspace = admin. */
-export async function isWorkspaceManager(userId: string, workspaceId: string): Promise<boolean> {
-  const membership = await getWorkspaceMembership(userId, workspaceId);
-  return membership?.role === "ADMIN";
+/** Só admin pode gerenciar o workspace (convidar/remover/trocar papel de membro). */
+export async function requireWorkspaceAdmin(userId: string, workspaceId: string): Promise<void> {
+  const role = await requireWorkspaceMember(userId, workspaceId);
+  if (role !== "ADMIN") throw new Forbidden("Apenas administradores podem fazer isso");
 }

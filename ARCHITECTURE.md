@@ -31,10 +31,12 @@ repositório). Veja §6 e §11 para a evolução possível.
 kerno/
 ├─ pnpm-workspace.yaml
 ├─ apps/
-│  └─ web/                 # @kerno/web — casca de entrega (Next.js)
+│  └─ web/                 # @kerno/web — único processo: Next.js + API (Hono) + Socket.io
 │     ├─ app/              #   SÓ ROTAS: cada page/layout é um atalho fino
-│     ├─ composition/      #   wiring de boot (liga bus ↔ Socket.io, integrações)
-│     └─ server.ts
+│     │  └─ api/[[...route]]/route.ts   # monta a API Hono (server/api.ts) no Next
+│     ├─ server/           #   wiring de boot: container (composition root), api.ts,
+│     │                    #   auth-middleware, realtime, integrações entre módulos
+│     └─ server.ts         #   custom server: Next + Socket.io no mesmo HTTP server
 └─ packages/
    ├─ core/                # @kerno/core — base de DOMÍNIO (1 package, subpaths)
    │  └─ src/
@@ -106,9 +108,12 @@ Regras:
 - **Um módulo nunca importa outro módulo.** Kanban não conhece Chat. Comunicação
   só por eventos (§7).
 - Um módulo pode depender da base (`@kerno/core/events`, `@kerno/db`, `@kerno/ui`).
-- **A fronteira (server actions) fica no app, não no módulo.** Auth/sessão é
-  responsabilidade da camada de entrega (NextAuth vive no app). O módulo expõe
-  *serviços*; o app os chama em `apps/web/app/.../actions.ts` após autenticar.
+- **A fronteira fica no app, não no módulo.** Auth/sessão é responsabilidade da
+  camada de entrega (NextAuth vive no app — sessão única, sem token próprio). O
+  módulo expõe *serviço* (regras) + *controller* (Hono, guarda de rota) + *client*
+  (fetch fino, `web/<módulo>.client.ts`). Server Components chamam o serviço
+  direto via `apps/web/server/container.ts` (mesmo processo, sem HTTP); Client
+  Components chamam o client, que fala com o controller por `/api/...`.
 
 ---
 
@@ -182,8 +187,9 @@ Os módulos são **bounded contexts**. Eles não se conhecem.
   publica `card:moved`) e/ou **assina** eventos. Nunca chama o outro direto.
 - **Integrações vivem na camada de composição do app**, não nos módulos. Ex:
   "quando o Kanban move um card, postar no Chat" é registrado em
-  `apps/web/composition/`, e é o **único** lugar que conhece dois módulos ao
-  mesmo tempo.
+  `apps/web/server/kanban-chat.ts`, e é o **único** lugar que conhece dois
+  módulos ao mesmo tempo (junto com `apps/web/server/container.ts`, que
+  instancia os serviços de todos os módulos).
 
 ---
 
@@ -195,9 +201,10 @@ O event bus é o **módulo base** — a fundação que liga tudo sem acoplar.
   Ponto de extensão para múltiplas instâncias (Redis pub/sub) é o `publish`.
 - **`@kerno/core/types`** — os **contratos** de evento (`KernoEventType`,
   payloads). Subpath do core; compartilhado por vários módulos.
-- **Dispatcher** (`apps/web/composition`) — assina *todos* os eventos e: (1)
-  persiste na tabela `Event` (auditoria); (2) repassa para a room do projeto via
-  Socket.io. Ligado uma vez no boot (`server.ts`).
+- **Dispatcher** (`apps/web/server/event-dispatcher.ts`) — assina *todos* os
+  eventos e: (1) persiste na tabela `Event` (auditoria); (2) repassa para a room
+  do workspace via Socket.io. Ligado uma vez no boot (`server.ts` →
+  `initRealtime`).
 - **Contratos no core, não nos módulos.** Um tipo de evento compartilhado por
   ≥2 módulos → mora em `@kerno/core/types`.
 
@@ -233,22 +240,28 @@ packages/modules/chat/prisma/chat.prisma       # Channel, Message
 
 ## 10. Camada de entrega (`apps/web`)
 
-A casca Next. **Não tem regra de negócio nem Prisma.** Ela orquestra.
+A casca Next — e também onde a API HTTP e o realtime vivem. **Não tem regra de
+negócio nem Prisma fora dos módulos.** Ela orquestra. Um processo só: sem BFF,
+sem serviço separado, sem token próprio — a sessão é o cookie do NextAuth.
 
-- **`app/` = só rotas.** Cada `page.tsx`/`layout.tsx` é um atalho que re-exporta
-  a tela do módulo (única fragmentação inevitável — regra do Next):
-
-  ```tsx
-  // app/w/[slug]/p/[id]/kanban/page.tsx
-  export { default } from "@kerno/kanban/page";
-  ```
-
-- **`composition/`** — wiring de boot: dispatcher de eventos + integrações entre
-  hubs. Invocado por `server.ts`.
-- **Server actions (a fronteira) ficam no app**, em `app/.../actions.ts`. Elas
-  autenticam (NextAuth), checam permissão e chamam os *serviços* do módulo. O
-  módulo não conhece auth — só expõe serviços/UI/types. Decisão consciente: o
-  auth é app-bound, então a fronteira pertence à camada de entrega.
+- **`app/` = rotas** (páginas do Next + `app/api/[[...route]]/route.ts`, que
+  monta a API Hono via `hono/vercel`).
+- **`server/`** — a composição:
+  - `container.ts` — instancia os serviços de todos os módulos (o único arquivo
+    que conhece mais de um módulo, junto com as integrações).
+  - `api.ts` — monta o Hono (`basePath("/api")`), traduz erro de domínio → HTTP
+    num lugar só, registra os controllers de cada módulo.
+  - `auth-middleware.ts` / `session.ts` (em `@kerno/core/http`) — a sessão
+    NextAuth (cookie) virada `userId` no contexto Hono; reusada pelo handshake
+    do socket.
+  - `realtime.ts`, `event-dispatcher.ts`, `kanban-chat.ts` — Socket.io e as
+    integrações entre módulos.
+- **A fronteira (server actions + o client HTTP de cada módulo) fica no app/nos
+  módulos, nunca no domínio.** Server Components e actions chamam o *serviço* do
+  módulo direto (via `container`, mesmo processo — sem HTTP). Client Components
+  chamam o *client* do módulo (`@kerno/<m>` exporta `<m>Client`), que fala com o
+  *controller* Hono por `/api/...`. O módulo não conhece auth — a sessão chega
+  pronta (`userId`) via o middleware do core.
 
 ---
 
