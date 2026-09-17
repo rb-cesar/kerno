@@ -1,6 +1,14 @@
 "use client";
 
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { Smile } from "lucide-react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -26,11 +34,21 @@ class EmojiOption extends MenuOption {
   }
 }
 
-/** Autocomplete inline: ":fogo" abre um menu de emojis; selecionar insere o nativo. */
-export function EmojiTypeaheadPlugin() {
+/**
+ * Autocomplete inline: ":fogo" abre um menu de emojis; selecionar insere o
+ * nativo. `menuOpenRef` (opcional) avisa quem embrulha o campo — ex.: um plugin
+ * de Enter-to-send — que o menu está aberto e não deve tratar o Enter.
+ */
+export function EmojiTypeaheadPlugin({
+  menuOpenRef,
+}: {
+  menuOpenRef?: MutableRefObject<boolean>;
+}) {
   const [editor] = useLexicalComposerContext();
   const [query, setQuery] = useState<string | null>(null);
   const [options, setOptions] = useState<EmojiOption[]>([]);
+  const internalRef = useRef(false);
+  const openRef = menuOpenRef ?? internalRef;
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +67,13 @@ export function EmojiTypeaheadPlugin() {
       cancelled = true;
     };
   }, [query]);
+
+  useEffect(() => {
+    openRef.current = query !== null && options.length > 0;
+    return () => {
+      openRef.current = false;
+    };
+  }, [query, options, openRef]);
 
   const triggerFn = useCallback((text: string): MenuTextMatch | null => {
     const match = /(?:^|\s)(:[a-zA-Z0-9_+-]+)$/.exec(text);
@@ -116,7 +141,7 @@ export function EmojiTypeaheadPlugin() {
 }
 
 /** Botão da toolbar que abre o picker completo (grid com busca/categorias). */
-export function EmojiPickerButton() {
+export function EmojiPickerButton({ busy = false }: { busy?: boolean }) {
   const [editor] = useLexicalComposerContext();
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<unknown>(null);
@@ -143,9 +168,13 @@ export function EmojiPickerButton() {
       <button
         type="button"
         title="Emoji"
+        disabled={busy}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => setOpen((v) => !v)}
-        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        className={cn(
+          "rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+          busy && "pointer-events-none opacity-50",
+        )}
       >
         <Smile className="h-3.5 w-3.5" />
       </button>

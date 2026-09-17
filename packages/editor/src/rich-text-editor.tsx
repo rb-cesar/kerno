@@ -27,13 +27,7 @@ import {
   ListNode,
 } from "@lexical/list";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
-import {
-  $createCodeNode,
-  $isCodeNode,
-  CodeHighlightNode,
-  CodeNode,
-  registerCodeHighlighting,
-} from "@lexical/code";
+import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
 import {
   $createParagraphNode,
   $getSelection,
@@ -51,11 +45,19 @@ import {
   type MentionMember,
 } from "./plugins/mention";
 import {
+  TASK_MENTION_TRANSFORMER,
+  TaskMentionNode,
+  TaskMentionTypeaheadPlugin,
+  type TaskRef,
+} from "./plugins/task-ref";
+import {
   ActiveFormatsPlugin,
+  CodeHighlightPlugin,
   EmojiShortcutPlugin,
+  ExitBlockOnArrowDownPlugin,
   NO_FORMATS,
   PasteMarkdownPlugin,
-  SubmitOnCtrlEnterPlugin,
+  SubmitPlugin,
   type ActiveFormats,
 } from "./plugins/behaviors";
 import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./plugins/emoji";
@@ -68,12 +70,6 @@ const LINK_MATCHERS = [
 ];
 
 const BASE_NODES = [QuoteNode, ListNode, ListItemNode, LinkNode, AutoLinkNode, CodeNode, CodeHighlightNode];
-
-function CodeHighlightPlugin() {
-  const [editor] = useLexicalComposerContext();
-  useEffect(() => registerCodeHighlighting(editor), [editor]);
-  return null;
-}
 
 /** Carrega o markdown inicial uma única vez (montagem). */
 function InitialMarkdownPlugin({
@@ -290,11 +286,13 @@ export function RichTextEditor({
   placeholder = "Escreva…",
   minHeightClass = "min-h-[5rem]",
   mentions,
+  taskRefs,
   enableEmojiShortcodes = false,
   enableEmojiPicker = false,
   enableSlashCommands = false,
   enablePasteMarkdown = false,
   onSubmit,
+  submitOn = "mod-enter",
 }: {
   value?: string;
   onChange: (markdown: string) => void;
@@ -302,24 +300,36 @@ export function RichTextEditor({
   minHeightClass?: string;
   /** Habilita a menção `@membro` com a lista de membros fornecida. */
   mentions?: { members: MentionMember[]; currentUserId?: string };
+  /** Habilita a menção `!tarefa` — `search` é injetada por quem usa o editor. */
+  taskRefs?: { search: (query: string) => Promise<TaskRef[]> };
   enableEmojiShortcodes?: boolean;
   /** Botão de emoji na toolbar + autocomplete `:nome:` (picker emoji-mart, lazy). */
   enableEmojiPicker?: boolean;
   /** Menu `/comandos` estilo Notion. */
   enableSlashCommands?: boolean;
   enablePasteMarkdown?: boolean;
-  /** Ctrl/Cmd+Enter dispara isto (ex.: enviar comentário). */
+  /** Dispara isto ao enviar — ver `submitOn`. */
   onSubmit?: () => void;
+  /** `"mod-enter"` (default): só Ctrl/Cmd+Enter envia. `"enter"`: Enter envia,
+   * Shift+Enter quebra linha (convenção de chat). */
+  submitOn?: "enter" | "mod-enter";
 }) {
-  const transformers = useMemo(
-    () => (mentions ? [...TRANSFORMERS, MENTION_TRANSFORMER] : TRANSFORMERS),
-    [mentions],
-  );
+  const transformers = useMemo(() => {
+    const extra = [
+      ...(mentions ? [MENTION_TRANSFORMER] : []),
+      ...(taskRefs ? [TASK_MENTION_TRANSFORMER] : []),
+    ];
+    return extra.length > 0 ? [...TRANSFORMERS, ...extra] : TRANSFORMERS;
+  }, [mentions, taskRefs]);
 
   const initialConfig = {
     namespace: "kerno-editor",
     theme: editorTheme,
-    nodes: mentions ? [...BASE_NODES, MentionNode] : BASE_NODES,
+    nodes: [
+      ...BASE_NODES,
+      ...(mentions ? [MentionNode] : []),
+      ...(taskRefs ? [TaskMentionNode] : []),
+    ],
     onError: (error: Error) => console.error("[rich-text-editor] erro:", error),
   };
 
@@ -339,17 +349,19 @@ export function RichTextEditor({
         <MarkdownShortcutPlugin transformers={transformers} />
         <InitialMarkdownPlugin markdown={value} transformers={transformers} />
         <OnChangeMarkdownPlugin onChange={onChange} transformers={transformers} />
+        <ExitBlockOnArrowDownPlugin />
         {mentions ? (
           <MentionTypeaheadPlugin
             members={mentions.members}
             currentUserId={mentions.currentUserId}
           />
         ) : null}
+        {taskRefs ? <TaskMentionTypeaheadPlugin search={taskRefs.search} /> : null}
         {enableEmojiShortcodes ? <EmojiShortcutPlugin /> : null}
         {enableEmojiPicker ? <EmojiTypeaheadPlugin /> : null}
         {enableSlashCommands ? <SlashCommandPlugin /> : null}
         {enablePasteMarkdown ? <PasteMarkdownPlugin transformers={transformers} /> : null}
-        {onSubmit ? <SubmitOnCtrlEnterPlugin onSubmit={onSubmit} /> : null}
+        {onSubmit ? <SubmitPlugin mode={submitOn} onSubmit={onSubmit} /> : null}
       </LexicalComposer>
     </div>
   );

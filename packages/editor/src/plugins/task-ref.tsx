@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { createPortal } from "react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
@@ -21,7 +21,8 @@ import {
 import { Hash } from "lucide-react";
 import { cn } from "@kerno/ui";
 import type { TaskRef } from "../types";
-import { useChat } from "./chat-context";
+
+export type { TaskRef };
 
 // ── Nó de menção de tarefa ──────────────────────────────────────────────────
 // Token atômico que mostra "KERN-12" no editor e carrega o cardId. Serializa para
@@ -115,33 +116,36 @@ class TaskOption extends MenuOption {
 }
 
 /**
- * Autocomplete inline: "!auth" busca tarefas (KERN-N / título) via `searchTasks`
- * do contexto; selecionar insere um TaskMentionNode. Se `searchTasks` não foi
- * injetado (kanban indisponível), o menu nunca abre.
+ * Autocomplete inline: "!auth" busca tarefas (KERN-N / título) via `search`
+ * (injetada por quem usa o editor); selecionar insere um TaskMentionNode. Sem
+ * `search`, o menu nunca abre — o editor não sabe o que é uma tarefa.
  */
 export function TaskMentionTypeaheadPlugin({
+  search,
   menuOpenRef,
 }: {
-  menuOpenRef: MutableRefObject<boolean>;
+  search?: (query: string) => Promise<TaskRef[]>;
+  menuOpenRef?: MutableRefObject<boolean>;
 }) {
   const [editor] = useLexicalComposerContext();
-  const { searchTasks } = useChat();
   const [query, setQuery] = useState<string | null>(null);
   const [results, setResults] = useState<TaskRef[]>([]);
+  const internalRef = useRef(false);
+  const openRef = menuOpenRef ?? internalRef;
 
   useEffect(() => {
-    if (query === null || !searchTasks) {
+    if (query === null || !search) {
       setResults([]);
       return;
     }
     let active = true;
-    void searchTasks(query).then((tasks) => {
+    void search(query).then((tasks) => {
       if (active) setResults(tasks);
     });
     return () => {
       active = false;
     };
-  }, [query, searchTasks]);
+  }, [query, search]);
 
   const options = useMemo(
     () =>
@@ -152,15 +156,15 @@ export function TaskMentionTypeaheadPlugin({
   );
 
   useEffect(() => {
-    menuOpenRef.current = query !== null && options.length > 0;
+    openRef.current = query !== null && options.length > 0;
     return () => {
-      menuOpenRef.current = false;
+      openRef.current = false;
     };
-  }, [query, options, menuOpenRef]);
+  }, [query, options, openRef]);
 
   const triggerFn = useCallback(
     (text: string): MenuTextMatch | null => {
-      if (!searchTasks) return null;
+      if (!search) return null;
       const match = /(?:^|\s)(![a-zA-ZÀ-ÿ0-9_.-]*)$/.exec(text);
       if (!match) return null;
       const replaceable = match[1] ?? "";
@@ -170,7 +174,7 @@ export function TaskMentionTypeaheadPlugin({
         replaceableString: replaceable,
       };
     },
-    [searchTasks],
+    [search],
   );
 
   const onSelectOption = useCallback(

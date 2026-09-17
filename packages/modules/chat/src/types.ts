@@ -10,17 +10,16 @@ import type {
   MessageDTO,
   ChatResult,
 } from "@kerno/contracts/chat";
+
 /**
- * Referência de tarefa para a menção `!` no chat. Tipo LOCAL do chat (não importa
- * nada do kanban) — o app injeta `searchTasks`, cujo retorno é estruturalmente
- * compatível. Mantém o hub Chat sem conhecimento do hub Kanban.
+ * Referência de tarefa para a menção `!` no chat. O tipo mora em `@kerno/editor`
+ * (dono do plugin de typeahead `!`), importado do subpath `/types` — puro, sem
+ * JSX, para não obrigar quem só usa o tipo (ex.: o backend) a resolver os
+ * componentes React do editor. O app injeta `searchTasks`, cujo retorno é
+ * estruturalmente compatível. Mantém o hub Chat sem conhecimento do hub Kanban.
  */
-export interface TaskRef {
-  id: string;
-  number: number;
-  title: string;
-  workspaceKey: string;
-}
+export type { TaskRef } from "@kerno/editor/types";
+import type { TaskRef } from "@kerno/editor/types";
 
 /** Busca tarefas do workspace p/ o typeahead `!` (injetada pelo app, opcional). */
 export type ChatSearchTasks = (query: string) => Promise<TaskRef[]>;

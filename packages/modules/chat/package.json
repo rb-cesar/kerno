@@ -13,11 +13,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@emoji-mart/data": "^1.2.1",
-    "@emoji-mart/react": "^1.1.1",
     "@kerno/contracts": "workspace:*",
     "@kerno/core": "workspace:*",
     "@kerno/db": "workspace:*",
+    "@kerno/editor": "workspace:*",
     "@kerno/ui": "workspace:*",
     "@nestjs/common": "^10.4.15",
     "@lexical/code": "^0.45.0",
@@ -27,7 +26,6 @@
     "@lexical/react": "^0.45.0",
     "@lexical/rich-text": "^0.45.0",
     "@lexical/selection": "^0.45.0",
-    "emoji-mart": "^5.6.0",
     "lexical": "^0.45.0",
     "lucide-react": "^1.18.0",
     "prism-react-renderer": "^2.4.1"

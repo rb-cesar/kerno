@@ -34,180 +34,74 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
-  BOLD_ITALIC_STAR,
-  BOLD_ITALIC_UNDERSCORE,
-  BOLD_STAR,
-  BOLD_UNDERSCORE,
-  CODE,
-  INLINE_CODE,
-  ITALIC_STAR,
-  ITALIC_UNDERSCORE,
-  LINK,
-  ORDERED_LIST,
-  QUOTE,
-  STRIKETHROUGH,
-  UNORDERED_LIST,
   type Transformer,
 } from "@lexical/markdown";
-import { $createQuoteNode, $isQuoteNode, QuoteNode } from "@lexical/rich-text";
+import { $createQuoteNode, QuoteNode } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
 import {
-  $isListItemNode,
-  $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
   ListItemNode,
   ListNode,
 } from "@lexical/list";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
-import {
-  $createCodeNode,
-  $isCodeNode,
-  CodeHighlightNode,
-  CodeNode,
-  registerCodeHighlighting,
-} from "@lexical/code";
+import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
 import {
   $createParagraphNode,
   $getRoot,
   $getSelection,
-  $isElementNode,
   $isRangeSelection,
-  COMMAND_PRIORITY_HIGH,
-  COMMAND_PRIORITY_NORMAL,
   FORMAT_TEXT_COMMAND,
-  INSERT_LINE_BREAK_COMMAND,
-  KEY_ARROW_DOWN_COMMAND,
   KEY_ARROW_UP_COMMAND,
-  KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
   KEY_MODIFIER_COMMAND,
-  PASTE_COMMAND,
-  TextNode,
-  type ElementNode,
+  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_NORMAL,
   type LexicalEditor,
   type LexicalNode,
-  type RangeSelection,
 } from "lexical";
 import { Button, cn } from "@kerno/ui";
-import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./emoji-plugin";
-import { SlashCommandPlugin } from "./slash-plugin";
-import { MENTION_TRANSFORMER, MentionNode, MentionTypeaheadPlugin } from "./mention-plugin";
 import {
+  MENTION_TRANSFORMER,
+  MentionNode,
+  MentionTypeaheadPlugin,
   TASK_MENTION_TRANSFORMER,
   TaskMentionNode,
   TaskMentionTypeaheadPlugin,
-} from "./task-mention-plugin";
+  EmojiPickerButton,
+  EmojiTypeaheadPlugin,
+  SlashCommandPlugin,
+  ActiveFormatsPlugin,
+  CodeHighlightPlugin,
+  EmojiShortcutPlugin,
+  ExitBlockOnArrowDownPlugin,
+  NO_FORMATS,
+  PasteMarkdownPlugin,
+  SubmitPlugin,
+  TRANSFORMERS as BASE_TRANSFORMERS,
+  URL_MATCHER,
+  editorTheme,
+  type ActiveFormats,
+} from "@kerno/editor";
+import { useChat } from "./chat-context";
 
-// Subconjunto de transformers — markdown como atalho de digitação (símbolos somem
-// ao digitar) e formato de serialização. Sem headings (é chat).
+// Plugins e nós de menção/emoji/comando vêm de @kerno/editor (fonte única —
+// o kanban usa os mesmos). Aqui ficam só as convenções do chat: Enter envia,
+// rascunho por canal, editar a última mensagem, cancelar com Esc.
+
 const TRANSFORMERS: Transformer[] = [
-  CODE,
-  UNORDERED_LIST,
-  ORDERED_LIST,
-  QUOTE,
-  BOLD_ITALIC_STAR,
-  BOLD_ITALIC_UNDERSCORE,
-  BOLD_STAR,
-  BOLD_UNDERSCORE,
-  ITALIC_STAR,
-  ITALIC_UNDERSCORE,
-  STRIKETHROUGH,
-  INLINE_CODE,
-  LINK,
+  ...BASE_TRANSFORMERS,
   MENTION_TRANSFORMER,
   TASK_MENTION_TRANSFORMER,
 ];
 
-// Detecta URLs digitadas e as transforma em links automaticamente.
-const URL_MATCHER =
-  /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/;
 const LINK_MATCHERS = [
   createLinkMatcherWithRegExp(URL_MATCHER, (text) =>
     text.startsWith("http") ? text : `https://${text}`,
   ),
 ];
 
-// Base para emojis por shortcode (:nome:). Um picker estilo Discord (typeahead no
-// ":") pode ser plugado depois reaproveitando este mapa — ver EmojiShortcutPlugin.
-const EMOJI: Record<string, string> = {
-  smile: "😄",
-  grin: "😁",
-  joy: "😂",
-  heart: "❤️",
-  fire: "🔥",
-  tada: "🎉",
-  rocket: "🚀",
-  eyes: "👀",
-  thinking: "🤔",
-  ok: "👌",
-  "+1": "👍",
-  "-1": "👎",
-  check: "✅",
-  warning: "⚠️",
-  bug: "🐛",
-};
-
-// Classes do tema = como a formatação aparece AO VIVO no campo (espelha o
-// MessageContent que renderiza as mensagens recebidas).
-const theme = {
-  paragraph: "m-0",
-  quote: "border-l-2 border-muted-foreground/40 pl-3 text-muted-foreground",
-  list: { ul: "list-disc pl-5", ol: "list-decimal pl-5", listitem: "ml-0" },
-  code: "block overflow-x-auto rounded-md bg-muted p-2 font-mono text-[0.85em]",
-  link: "text-primary underline underline-offset-2",
-  text: {
-    bold: "font-semibold",
-    italic: "italic",
-    strikethrough: "line-through",
-    code: "rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]",
-  },
-  codeHighlight: {
-    comment: "text-muted-foreground italic",
-    keyword: "text-purple-400",
-    string: "text-emerald-400",
-    number: "text-amber-400",
-    boolean: "text-amber-400",
-    function: "text-blue-400",
-    "class-name": "text-yellow-300",
-    property: "text-sky-400",
-    attr: "text-sky-400",
-    tag: "text-rose-400",
-    operator: "text-muted-foreground",
-    punctuation: "text-muted-foreground",
-    selector: "text-emerald-400",
-    variable: "text-foreground",
-  },
-};
-
-// ── Plugins ──────────────────────────────────────────────────────────────────
-
-function CodeHighlightPlugin() {
-  const [editor] = useLexicalComposerContext();
-  useEffect(() => registerCodeHighlighting(editor), [editor]);
-  return null;
-}
-
-function EmojiShortcutPlugin() {
-  const [editor] = useLexicalComposerContext();
-  useEffect(
-    () =>
-      editor.registerNodeTransform(TextNode, (node) => {
-        if (!node.isSimpleText()) return;
-        const text = node.getTextContent();
-        const match = /:([a-z0-9_+-]{2,30}):/i.exec(text);
-        if (!match) return;
-        const emoji = EMOJI[match[1]!.toLowerCase()];
-        if (!emoji) return;
-        const next = text.slice(0, match.index) + emoji + text.slice(match.index + match[0].length);
-        node.setTextContent(next);
-        const caret = match.index + emoji.length;
-        node.select(caret, caret);
-      }),
-    [editor],
-  );
-  return null;
-}
+// ── Plugins específicos do chat ─────────────────────────────────────────────
 
 /** Atalhos extras (Slack): tachado e código inline. Negrito/itálico já são nativos. */
 function FormatShortcutsPlugin() {
@@ -232,202 +126,6 @@ function FormatShortcutsPlugin() {
           return false;
         },
         COMMAND_PRIORITY_NORMAL,
-      ),
-    [editor],
-  );
-  return null;
-}
-
-// ── Entrada/saída de blocos (lista, código, citação) ──────────────────────────
-// LISTA: Shift+Enter num item vazio SAI da lista (Backspace volta) — convenção
-// Notion/Docs.
-// CÓDIGO/CITAÇÃO: Enter/Shift+Enter sempre quebram linha (conteúdo multi-linha);
-// para SAIR usa-se a SETA PARA BAIXO na última linha (igual clicar abaixo do
-// bloco) — ver ExitBlockOnArrowDownPlugin. Enter nunca sai de bloco de código,
-// que é a convenção de editores de código.
-
-/** Sobe a árvore a partir da seleção e captura o bloco-alvo do Enter. */
-function findEnclosingBlock(selection: RangeSelection): {
-  listItem: LexicalNode | null;
-  codeOrQuote: ElementNode | null;
-} {
-  let node: LexicalNode | null = selection.anchor.getNode();
-  while (node) {
-    if ($isListItemNode(node)) return { listItem: node, codeOrQuote: null };
-    if ($isListNode(node)) {
-      // Seleção diretamente no nó da lista (item vazio recém-criado): pega o filho.
-      const child = node.getChildAtIndex(selection.anchor.offset) ?? node.getLastChild();
-      return { listItem: $isListItemNode(child) ? child : null, codeOrQuote: null };
-    }
-    if ($isCodeNode(node) || $isQuoteNode(node)) return { listItem: null, codeOrQuote: node };
-    node = node.getParent();
-  }
-  return { listItem: null, codeOrQuote: null };
-}
-
-/**
- * Offset absoluto (em caracteres) do cursor dentro do bloco. Calculado somando o
- * tamanho dos filhos/irmãos anteriores — NÃO depende de em qual nó a âncora caiu
- * (no código com highlight ela pode parar no próprio CodeNode, num token de
- * conteúdo ou num token vazio do fim; tudo dá o mesmo offset lógico).
- */
-function blockOffset(block: ElementNode, selection: RangeSelection): number {
-  const anchor = selection.anchor;
-  const node = anchor.getNode();
-  if (node.getKey() === block.getKey()) {
-    const children = block.getChildren();
-    let sum = 0;
-    for (let i = 0; i < anchor.offset && i < children.length; i += 1) {
-      sum += children[i]!.getTextContentSize();
-    }
-    return sum;
-  }
-  let sum = anchor.offset;
-  let prev = node.getPreviousSibling();
-  while (prev) {
-    sum += prev.getTextContentSize();
-    prev = prev.getPreviousSibling();
-  }
-  return sum;
-}
-
-/** A seleção está na ÚLTIMA linha do bloco (não há "\n" depois do cursor)? */
-function isOnLastLine(block: ElementNode, selection: RangeSelection): boolean {
-  const text = block.getTextContent();
-  return text.indexOf("\n", blockOffset(block, selection)) === -1;
-}
-
-/** Sai da lista: cria um parágrafo após a lista e remove o item vazio. */
-function exitList(listItem: LexicalNode): void {
-  const topElement = listItem.getTopLevelElement();
-  const parentList = listItem.getParent();
-  const paragraph = $createParagraphNode();
-  if (topElement) topElement.insertAfter(paragraph);
-  listItem.remove();
-  if ($isListNode(parentList) && parentList.getChildrenSize() === 0) parentList.remove();
-  paragraph.select();
-}
-
-/**
- * Enter envia; Shift+Enter quebra linha; Ctrl/Cmd+Enter também envia. Dentro de
- * lista / citação / bloco de código, Enter continua o bloco (não envia). Numa
- * linha vazia ao fim do bloco, o Shift+Enter SAI do bloco (volta ao texto).
- */
-function EnterToSendPlugin({
-  onSubmit,
-  menuOpenRefs,
-}: {
-  onSubmit: () => void;
-  menuOpenRefs: MutableRefObject<boolean>[];
-}) {
-  const [editor] = useLexicalComposerContext();
-  useEffect(
-    () =>
-      editor.registerCommand(
-        KEY_ENTER_COMMAND,
-        (event) => {
-          if (!event) return false;
-          // Se um menu (emoji "/"/comandos) está aberto, deixa-o tratar o Enter.
-          if (menuOpenRefs.some((ref) => ref.current)) return false;
-
-          // Detecta o bloco atual subindo a árvore de pais (robusto a aninhamento).
-          const selection = $getSelection();
-          const { listItem, codeOrQuote } = $isRangeSelection(selection)
-            ? findEnclosingBlock(selection)
-            : { listItem: null, codeOrQuote: null };
-          const inCodeOrQuote = codeOrQuote !== null;
-
-          if (event.shiftKey) {
-            event.preventDefault();
-            if (!$isRangeSelection(selection)) {
-              editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
-              return true;
-            }
-            // Lista: item vazio SAI da lista (Shift+Enter "duas vezes" no fim);
-            // item com conteúdo cria um novo item (continua a lista).
-            if (listItem) {
-              if (listItem.getTextContent().trim() === "") exitList(listItem);
-              else selection.insertParagraph();
-              return true;
-            }
-            // Código/citação: sempre quebra suave nativa (conteúdo multi-linha).
-            // Para SAIR do bloco usa-se a seta para baixo (ExitBlockOnArrowDownPlugin).
-            if (codeOrQuote) {
-              editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
-              return true;
-            }
-            // Texto normal: cria um NOVO PARÁGRAFO (não quebra suave), para que
-            // "- " / "1. " no começo da linha nova convertam em lista.
-            selection.insertParagraph();
-            return true;
-          }
-
-          // Ctrl/Cmd+Enter sempre envia (útil para enviar de dentro de uma lista).
-          if (event.ctrlKey || event.metaKey) {
-            event.preventDefault();
-            onSubmit();
-            return true;
-          }
-
-          // Em bloco de código/citação o Enter mantém o comportamento nativo (nova
-          // linha) para permitir conteúdo multi-linha. Em lista (e texto normal),
-          // Enter envia — só o Shift+Enter cria item/quebra.
-          if (inCodeOrQuote) return false;
-
-          event.preventDefault();
-          onSubmit();
-          return true;
-        },
-        COMMAND_PRIORITY_HIGH,
-      ),
-    [editor, onSubmit, menuOpenRefs],
-  );
-  return null;
-}
-
-/**
- * Seta para baixo na ÚLTIMA linha de um bloco de código/citação SAI do bloco para
- * o bloco seguinte (cria um parágrafo se não houver) — como clicar logo abaixo.
- * É a forma de "sair" de código, já que ali o Enter é sempre quebra de linha.
- */
-function ExitBlockOnArrowDownPlugin() {
-  const [editor] = useLexicalComposerContext();
-  useEffect(
-    () =>
-      editor.registerCommand(
-        KEY_ARROW_DOWN_COMMAND,
-        (event) => {
-          const selection = $getSelection();
-          if (!$isRangeSelection(selection) || !selection.isCollapsed()) return false;
-
-          // Acha o bloco código/citação que contém o cursor.
-          let block: ElementNode | null = null;
-          let node: LexicalNode | null = selection.anchor.getNode();
-          while (node) {
-            if ($isCodeNode(node) || $isQuoteNode(node)) {
-              block = node;
-              break;
-            }
-            node = node.getParent();
-          }
-          if (!block) return false;
-
-          // Só intercepta na última linha; nas demais, deixa a navegação nativa
-          // mover entre as linhas do bloco.
-          if (!isOnLastLine(block, selection)) return false;
-
-          event?.preventDefault();
-          const next = block.getNextSibling();
-          if (next && $isElementNode(next)) {
-            next.selectStart();
-          } else {
-            const paragraph = $createParagraphNode();
-            block.insertAfter(paragraph);
-            paragraph.select();
-          }
-          return true;
-        },
-        COMMAND_PRIORITY_HIGH,
       ),
     [editor],
   );
@@ -538,99 +236,7 @@ function EditLastPlugin({ onRequestEditLast }: { onRequestEditLast?: () => void 
   return null;
 }
 
-/** Detecta se um texto colado parece markdown (para converter em vez de texto cru). */
-function looksLikeMarkdown(text: string): boolean {
-  return (
-    /(^|\n)\s*([-*+]\s|\d+\.\s|>\s|#{1,6}\s|```)/.test(text) ||
-    /\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~/.test(text)
-  );
-}
-
-/**
- * Colar texto com markdown converte nos blocos correspondentes (MVP: só quando o
- * campo está vazio — evita a complexidade de inserir blocos no meio do conteúdo).
- * Conteúdo rico (text/html) sem cara de markdown segue o paste nativo.
- */
-function PasteMarkdownPlugin() {
-  const [editor] = useLexicalComposerContext();
-  useEffect(
-    () =>
-      editor.registerCommand(
-        PASTE_COMMAND,
-        (event) => {
-          const cb = (event as ClipboardEvent).clipboardData;
-          if (!cb) return false;
-          const text = cb.getData("text/plain");
-          const html = cb.getData("text/html");
-          if (!text) return false;
-          if (html && !looksLikeMarkdown(text)) return false;
-
-          let isEmpty = false;
-          editor.getEditorState().read(() => {
-            isEmpty = $getRoot().getTextContent().trim() === "";
-          });
-          if (!isEmpty || !looksLikeMarkdown(text)) return false;
-
-          event.preventDefault();
-          editor.update(() => {
-            $convertFromMarkdownString(text, TRANSFORMERS);
-          });
-          return true;
-        },
-        COMMAND_PRIORITY_NORMAL,
-      ),
-    [editor],
-  );
-  return null;
-}
-
 // ── Toolbar ──────────────────────────────────────────────────────────────────
-
-/** Formatos ativos na seleção — destaca os botões da toolbar (estilo Notion). */
-type ActiveFormats = {
-  bold: boolean;
-  italic: boolean;
-  strikethrough: boolean;
-  code: boolean;
-  ul: boolean;
-  ol: boolean;
-  quote: boolean;
-  codeblock: boolean;
-};
-
-const NO_FORMATS: ActiveFormats = {
-  bold: false,
-  italic: false,
-  strikethrough: false,
-  code: false,
-  ul: false,
-  ol: false,
-  quote: false,
-  codeblock: false,
-};
-
-function $computeActiveFormats(): ActiveFormats {
-  const selection = $getSelection();
-  if (!$isRangeSelection(selection)) return NO_FORMATS;
-  const active: ActiveFormats = {
-    ...NO_FORMATS,
-    bold: selection.hasFormat("bold"),
-    italic: selection.hasFormat("italic"),
-    strikethrough: selection.hasFormat("strikethrough"),
-    code: selection.hasFormat("code"),
-  };
-  let node: LexicalNode | null = selection.anchor.getNode();
-  while (node) {
-    if ($isListNode(node)) {
-      if (node.getListType() === "number") active.ol = true;
-      else active.ul = true;
-    }
-    if ($isQuoteNode(node)) active.quote = true;
-    if ($isCodeNode(node)) active.codeblock = true;
-    node = node.getParent();
-  }
-  return active;
-}
 
 function ToolbarButton({
   title,
@@ -673,7 +279,7 @@ function Toolbar({
   busy: boolean;
   active: ActiveFormats;
 }) {
-  const setBlock = (create: () => QuoteNode | ReturnType<typeof $createCodeNode>) =>
+  const setBlock = (create: () => ReturnType<typeof $createQuoteNode>) =>
     editor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) $setBlocksType(selection, create);
@@ -761,6 +367,7 @@ function ComposerInner({
   draftKey?: string;
   onRequestEditLast?: () => void;
 }) {
+  const { members, currentUserId, searchTasks } = useChat();
   const [editor] = useLexicalComposerContext();
   const [pending, startTransition] = useTransition();
   const busy = Boolean(disabled) || pending;
@@ -769,20 +376,17 @@ function ComposerInner({
   const slashMenuOpen = useRef(false);
   const mentionMenuOpen = useRef(false);
   const taskMentionMenuOpen = useRef(false);
+  const menuOpenRefs: MutableRefObject<boolean>[] = [
+    emojiMenuOpen,
+    slashMenuOpen,
+    mentionMenuOpen,
+    taskMentionMenuOpen,
+  ];
   const [active, setActive] = useState<ActiveFormats>(NO_FORMATS);
 
   useEffect(() => {
     editor.setEditable(!busy);
   }, [editor, busy]);
-
-  // Acompanha os formatos da seleção para destacar os botões da toolbar.
-  useEffect(
-    () =>
-      editor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => setActive($computeActiveFormats()));
-      }),
-    [editor],
-  );
 
   const submit = useCallback(() => {
     let markdown = "";
@@ -852,8 +456,9 @@ function ComposerInner({
       ) : null}
       {draftKey ? <DraftPlugin draftKey={draftKey} /> : null}
       <EditLastPlugin onRequestEditLast={onRequestEditLast} />
-      <PasteMarkdownPlugin />
+      <PasteMarkdownPlugin transformers={TRANSFORMERS} />
       <EscapeToCancelPlugin onCancel={onCancel} />
+      <ActiveFormatsPlugin onChange={setActive} />
       <HistoryPlugin />
       <ListPlugin />
       <LinkPlugin />
@@ -863,13 +468,14 @@ function ComposerInner({
       <FormatShortcutsPlugin />
       <EmojiShortcutPlugin />
       <EmojiTypeaheadPlugin menuOpenRef={emojiMenuOpen} />
-      <MentionTypeaheadPlugin menuOpenRef={mentionMenuOpen} />
-      <TaskMentionTypeaheadPlugin menuOpenRef={taskMentionMenuOpen} />
-      <SlashCommandPlugin menuOpenRef={slashMenuOpen} />
-      <EnterToSendPlugin
-        onSubmit={submit}
-        menuOpenRefs={[emojiMenuOpen, slashMenuOpen, mentionMenuOpen, taskMentionMenuOpen]}
+      <MentionTypeaheadPlugin
+        members={members}
+        currentUserId={currentUserId}
+        menuOpenRef={mentionMenuOpen}
       />
+      <TaskMentionTypeaheadPlugin search={searchTasks} menuOpenRef={taskMentionMenuOpen} />
+      <SlashCommandPlugin menuOpenRef={slashMenuOpen} />
+      <SubmitPlugin mode="enter" onSubmit={submit} menuOpenRefs={menuOpenRefs} />
       <ExitBlockOnArrowDownPlugin />
     </div>
   );
@@ -899,7 +505,7 @@ export function MessageComposer({
   const editMode = Boolean(onCancel);
   const initialConfig = {
     namespace: "kerno-chat",
-    theme,
+    theme: editorTheme,
     nodes: [
       QuoteNode,
       ListNode,

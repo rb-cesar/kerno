@@ -20,6 +20,7 @@
       "@kerno/core/workspaces": ["../../packages/core/src/workspaces/index.ts"],
       "@kerno/core/workspaces-api": ["../../packages/core/src/workspaces/api/index.ts"],
       "@kerno/core/auth": ["../../packages/core/src/auth/index.ts"],
+      "@kerno/editor/types": ["../../packages/editor/src/types.ts"],
       "@kerno/kanban/api": ["../../packages/modules/kanban/src/api/index.ts"],
       "@kerno/chat/api": ["../../packages/modules/chat/src/api/index.ts"]
     }

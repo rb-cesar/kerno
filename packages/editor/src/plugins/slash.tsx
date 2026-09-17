@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { createPortal } from "react-dom";
 import {
   Bold,
@@ -89,10 +89,18 @@ class SlashOption extends MenuOption {
 /**
  * Menu de comandos estilo Notion, disparado por "/" NO INÍCIO da linha (evita
  * acionar com "/" no meio do texto/URLs). Selecionar remove o "/texto" e aplica.
+ * `menuOpenRef` (opcional) avisa quem embrulha o campo — ex.: um plugin de
+ * Enter-to-send — que o menu está aberto e não deve tratar o Enter.
  */
-export function SlashCommandPlugin() {
+export function SlashCommandPlugin({
+  menuOpenRef,
+}: {
+  menuOpenRef?: MutableRefObject<boolean>;
+} = {}) {
   const [editor] = useLexicalComposerContext();
   const [query, setQuery] = useState<string | null>(null);
+  const internalRef = useRef(false);
+  const openRef = menuOpenRef ?? internalRef;
 
   const options = useMemo(() => {
     const q = (query ?? "").toLowerCase();
@@ -100,6 +108,13 @@ export function SlashCommandPlugin() {
       (c) => q === "" || c.title.toLowerCase().includes(q) || c.keywords.some((k) => k.includes(q)),
     ).map((c) => new SlashOption(c));
   }, [query]);
+
+  useEffect(() => {
+    openRef.current = query !== null && options.length > 0;
+    return () => {
+      openRef.current = false;
+    };
+  }, [query, options, openRef]);
 
   const triggerFn = useCallback((text: string): MenuTextMatch | null => {
     const match = /^\/([a-zA-Z]*)$/.exec(text);
