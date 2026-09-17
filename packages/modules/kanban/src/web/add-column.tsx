@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Plus } from "lucide-react";
 import { Button, Input } from "@kerno/ui";
+import { Plus } from "lucide-react";
+import { useState, useTransition } from "react";
 import { useKanban } from "./kanban-context";
 
 export function AddColumn({ boardId }: { boardId: string }) {

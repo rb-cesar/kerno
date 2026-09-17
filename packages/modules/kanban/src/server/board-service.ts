@@ -1,5 +1,5 @@
 import { prisma } from "@kerno/db";
-import { DEFAULT_BOARD_COLUMNS, type BoardData, type TaskRefDTO } from "../types";
+import { type BoardData, DEFAULT_BOARD_COLUMNS, type TaskRefDTO } from "../types";
 
 /** Máximo de boards por workspace. */
 export const MAX_BOARDS = 5;

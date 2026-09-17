@@ -1,5 +1,5 @@
-import { requireUser } from "@/lib/auth-helpers";
 import { AppTopbar } from "@/components/app/app-topbar";
+import { requireUser } from "@/lib/auth-helpers";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();

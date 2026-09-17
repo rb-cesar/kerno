@@ -1,7 +1,11 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { createWorkspaceInputSchema, inviteMemberInputSchema, updateMemberInputSchema } from "./workspace.dto";
-import { requireUser, type AuthEnv } from "../http";
+import { Hono } from "hono";
+import { type AuthEnv, requireUser } from "../http";
+import {
+  createWorkspaceInputSchema,
+  inviteMemberInputSchema,
+  updateMemberInputSchema,
+} from "./workspace.dto";
 import type { WorkspaceService } from "./workspace.service";
 
 export function createWorkspaceController(workspaces: WorkspaceService) {

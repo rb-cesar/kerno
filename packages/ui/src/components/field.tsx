@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
+import * as React from "react";
 import { cn } from "../utils";
 import { Label } from "./label";
 
@@ -97,41 +97,48 @@ const FieldControl = React.forwardRef<HTMLElement, { children: React.ReactElemen
 );
 FieldControl.displayName = "FieldControl";
 
-const FieldHint = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => {
-    const { hintId, setHasHint } = useFieldContext();
-    React.useEffect(() => {
-      setHasHint(true);
-      return () => setHasHint(false);
-    }, [setHasHint]);
-    return (
-      <p ref={ref} id={hintId} className={cn("text-xs text-muted-foreground", className)} {...props} />
-    );
-  },
-);
+const FieldHint = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => {
+  const { hintId, setHasHint } = useFieldContext();
+  React.useEffect(() => {
+    setHasHint(true);
+    return () => setHasHint(false);
+  }, [setHasHint]);
+  return (
+    <p
+      ref={ref}
+      id={hintId}
+      className={cn("text-xs text-muted-foreground", className)}
+      {...props}
+    />
+  );
+});
 FieldHint.displayName = "FieldHint";
 
-const FieldError = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, children, ...props }, ref) => {
-    const { errorId, setHasError } = useFieldContext();
-    React.useEffect(() => {
-      setHasError(true);
-      return () => setHasError(false);
-    }, [setHasError]);
-    if (!children) return null;
-    return (
-      <p
-        ref={ref}
-        id={errorId}
-        role="alert"
-        className={cn("text-sm text-destructive", className)}
-        {...props}
-      >
-        {children}
-      </p>
-    );
-  },
-);
+const FieldError = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, children, ...props }, ref) => {
+  const { errorId, setHasError } = useFieldContext();
+  React.useEffect(() => {
+    setHasError(true);
+    return () => setHasError(false);
+  }, [setHasError]);
+  if (!children) return null;
+  return (
+    <p
+      ref={ref}
+      id={errorId}
+      role="alert"
+      className={cn("text-sm text-destructive", className)}
+      {...props}
+    >
+      {children}
+    </p>
+  );
+});
 FieldError.displayName = "FieldError";
 
-export { Field, FieldLabel, FieldControl, FieldHint, FieldError };
+export { Field, FieldControl, FieldError, FieldHint, FieldLabel };

@@ -1,24 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Bold, Braces, Code, Italic, List, ListOrdered, Quote, Strikethrough } from "lucide-react";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { ListPlugin } from "@lexical/react/LexicalListPlugin";
-import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
-import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
-import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import {
-  $convertFromMarkdownString,
-  $convertToMarkdownString,
-  type Transformer,
-} from "@lexical/markdown";
-import { $createQuoteNode, QuoteNode } from "@lexical/rich-text";
-import { $setBlocksType } from "@lexical/selection";
+import { cn } from "@kerno/ui";
+import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
+import { AutoLinkNode, LinkNode } from "@lexical/link";
 import {
   $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
@@ -26,8 +10,23 @@ import {
   ListItemNode,
   ListNode,
 } from "@lexical/list";
-import { AutoLinkNode, LinkNode } from "@lexical/link";
-import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
+import {
+  $convertFromMarkdownString,
+  $convertToMarkdownString,
+  type Transformer,
+} from "@lexical/markdown";
+import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { $createQuoteNode, QuoteNode } from "@lexical/rich-text";
+import { $setBlocksType } from "@lexical/selection";
 import {
   $createParagraphNode,
   $getSelection,
@@ -36,21 +35,11 @@ import {
   type LexicalEditor,
   type LexicalNode,
 } from "lexical";
-import { cn } from "@kerno/ui";
-import { TRANSFORMERS, URL_MATCHER, editorTheme } from "./config";
+import { Bold, Braces, Code, Italic, List, ListOrdered, Quote, Strikethrough } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { editorTheme, TRANSFORMERS, URL_MATCHER } from "./config";
 import {
-  MENTION_TRANSFORMER,
-  MentionNode,
-  MentionTypeaheadPlugin,
-  type MentionMember,
-} from "./plugins/mention";
-import {
-  TASK_MENTION_TRANSFORMER,
-  TaskMentionNode,
-  TaskMentionTypeaheadPlugin,
-  type TaskRef,
-} from "./plugins/task-ref";
-import {
+  type ActiveFormats,
   ActiveFormatsPlugin,
   CodeHighlightPlugin,
   EmojiShortcutPlugin,
@@ -58,10 +47,21 @@ import {
   NO_FORMATS,
   PasteMarkdownPlugin,
   SubmitPlugin,
-  type ActiveFormats,
 } from "./plugins/behaviors";
 import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./plugins/emoji";
+import {
+  MENTION_TRANSFORMER,
+  type MentionMember,
+  MentionNode,
+  MentionTypeaheadPlugin,
+} from "./plugins/mention";
 import { SlashCommandPlugin } from "./plugins/slash";
+import {
+  TASK_MENTION_TRANSFORMER,
+  TaskMentionNode,
+  TaskMentionTypeaheadPlugin,
+  type TaskRef,
+} from "./plugins/task-ref";
 
 const LINK_MATCHERS = [
   createLinkMatcherWithRegExp(URL_MATCHER, (text) =>
@@ -69,7 +69,15 @@ const LINK_MATCHERS = [
   ),
 ];
 
-const BASE_NODES = [QuoteNode, ListNode, ListItemNode, LinkNode, AutoLinkNode, CodeNode, CodeHighlightNode];
+const BASE_NODES = [
+  QuoteNode,
+  ListNode,
+  ListItemNode,
+  LinkNode,
+  AutoLinkNode,
+  CodeNode,
+  CodeHighlightNode,
+];
 
 /** Carrega o markdown inicial uma única vez (montagem). */
 function InitialMarkdownPlugin({
@@ -199,16 +207,32 @@ function Toolbar({
 
   return (
     <div className="flex items-center gap-0.5 border-b px-1.5 py-1">
-      <ToolbarButton title="Negrito (Ctrl+B)" active={active.bold} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}>
+      <ToolbarButton
+        title="Negrito (Ctrl+B)"
+        active={active.bold}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+      >
         <Bold className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Itálico (Ctrl+I)" active={active.italic} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}>
+      <ToolbarButton
+        title="Itálico (Ctrl+I)"
+        active={active.italic}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
+      >
         <Italic className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Tachado" active={active.strikethrough} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}>
+      <ToolbarButton
+        title="Tachado"
+        active={active.strikethrough}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}
+      >
         <Strikethrough className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Código" active={active.code} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}>
+      <ToolbarButton
+        title="Código"
+        active={active.code}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
+      >
         <Code className="h-3.5 w-3.5" />
       </ToolbarButton>
       <span className="mx-1 h-4 w-px bg-border" />

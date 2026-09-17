@@ -1,6 +1,6 @@
 import { prisma } from "@kerno/db";
-import { createCard } from "./card-service";
 import type { CardDetailDTO, MemberDTO } from "../types";
+import { createCard } from "./card-service";
 
 /** Cria uma sub-tarefa: um card filho no mesmo estado (coluna) do pai. */
 export async function createSubtask(parentId: string, title: string, actorId: string) {

@@ -1,8 +1,4 @@
-import type {
-  KernoEvent,
-  KernoEventMap,
-  KernoEventType,
-} from "../types";
+import type { KernoEvent, KernoEventMap, KernoEventType } from "../types";
 
 export { eventBus } from "./bus";
 

@@ -18,7 +18,7 @@ Ordem recomendada: **1) Postgres → 2) Web**.
 
 ## Pré-requisitos no repositório (já configurados)
 
-- **`postinstall`** na raiz roda `pnpm --filter @kerno/db generate` → gera o Prisma Client (com o schema montado pelo `gather.mjs`) após o `install`. Sem isso, o build falha com erros de tipo (`any`).
+- **`postinstall`** na raiz roda `pnpm --filter @kerno/db generate` → gera o Prisma Client após o `install`. Sem isso, o build falha com erros de tipo (`any`).
 - **`apps/web` `start`** usa `--env-file-if-exists` → não quebra quando não há `.env` (em produção as envs vêm do painel do host).
 - **`server.ts`** escuta em `PORT` (injetado dinamicamente por hosts como Railway) e `HOST`.
 

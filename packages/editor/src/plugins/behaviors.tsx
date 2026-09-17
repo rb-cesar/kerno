@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, type MutableRefObject } from "react";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $convertFromMarkdownString, type Transformer } from "@lexical/markdown";
-import { $isQuoteNode } from "@lexical/rich-text";
-import { $isListItemNode, $isListNode } from "@lexical/list";
 import { $isCodeNode, registerCodeHighlighting } from "@lexical/code";
+import { $isListItemNode, $isListNode } from "@lexical/list";
+import { $convertFromMarkdownString, type Transformer } from "@lexical/markdown";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { $isQuoteNode } from "@lexical/rich-text";
 import {
   $createParagraphNode,
   $getRoot,
@@ -14,15 +13,16 @@ import {
   $isRangeSelection,
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_NORMAL,
+  type ElementNode,
   INSERT_LINE_BREAK_COMMAND,
   KEY_ARROW_DOWN_COMMAND,
   KEY_ENTER_COMMAND,
-  PASTE_COMMAND,
-  TextNode,
-  type ElementNode,
   type LexicalNode,
+  PASTE_COMMAND,
   type RangeSelection,
+  TextNode,
 } from "lexical";
+import { type MutableRefObject, useEffect } from "react";
 
 /** `registerCodeHighlighting` num plugin — usado por qualquer campo com bloco de código. */
 export function CodeHighlightPlugin() {

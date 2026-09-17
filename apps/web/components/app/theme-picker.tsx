@@ -1,16 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
+import { cn, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@kerno/ui";
 import { Check } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  cn,
-} from "@kerno/ui";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { DEFAULT_THEME, THEME_GROUPS, type ThemeMeta } from "@/lib/themes";
 
 /**
@@ -108,13 +101,22 @@ function ThemeCard({
             style={{ backgroundColor: sidebar }}
           >
             <span className="h-1.5 w-1.5 rounded-[3px]" style={{ backgroundColor: accent }} />
-            <span className="h-1.5 w-1.5 rounded-[3px]" style={{ backgroundColor: fg, opacity: 0.45 }} />
+            <span
+              className="h-1.5 w-1.5 rounded-[3px]"
+              style={{ backgroundColor: fg, opacity: 0.45 }}
+            />
           </div>
           {/* conteúdo */}
           <div className="flex flex-1 flex-col gap-1.5 p-2">
             <span className="h-2 w-3/5 rounded-full" style={{ backgroundColor: accent }} />
-            <span className="h-1.5 w-full rounded-full" style={{ backgroundColor: fg, opacity: 0.55 }} />
-            <span className="h-1.5 w-4/5 rounded-full" style={{ backgroundColor: fg, opacity: 0.35 }} />
+            <span
+              className="h-1.5 w-full rounded-full"
+              style={{ backgroundColor: fg, opacity: 0.55 }}
+            />
+            <span
+              className="h-1.5 w-4/5 rounded-full"
+              style={{ backgroundColor: fg, opacity: 0.35 }}
+            />
             <span className="mt-auto h-3 w-10 rounded" style={{ backgroundColor: accent }} />
           </div>
         </div>

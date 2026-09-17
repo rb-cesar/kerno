@@ -8,11 +8,14 @@
   },
   "scripts": {
     "postinstall": "pnpm --filter @kerno/db generate",
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "pnpm -r typecheck",
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "test": "vitest",
+    "format": "biome format --write .",
     "db:generate": "pnpm --filter @kerno/db generate",
     "db:migrate": "dotenv -e .env -- pnpm --filter @kerno/db migrate",
     "db:push": "dotenv -e .env -- pnpm --filter @kerno/db push",
@@ -22,9 +25,9 @@
     "docker:down": "docker compose down"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
     "dotenv-cli": "^7.4.4",
-    "prettier": "^3.4.2",
-    "turbo": "^2.3.3",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^5.0.1"
   }
 }

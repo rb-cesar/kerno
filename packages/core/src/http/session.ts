@@ -10,7 +10,9 @@ const secureCookie = (process.env.AUTH_URL ?? "").startsWith("https://");
  * do socket (`socket.handshake.headers.cookie`). Mesma sessão, uma única fonte
  * — nada de JWT próprio, nada de BFF.
  */
-export async function userIdFromCookieHeader(cookieHeader: string | undefined): Promise<string | null> {
+export async function userIdFromCookieHeader(
+  cookieHeader: string | undefined,
+): Promise<string | null> {
   const token = await getToken({
     req: { headers: { cookie: cookieHeader ?? "" } },
     secret: process.env.AUTH_SECRET,

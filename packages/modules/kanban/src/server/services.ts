@@ -1,44 +1,44 @@
 export {
-  getBoardSnapshot,
-  getBoardSnapshotOfCard,
-  workspaceIdOfBoard,
-  workspaceIdOfColumn,
-  workspaceIdOfCard,
-  workspaceIdOfLabel,
   createBoard,
   createBoardWithDefaults,
-  renameBoard,
   deleteBoard,
-  searchCards,
+  getBoardSnapshot,
+  getBoardSnapshotOfCard,
   MAX_BOARDS,
+  renameBoard,
+  searchCards,
+  workspaceIdOfBoard,
+  workspaceIdOfCard,
+  workspaceIdOfColumn,
+  workspaceIdOfLabel,
 } from "./board-service";
 export {
-  createColumn,
-  renameColumn,
-  updateColumn,
-  reorderColumns,
-  deleteColumn,
-} from "./column-service";
-export { createCard, updateCard, moveCard, deleteCard } from "./card-service";
-export {
-  createSubtask,
   addComment,
-  deleteComment,
   cardIdOfComment,
+  createSubtask,
+  deleteComment,
   getCardDetail,
 } from "./card-detail-service";
+export { createCard, deleteCard, moveCard, updateCard } from "./card-service";
 export {
-  createChecklist,
-  renameChecklist,
-  deleteChecklist,
   addChecklistItem,
-  toggleChecklistItem,
-  updateChecklistItem,
-  deleteChecklistItem,
   cardIdOfChecklist,
   cardIdOfChecklistItem,
+  createChecklist,
+  deleteChecklist,
+  deleteChecklistItem,
+  renameChecklist,
+  toggleChecklistItem,
+  updateChecklistItem,
 } from "./checklist-service";
-export { createLabel, deleteLabel } from "./label-service";
+export {
+  createColumn,
+  deleteColumn,
+  renameColumn,
+  reorderColumns,
+  updateColumn,
+} from "./column-service";
 export { createCycle, deleteCycle, workspaceIdOfCycle } from "./cycle-service";
-export { createStory, updateStory, deleteStory, workspaceIdOfStory } from "./story-service";
+export { createLabel, deleteLabel } from "./label-service";
 export { getBoardMetrics } from "./metrics-service";
+export { createStory, deleteStory, updateStory, workspaceIdOfStory } from "./story-service";

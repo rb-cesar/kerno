@@ -6,28 +6,32 @@ Plataforma modular para times de TI — um núcleo compartilhado (identidade, co
 
 ## Stack
 
-- **Monorepo:** pnpm workspaces + Turborepo
-- **App:** Next.js 15 (App Router) fullstack + custom server (Next + Socket.io no mesmo processo)
-- **Realtime:** Socket.io (self-hosted)
-- **Auth:** NextAuth v5 / Auth.js (Credentials + JWT) — _Fase 1_
-- **DB:** PostgreSQL + Prisma
-- **UI:** Tailwind CSS + shadcn/ui
+- **Monorepo:** pnpm workspaces (`pnpm -r`, sem orquestrador à parte)
+- **App:** Next.js 15 (App Router) fullstack — Next, a API (Hono) e o Socket.io no
+  mesmo processo (custom `server.ts`)
+- **API:** Hono, montada como route handler do Next (`app/api/[[...route]]`)
+- **Realtime:** Socket.io (self-hosted, mesma origem — sessão via cookie)
+- **Auth:** NextAuth v5 / Auth.js (Credentials) — sessão única, sem BFF
+- **DB:** PostgreSQL + Prisma (schema multi-arquivo, um `.prisma` por dono)
+- **UI:** Tailwind CSS + Radix
+- **Lint/format:** Biome
 
 ## Estrutura
 
 ```
 kerno/
-├── apps/web/              # Next.js + server.ts (Next + Socket.io)
+├── apps/web/                    # Next.js + server.ts (Next + API Hono + Socket.io)
+│   └── server/                  # composition root, api.ts, realtime, integrações
 ├── packages/
-│   ├── core/             # núcleo: event bus tipado
-│   ├── db/               # Prisma client + schema + migrations
-│   ├── types/            # contratos de eventos compartilhados
-│   ├── ui/               # componentes compartilhados (shadcn)
-│   └── hubs/
+│   ├── core/                    # núcleo: events, errors, http (sessão), workspaces
+│   ├── db/                      # Prisma client + schema (um .prisma por dono) + migrations
+│   ├── editor/                  # editor Lexical compartilhado (kanban + chat)
+│   ├── ui/                      # componentes compartilhados (Radix)
+│   └── modules/
 │       ├── kanban/
 │       └── chat/
-├── docker-compose.yml    # Postgres local
-└── turbo.json
+├── docker-compose.yml            # Postgres local
+└── biome.json
 ```
 
 ## Pré-requisitos

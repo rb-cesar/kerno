@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { cn, Input } from "@kerno/ui";
 import { AtSign, Hash, Plus } from "lucide-react";
-import { Input, cn } from "@kerno/ui";
+import { useState, useTransition } from "react";
 import type { ChannelDTO, DirectConversationDTO } from "../types";
 import { useChat } from "./chat-context";
 
@@ -158,9 +158,7 @@ export function ChannelSidebar({
                   title={self ? undefined : `Conversar com ${m.name}`}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
-                    self
-                      ? "cursor-default"
-                      : "hover:bg-accent hover:text-accent-foreground",
+                    self ? "cursor-default" : "hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   <span

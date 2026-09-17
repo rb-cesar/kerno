@@ -2,8 +2,8 @@
 
 import { cn } from "@kerno/ui";
 import type { CycleDTO, LabelDTO, MemberDTO, Priority } from "../types";
-import { LabelManager } from "./label-manager";
 import { CycleManager } from "./cycle-manager";
+import { LabelManager } from "./label-manager";
 import { PRIORITY_META } from "./meta";
 
 const PRIORITY_FILTERS: Exclude<Priority, "NONE">[] = ["URGENT", "HIGH", "MEDIUM", "LOW"];

@@ -4,6 +4,6 @@
 
 export * from "./permissions";
 export * from "./types";
-export * from "./workspace.dto";
-export { WorkspaceService, createWorkspaceService, type WorkspaceRole } from "./workspace.service";
 export { createWorkspaceController } from "./workspace.controller";
+export * from "./workspace.dto";
+export { createWorkspaceService, type WorkspaceRole, WorkspaceService } from "./workspace.service";

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Droppable, type DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
-import { GripVertical, Plus, Settings2 } from "lucide-react";
+import { type DraggableProvidedDragHandleProps, Droppable } from "@hello-pangea/dnd";
 import {
   Button,
+  cn,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -17,11 +16,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  cn,
 } from "@kerno/ui";
+import { GripVertical, Plus, Settings2 } from "lucide-react";
+import { useState, useTransition } from "react";
 import type { ColumnDTO, StatusCategory } from "../types";
-import { useKanban } from "./kanban-context";
 import { KanbanCard } from "./kanban-card";
+import { useKanban } from "./kanban-context";
 
 // Cor + rótulo por categoria do estado (coluna).
 const CATEGORY_COLOR: Record<StatusCategory, string> = {

@@ -3,5 +3,5 @@
 // (integração Kanban→Chat posta mensagem de sistema no canal padrão).
 
 export { createChatController } from "./chat.controller";
-export { createChatService, type ChatService } from "./chat.service";
+export { type ChatService, createChatService } from "./chat.service";
 export { defaultChannelId, postSystemMessage } from "./services";

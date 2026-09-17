@@ -1,25 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
-import { createPortal } from "react-dom";
+import { cn } from "@kerno/ui";
+import type { TextMatchTransformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
   MenuOption,
   type MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import type { TextMatchTransformer } from "@lexical/markdown";
 import {
   $applyNodeReplacement,
   $createTextNode,
-  TextNode,
   type EditorConfig,
   type LexicalNode,
   type NodeKey,
   type SerializedTextNode,
+  TextNode,
 } from "lexical";
 import { Hash } from "lucide-react";
-import { cn } from "@kerno/ui";
+import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { TaskRef } from "../types";
 
 export type { TaskRef };
@@ -80,9 +80,7 @@ export function $createTaskMentionNode(cardId: string, label: string): TaskMenti
   return $applyNodeReplacement(node);
 }
 
-export function $isTaskMentionNode(
-  node: LexicalNode | null | undefined,
-): node is TaskMentionNode {
+export function $isTaskMentionNode(node: LexicalNode | null | undefined): node is TaskMentionNode {
   return node instanceof TaskMentionNode;
 }
 
@@ -90,9 +88,7 @@ export function $isTaskMentionNode(
 export const TASK_MENTION_TRANSFORMER: TextMatchTransformer = {
   dependencies: [TaskMentionNode],
   export: (node) =>
-    $isTaskMentionNode(node)
-      ? `!task[${node.getTextContent()}](task:${node.getCardId()})`
-      : null,
+    $isTaskMentionNode(node) ? `!task[${node.getTextContent()}](task:${node.getCardId()})` : null,
   importRegExp: /!task\[([^\]]+)\]\(task:([^)]+)\)/,
   regExp: /!task\[([^\]]+)\]\(task:([^)]+)\)$/,
   replace: (textNode, match) => {
@@ -197,7 +193,10 @@ export function TaskMentionTypeaheadPlugin({
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
+      menuRenderFn={(
+        anchorElementRef,
+        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
+      ) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-72 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

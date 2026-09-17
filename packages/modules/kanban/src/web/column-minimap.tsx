@@ -1,13 +1,13 @@
 "use client";
 
+import { cn } from "@kerno/ui";
 import {
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
   useEffect,
   useRef,
   useState,
-  type PointerEvent as ReactPointerEvent,
-  type RefObject,
 } from "react";
-import { cn } from "@kerno/ui";
 import type { ColumnDTO } from "../types";
 import { CATEGORY_COLOR, PRIORITY_META } from "./meta";
 
@@ -96,20 +96,22 @@ export function BoardMinimap({
               style={{ backgroundColor: column.color ?? CATEGORY_COLOR[column.category] }}
             />
             <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
-              {column.cards.slice(0, 24).map((card) =>
-                card.priority !== "NONE" ? (
-                  <div
-                    key={card.id}
-                    className="h-1.5 w-full shrink-0 rounded-[1px] opacity-80"
-                    style={{ backgroundColor: PRIORITY_META[card.priority].color }}
-                  />
-                ) : (
-                  <div
-                    key={card.id}
-                    className="h-1.5 w-full shrink-0 rounded-[1px] bg-muted-foreground/40"
-                  />
-                ),
-              )}
+              {column.cards
+                .slice(0, 24)
+                .map((card) =>
+                  card.priority !== "NONE" ? (
+                    <div
+                      key={card.id}
+                      className="h-1.5 w-full shrink-0 rounded-[1px] opacity-80"
+                      style={{ backgroundColor: PRIORITY_META[card.priority].color }}
+                    />
+                  ) : (
+                    <div
+                      key={card.id}
+                      className="h-1.5 w-full shrink-0 rounded-[1px] bg-muted-foreground/40"
+                    />
+                  ),
+                )}
             </div>
           </div>
         ))}

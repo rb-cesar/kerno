@@ -1,9 +1,9 @@
 "use server";
 
-import { signIn } from "@/auth";
 import { createUser } from "@kerno/core/auth";
-import { registerSchema } from "@/lib/validations";
 import type { AuthFormState } from "@/app/(auth)/login/actions";
+import { signIn } from "@/auth";
+import { registerSchema } from "@/lib/validations";
 
 export async function registerAction(
   _prev: AuthFormState,

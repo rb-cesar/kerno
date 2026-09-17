@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Button, Checkbox, cn, Input, Label } from "@kerno/ui";
 import { ListChecks, Plus, Trash2, X } from "lucide-react";
-import { Button, Checkbox, Input, Label, cn } from "@kerno/ui";
+import { useState, useTransition } from "react";
 import type { ChecklistDTO, KanbanCommand, KanbanMutationResult } from "../types";
 
 type Mutate = (command: KanbanCommand) => Promise<KanbanMutationResult>;
@@ -122,10 +122,7 @@ function ChecklistBlock({
                 }
               />
               <span
-                className={cn(
-                  "flex-1 text-sm",
-                  item.done && "text-muted-foreground line-through",
-                )}
+                className={cn("flex-1 text-sm", item.done && "text-muted-foreground line-through")}
               >
                 {item.text}
               </span>
@@ -157,7 +154,13 @@ function ChecklistBlock({
           }}
           className="h-8"
         />
-        <Button variant="outline" size="icon" className="h-8 w-8" disabled={pending} onClick={addItem}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          disabled={pending}
+          onClick={addItem}
+        >
           <Plus />
         </Button>
       </div>

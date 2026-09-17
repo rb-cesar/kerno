@@ -1,8 +1,8 @@
 "use client";
 
+import type { AnyKernoEvent } from "@kerno/core/types";
 import { useEffect } from "react";
 import type { Socket } from "socket.io-client";
-import type { AnyKernoEvent } from "@kerno/core/types";
 
 /**
  * Reage a eventos `card:*` de OUTROS usuários no mesmo projeto e dispara um

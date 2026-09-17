@@ -1,12 +1,12 @@
 "use client";
 
-import { type HTMLAttributes } from "react";
 import { Draggable } from "@hello-pangea/dnd";
+import { Badge, cn, Tooltip, TooltipContent, TooltipTrigger } from "@kerno/ui";
 import { BookMarked, CalendarClock } from "lucide-react";
-import { Badge, Tooltip, TooltipContent, TooltipTrigger, cn } from "@kerno/ui";
+import type { HTMLAttributes } from "react";
 import type { CardDTO } from "../types";
 import { useKanban } from "./kanban-context";
-import { PRIORITY_META, formatDue, initials, isOverdue } from "./meta";
+import { formatDue, initials, isOverdue, PRIORITY_META } from "./meta";
 
 /** Tile do card no board. Clique abre em aba preview; duplo-clique/Enter fixa. */
 export function KanbanCard({
@@ -57,7 +57,10 @@ export function KanbanCard({
             {card.storyId ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex items-center gap-0.5 text-primary" aria-label="História vinculada">
+                  <span
+                    className="flex items-center gap-0.5 text-primary"
+                    aria-label="História vinculada"
+                  >
                     <BookMarked className="h-3 w-3" />
                   </span>
                 </TooltipTrigger>

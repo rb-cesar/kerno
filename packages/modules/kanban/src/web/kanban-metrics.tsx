@@ -78,11 +78,16 @@ export function KanbanMetrics({
           <h3 className="text-sm font-semibold">Throughput — concluídos por semana</h3>
           <div className="flex h-44 items-end gap-2 rounded-lg border p-3">
             {metrics.throughput.map((t) => (
-              <div key={t.weekStart} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+              <div
+                key={t.weekStart}
+                className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+              >
                 <span className="text-[10px] tabular-nums text-muted-foreground">{t.count}</span>
                 <div
                   className="w-full rounded-t bg-primary/70"
-                  style={{ height: `${t.count === 0 ? 0 : Math.max(4, (t.count / maxCount) * 100)}%` }}
+                  style={{
+                    height: `${t.count === 0 ? 0 : Math.max(4, (t.count / maxCount) * 100)}%`,
+                  }}
                   title={`Semana de ${weekLabel(t.weekStart)}: ${t.count}`}
                 />
                 <span className="text-[10px] text-muted-foreground">{weekLabel(t.weekStart)}</span>

@@ -1,7 +1,7 @@
-import type { Server as IOServer } from "socket.io";
-import type { AnyKernoEvent } from "@kerno/core/types";
 import { eventBus } from "@kerno/core/events";
-import { prisma, Prisma } from "@kerno/db";
+import type { AnyKernoEvent } from "@kerno/core/types";
+import { type Prisma, prisma } from "@kerno/db";
+import type { Server as IOServer } from "socket.io";
 
 let initialized = false;
 

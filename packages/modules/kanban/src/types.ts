@@ -150,6 +150,7 @@ export interface CardDetailDTO {
 // cujo schema só o controller usa; o tipo é reexportado aqui porque o client
 // (web) também precisa da forma de cada comando.
 export type { KanbanCommand } from "./kanban.dto";
+
 import type { KanbanCommand } from "./kanban.dto";
 
 export type KanbanMutationResult = { ok: true } | { ok: false; error: string };

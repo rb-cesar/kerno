@@ -81,10 +81,26 @@ async function main() {
 
   // ── Stories (épicos) ─────────────────────────────────────────────────────────
   const storyAuth = await prisma.story.create({
-    data: { boardId: board.id, number: 1, title: "Autenticação", status: "STARTED", order: 0, priority: "HIGH", color: "#6366f1" },
+    data: {
+      boardId: board.id,
+      number: 1,
+      title: "Autenticação",
+      status: "STARTED",
+      order: 0,
+      priority: "HIGH",
+      color: "#6366f1",
+    },
   });
   const storyUX = await prisma.story.create({
-    data: { boardId: board.id, number: 2, title: "Onboarding UX", status: "UNSTARTED", order: 1, priority: "MEDIUM", color: "#ec4899" },
+    data: {
+      boardId: board.id,
+      number: 2,
+      title: "Onboarding UX",
+      status: "UNSTARTED",
+      order: 1,
+      priority: "MEDIUM",
+      color: "#ec4899",
+    },
   });
 
   // ── Cards ────────────────────────────────────────────────────────────────────
@@ -112,23 +128,127 @@ async function main() {
 
   const specs: Spec[] = [
     // Backlog
-    { column: "Backlog", title: "Pesquisar provedores de e-mail transacional", priority: "LOW", labels: [chore], assignedTo: diego, estimate: 2 },
-    { column: "Backlog", title: "Especificar permissões por papel (ADMIN/MEMBER/VIEWER)", priority: "MEDIUM", labels: [docs], assignedTo: carla, storyId: storyAuth.id },
-    { column: "Backlog", title: "Wireframe do onboarding em 3 passos", priority: "MEDIUM", labels: [design], assignedTo: elena, storyId: storyUX.id, estimate: 3 },
-    { column: "Backlog", title: "Auditar dependências desatualizadas", priority: "LOW", labels: [chore], assignedTo: bruno.id, estimate: 1 },
+    {
+      column: "Backlog",
+      title: "Pesquisar provedores de e-mail transacional",
+      priority: "LOW",
+      labels: [chore],
+      assignedTo: diego,
+      estimate: 2,
+    },
+    {
+      column: "Backlog",
+      title: "Especificar permissões por papel (ADMIN/MEMBER/VIEWER)",
+      priority: "MEDIUM",
+      labels: [docs],
+      assignedTo: carla,
+      storyId: storyAuth.id,
+    },
+    {
+      column: "Backlog",
+      title: "Wireframe do onboarding em 3 passos",
+      priority: "MEDIUM",
+      labels: [design],
+      assignedTo: elena,
+      storyId: storyUX.id,
+      estimate: 3,
+    },
+    {
+      column: "Backlog",
+      title: "Auditar dependências desatualizadas",
+      priority: "LOW",
+      labels: [chore],
+      assignedTo: bruno.id,
+      estimate: 1,
+    },
     // A fazer
-    { column: "A fazer", title: MARKER, description: "OAuth com GitHub para login social.", priority: "HIGH", labels: [feature], assignedTo: carla, cycleId: cycle.id, storyId: storyAuth.id, estimate: 5, dueDate: day(5) },
-    { column: "A fazer", title: "Tela de convite de membros", priority: "MEDIUM", labels: [feature], assignedTo: ana.id, cycleId: cycle.id, storyId: storyUX.id, estimate: 3, dueDate: day(7) },
-    { column: "A fazer", title: "Validação de formulário no cadastro", priority: "MEDIUM", labels: [feature, bug], assignedTo: diego, cycleId: cycle.id, estimate: 2 },
+    {
+      column: "A fazer",
+      title: MARKER,
+      description: "OAuth com GitHub para login social.",
+      priority: "HIGH",
+      labels: [feature],
+      assignedTo: carla,
+      cycleId: cycle.id,
+      storyId: storyAuth.id,
+      estimate: 5,
+      dueDate: day(5),
+    },
+    {
+      column: "A fazer",
+      title: "Tela de convite de membros",
+      priority: "MEDIUM",
+      labels: [feature],
+      assignedTo: ana.id,
+      cycleId: cycle.id,
+      storyId: storyUX.id,
+      estimate: 3,
+      dueDate: day(7),
+    },
+    {
+      column: "A fazer",
+      title: "Validação de formulário no cadastro",
+      priority: "MEDIUM",
+      labels: [feature, bug],
+      assignedTo: diego,
+      cycleId: cycle.id,
+      estimate: 2,
+    },
     // Em progresso
-    { column: "Em progresso", title: "Refresh token + expiração de sessão", priority: "URGENT", labels: [feature], assignedTo: carla, cycleId: cycle.id, storyId: storyAuth.id, estimate: 5, dueDate: day(2) },
-    { column: "Em progresso", title: "Componente de avatar com presença online", priority: "LOW", labels: [design], assignedTo: elena, cycleId: cycle.id, estimate: 2 },
+    {
+      column: "Em progresso",
+      title: "Refresh token + expiração de sessão",
+      priority: "URGENT",
+      labels: [feature],
+      assignedTo: carla,
+      cycleId: cycle.id,
+      storyId: storyAuth.id,
+      estimate: 5,
+      dueDate: day(2),
+    },
+    {
+      column: "Em progresso",
+      title: "Componente de avatar com presença online",
+      priority: "LOW",
+      labels: [design],
+      assignedTo: elena,
+      cycleId: cycle.id,
+      estimate: 2,
+    },
     // Concluído
-    { column: "Concluído", title: "Hash de senha com bcrypt", priority: "HIGH", labels: [feature], assignedTo: bruno.id, storyId: storyAuth.id, estimate: 2 },
-    { column: "Concluído", title: "Layout base com tema escuro", priority: "MEDIUM", labels: [design], assignedTo: ana.id, estimate: 3 },
-    { column: "Concluído", title: "Escrever README de setup local", priority: "LOW", labels: [docs], assignedTo: diego, estimate: 1 },
+    {
+      column: "Concluído",
+      title: "Hash de senha com bcrypt",
+      priority: "HIGH",
+      labels: [feature],
+      assignedTo: bruno.id,
+      storyId: storyAuth.id,
+      estimate: 2,
+    },
+    {
+      column: "Concluído",
+      title: "Layout base com tema escuro",
+      priority: "MEDIUM",
+      labels: [design],
+      assignedTo: ana.id,
+      estimate: 3,
+    },
+    {
+      column: "Concluído",
+      title: "Escrever README de setup local",
+      priority: "LOW",
+      labels: [docs],
+      assignedTo: diego,
+      estimate: 1,
+    },
     // Cancelado
-    { column: "Cancelado", title: "Login por magic link (adiado)", priority: "NONE", labels: [feature], assignedTo: null },
+    {
+      column: "Cancelado",
+      title: "Login por magic link (adiado)",
+      priority: "NONE",
+      labels: [feature],
+      assignedTo: null,
+    },
   ];
 
   for (const s of specs) {
@@ -151,7 +271,9 @@ async function main() {
         cycleId: s.cycleId ?? null,
         storyId: s.storyId ?? null,
         labels: { create: (s.labels ?? []).map((l) => ({ labelId: l.id })) },
-        statusEvents: { create: { toColumnId: column.id, category: column.category as never, actorId: ana.id } },
+        statusEvents: {
+          create: { toColumnId: column.id, category: column.category as never, actorId: ana.id },
+        },
       },
     });
   }

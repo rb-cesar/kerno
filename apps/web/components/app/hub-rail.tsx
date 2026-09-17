@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@kerno/ui";
+import { LayoutGrid, type LucideIcon, MessageSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, MessageSquare, Plus, type LucideIcon } from "lucide-react";
-import { cn } from "@kerno/ui";
 import { UserMenu } from "@/components/app/user-menu";
 
 type Hub = { key: string; label: string; icon: LucideIcon };

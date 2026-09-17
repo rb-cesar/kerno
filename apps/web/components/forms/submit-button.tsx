@@ -1,7 +1,7 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
 import { Button, type ButtonProps } from "@kerno/ui";
+import { useFormStatus } from "react-dom";
 
 export function SubmitButton({ children, ...props }: ButtonProps) {
   const { pending } = useFormStatus();

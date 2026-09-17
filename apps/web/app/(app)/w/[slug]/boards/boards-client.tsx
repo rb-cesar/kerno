@@ -1,6 +1,6 @@
 "use client";
 
-import { KanbanBoard, kanbanClient, type BoardData } from "@kerno/kanban";
+import { type BoardData, KanbanBoard, kanbanClient } from "@kerno/kanban";
 import { useSocket } from "@/components/providers/socket-provider";
 import { useWorkspaceDock } from "@/components/providers/workspace-dock-provider";
 

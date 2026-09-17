@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { cn } from "@kerno/ui";
-import { useSocket } from "@/components/providers/socket-provider";
+import Link from "next/link";
 import { WorkspaceMembersDialog } from "@/components/app/workspace-members-dialog";
+import { useSocket } from "@/components/providers/socket-provider";
 
 type Member = { id: string; name: string; role: string };
 

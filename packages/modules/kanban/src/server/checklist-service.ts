@@ -1,5 +1,5 @@
+import { createEvent, eventBus } from "@kerno/core/events";
 import { prisma } from "@kerno/db";
-import { eventBus, createEvent } from "@kerno/core/events";
 
 /** Resolve o contexto (board/workspace) de um card e publica o resync do Kanban. */
 async function notifyCard(cardId: string, actorId: string) {
@@ -9,7 +9,12 @@ async function notifyCard(cardId: string, actorId: string) {
   });
   if (!card) return;
   eventBus.publish(
-    createEvent("kanban:changed", card.board.workspaceId, { boardId: card.boardId, cardId }, actorId),
+    createEvent(
+      "kanban:changed",
+      card.board.workspaceId,
+      { boardId: card.boardId, cardId },
+      actorId,
+    ),
   );
 }
 

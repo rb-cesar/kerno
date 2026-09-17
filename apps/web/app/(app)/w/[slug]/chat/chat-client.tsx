@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback } from "react";
-import { ChatPanel, chatClient, type ChatData } from "@kerno/chat";
+import { type ChatData, ChatPanel, chatClient } from "@kerno/chat";
 import { kanbanClient } from "@kerno/kanban";
+import { useCallback } from "react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { useWorkspaceDock } from "@/components/providers/workspace-dock-provider";
 

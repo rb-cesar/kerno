@@ -1,4 +1,5 @@
 import { NotFound } from "@kerno/core/errors";
+import { requireWorkspaceMember } from "@kerno/core/workspaces";
 import {
   cardIdOfChecklist,
   cardIdOfChecklistItem,
@@ -10,7 +11,6 @@ import {
   workspaceIdOfLabel,
   workspaceIdOfStory,
 } from "./services";
-import { requireWorkspaceMember } from "@kerno/core/workspaces";
 
 /**
  * Resolve o workspace dono do recurso e exige membership (checagem numa fonte

@@ -1,6 +1,6 @@
 import type { Server as HttpServer } from "node:http";
-import { Server as IOServer } from "socket.io";
 import { userIdFromCookieHeader } from "@kerno/core/http";
+import { Server as IOServer } from "socket.io";
 import { initEventDispatcher } from "./event-dispatcher";
 import { initKanbanChatIntegration } from "./kanban-chat";
 
@@ -15,9 +15,12 @@ interface SocketData {
  * a mesma origem.
  */
 export function initRealtime(httpServer: HttpServer): IOServer {
-  const io = new IOServer<Record<string, never>, Record<string, never>, Record<string, never>, SocketData>(
-    httpServer,
-  );
+  const io = new IOServer<
+    Record<string, never>,
+    Record<string, never>,
+    Record<string, never>,
+    SocketData
+  >(httpServer);
 
   // Autenticação do handshake — rejeita conexão sem sessão válida.
   io.use((socket, next) => {

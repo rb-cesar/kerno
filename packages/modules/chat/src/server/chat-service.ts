@@ -1,5 +1,5 @@
-import { prisma } from "@kerno/db";
 import { createEvent, eventBus } from "@kerno/core/events";
+import { prisma } from "@kerno/db";
 import type {
   ChannelDTO,
   DirectConversationDTO,
@@ -74,9 +74,7 @@ function toMessageDTO(row: MessageRow, viewerId: string): MessageDTO {
     replyTo: row.replyTo
       ? {
           id: row.replyTo.id,
-          authorName: row.replyTo.isSystem
-            ? "Sistema"
-            : (row.replyTo.user?.name ?? "Desconhecido"),
+          authorName: row.replyTo.isSystem ? "Sistema" : (row.replyTo.user?.name ?? "Desconhecido"),
           excerpt: makeExcerpt(row.replyTo.content),
         }
       : null,

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { cn, Dialog, DialogContent, DialogTitle } from "@kerno/ui";
 import { Search } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle, cn } from "@kerno/ui";
+import { useEffect, useMemo, useState } from "react";
 import type { BoardData } from "../types";
 
 type Item =

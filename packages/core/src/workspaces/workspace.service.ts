@@ -1,9 +1,9 @@
 import { prisma } from "@kerno/db";
 import { Forbidden, NotFound } from "../errors";
 import { DEFAULT_BOARD_COLUMNS } from "../types";
+import { requireWorkspaceAdmin } from "./permissions";
 import type { ActionResult, WorkspaceListItem, WorkspaceView } from "./types";
 import type { CreateWorkspaceInput, InviteMemberInput, UpdateMemberInput } from "./workspace.dto";
-import { requireWorkspaceAdmin } from "./permissions";
 
 const WORKSPACE_ROLES = ["ADMIN", "MEMBER", "VIEWER"] as const;
 export type WorkspaceRole = (typeof WORKSPACE_ROLES)[number];
@@ -37,7 +37,10 @@ function errorMessage(error: unknown): string {
 
 /** Chave curta p/ os cards (ex.: "Kerno App" → "KERN"). Sem garantia de unicidade. */
 function workspaceKeyFromName(name: string): string {
-  const letters = name.normalize("NFD").replace(/[^a-zA-Z]/g, "").toUpperCase();
+  const letters = name
+    .normalize("NFD")
+    .replace(/[^a-zA-Z]/g, "")
+    .toUpperCase();
   return letters.slice(0, 4) || "WORK";
 }
 
@@ -89,7 +92,10 @@ async function addWorkspaceMember(input: {
   });
 }
 
-async function removeWorkspaceMember(input: { workspaceId: string; userId: string }): Promise<void> {
+async function removeWorkspaceMember(input: {
+  workspaceId: string;
+  userId: string;
+}): Promise<void> {
   const target = await prisma.workspaceUser.findUnique({
     where: { userId_workspaceId: { userId: input.userId, workspaceId: input.workspaceId } },
   });
@@ -181,7 +187,11 @@ export class WorkspaceService {
     return { slug: workspace.slug };
   }
 
-  async invite(userId: string, workspaceId: string, input: InviteMemberInput): Promise<ActionResult> {
+  async invite(
+    userId: string,
+    workspaceId: string,
+    input: InviteMemberInput,
+  ): Promise<ActionResult> {
     try {
       await requireWorkspaceAdmin(userId, workspaceId);
 
@@ -219,7 +229,11 @@ export class WorkspaceService {
     }
   }
 
-  async removeMember(userId: string, workspaceId: string, targetUserId: string): Promise<ActionResult> {
+  async removeMember(
+    userId: string,
+    workspaceId: string,
+    targetUserId: string,
+  ): Promise<ActionResult> {
     try {
       await requireWorkspaceAdmin(userId, workspaceId);
       await removeWorkspaceMember({ workspaceId, userId: targetUserId });

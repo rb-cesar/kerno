@@ -1,14 +1,10 @@
-import { notFound } from "next/navigation";
 import type { WorkspaceView } from "@kerno/core/workspaces";
+import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth-helpers";
 import { container } from "@/server/container";
 import { ChatClient } from "./chat-client";
 
-export default async function ChatPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function ChatPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const user = await requireUser();
 

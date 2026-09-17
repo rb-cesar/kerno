@@ -40,12 +40,13 @@ function round1(n: number): number {
 export async function getBoardMetrics(boardId: string): Promise<BoardMetricsDTO> {
   const [columns, cards] = await Promise.all([
     prisma.column.findMany({ where: { boardId }, select: { id: true, category: true } }),
-    prisma.card.findMany({ where: { boardId }, select: { id: true, createdAt: true, columnId: true } }),
+    prisma.card.findMany({
+      where: { boardId },
+      select: { id: true, createdAt: true, columnId: true },
+    }),
   ]);
 
-  const startedColumns = new Set(
-    columns.filter((c) => c.category === "STARTED").map((c) => c.id),
-  );
+  const startedColumns = new Set(columns.filter((c) => c.category === "STARTED").map((c) => c.id));
   const createdAtById = new Map(cards.map((c) => [c.id, c.createdAt]));
 
   const events = await prisma.cardStatusEvent.findMany({

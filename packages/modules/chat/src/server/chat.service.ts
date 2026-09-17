@@ -1,5 +1,4 @@
 import { prisma } from "@kerno/db";
-import * as chat from "./services";
 import type {
   ChannelDTO,
   ChatData,
@@ -13,12 +12,8 @@ import type {
   SendMessageInput,
   ToggleReactionInput,
 } from "../types";
-import {
-  assertMember,
-  guardChannel,
-  guardConversation,
-  guardWorkspace,
-} from "./chat-permissions";
+import { assertMember, guardChannel, guardConversation, guardWorkspace } from "./chat-permissions";
+import * as chat from "./services";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Erro inesperado";
@@ -151,10 +146,7 @@ export class ChatService {
     }
   }
 
-  async sendDirect(
-    userId: string,
-    input: SendDirectMessageInput,
-  ): Promise<ChatResult<MessageDTO>> {
+  async sendDirect(userId: string, input: SendDirectMessageInput): Promise<ChatResult<MessageDTO>> {
     try {
       await guardConversation(userId, input.conversationId);
       const content = input.content.trim();

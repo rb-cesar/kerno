@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { Skeleton, TooltipProvider } from "@kerno/ui";
+import { useCallback, useEffect, useState } from "react";
 import type { BoardData, KanbanFetch, KanbanFetchCardDetail, KanbanMutate } from "../types";
-import { KanbanProvider } from "./kanban-context";
 import { CardPanelContent } from "./card-dialog";
+import { KanbanProvider } from "./kanban-context";
 
 /**
  * Conteúdo de uma tarefa para uso FORA do board (ex.: como aba do dock no chat).

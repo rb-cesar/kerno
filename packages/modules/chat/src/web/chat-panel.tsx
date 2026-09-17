@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { AtSign, CornerUpLeft, Hash, X } from "lucide-react";
-import type { Socket } from "socket.io-client";
 import { cn } from "@kerno/ui";
+import { AtSign, CornerUpLeft, Hash, X } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import type { Socket } from "socket.io-client";
 import type {
   ChannelDTO,
   ChatCreateChannel,
@@ -20,15 +20,11 @@ import type {
   DirectConversationDTO,
   MessageDTO,
 } from "../types";
-import {
-  useChatRealtime,
-  type ChatEventKind,
-  type ChatTarget,
-} from "./use-chat-realtime";
-import { ChatProvider } from "./chat-context";
 import { ChannelSidebar } from "./channel-sidebar";
-import { MessageList } from "./message-list";
+import { ChatProvider } from "./chat-context";
 import { MessageComposer } from "./message-composer";
+import { MessageList } from "./message-list";
+import { type ChatEventKind, type ChatTarget, useChatRealtime } from "./use-chat-realtime";
 
 /** O que está aberto no painel principal: um canal ou uma conversa privada. */
 type ActiveTarget = { kind: "channel"; id: string } | { kind: "dm"; id: string };
@@ -230,9 +226,9 @@ export function ChatPanel({
   };
 
   const activeChannel =
-    active?.kind === "channel" ? channels.find((c) => c.id === active.id) ?? null : null;
+    active?.kind === "channel" ? (channels.find((c) => c.id === active.id) ?? null) : null;
   const activeConversation =
-    active?.kind === "dm" ? conversations.find((c) => c.id === active.id) ?? null : null;
+    active?.kind === "dm" ? (conversations.find((c) => c.id === active.id) ?? null) : null;
 
   return (
     <ChatProvider

@@ -1,24 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type MutableRefObject } from "react";
-import { createPortal } from "react-dom";
+import { cn } from "@kerno/ui";
+import type { TextMatchTransformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
   MenuOption,
   type MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import type { TextMatchTransformer } from "@lexical/markdown";
 import {
   $applyNodeReplacement,
   $createTextNode,
-  TextNode,
   type EditorConfig,
   type LexicalNode,
   type NodeKey,
   type SerializedTextNode,
+  TextNode,
 } from "lexical";
-import { cn } from "@kerno/ui";
+import { type MutableRefObject, useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 // Nó de menção genérico (reaproveitável por qualquer campo): mostra "@Nome" e
 // carrega o userId; serializa para `@[Nome](user:ID)` no markdown (mesmo formato
@@ -179,7 +179,10 @@ export function MentionTypeaheadPlugin({
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
+      menuRenderFn={(
+        anchorElementRef,
+        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
+      ) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

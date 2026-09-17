@@ -1,12 +1,7 @@
 "use client";
 
 import { request } from "@kerno/core/client";
-import type {
-  ChannelDTO,
-  ChatResult,
-  DirectConversationDTO,
-  MessageDTO,
-} from "../types";
+import type { ChannelDTO, ChatResult, DirectConversationDTO, MessageDTO } from "../types";
 
 // Chamadas HTTP do módulo Chat — mesma origem (/api/chat/...), sem BFF.
 

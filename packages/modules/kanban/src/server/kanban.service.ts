@@ -1,6 +1,5 @@
-import { prisma } from "@kerno/db";
 import { NotFound } from "@kerno/core/errors";
-import * as kanban from "./services";
+import { prisma } from "@kerno/db";
 import type {
   BoardData,
   BoardMetricsDTO,
@@ -21,6 +20,7 @@ import {
   guardLabel,
   guardStory,
 } from "./kanban-permissions";
+import * as kanban from "./services";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Erro inesperado";

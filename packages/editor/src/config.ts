@@ -15,8 +15,8 @@ import {
   ORDERED_LIST,
   QUOTE,
   STRIKETHROUGH,
-  UNORDERED_LIST,
   type Transformer,
+  UNORDERED_LIST,
 } from "@lexical/markdown";
 
 export const TRANSFORMERS: Transformer[] = [

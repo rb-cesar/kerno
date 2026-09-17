@@ -1,5 +1,6 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { type AuthEnv, requireUser } from "@kerno/core/http";
+import { Hono } from "hono";
 import {
   createChannelInputSchema,
   editMessageInputSchema,
@@ -8,7 +9,6 @@ import {
   sendMessageInputSchema,
   toggleReactionInputSchema,
 } from "../chat.dto";
-import { requireUser, type AuthEnv } from "@kerno/core/http";
 import type { ChatService } from "./chat.service";
 
 export function createChatController(chat: ChatService) {

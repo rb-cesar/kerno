@@ -1,10 +1,10 @@
 "use client";
 
-import { CalendarClock } from "lucide-react";
 import { Badge, cn } from "@kerno/ui";
+import { CalendarClock } from "lucide-react";
 import type { ColumnDTO } from "../types";
 import { useKanban } from "./kanban-context";
-import { CATEGORY_COLOR, PRIORITY_META, formatDue, initials, isOverdue } from "./meta";
+import { CATEGORY_COLOR, formatDue, initials, isOverdue, PRIORITY_META } from "./meta";
 
 /** Visão em lista: cards agrupados por estado (coluna), em linhas clicáveis. */
 export function KanbanList({ columns }: { columns: ColumnDTO[] }) {

@@ -1,12 +1,10 @@
+import { createEvent, eventBus } from "@kerno/core/events";
 import { prisma } from "@kerno/db";
-import { eventBus, createEvent } from "@kerno/core/events";
 import type { Priority, StatusCategory } from "../types";
 
 /** Publica o resync genérico do Kanban p/ os outros clientes do workspace. */
 function notifyChanged(boardId: string, workspaceId: string, actorId: string) {
-  eventBus.publish(
-    createEvent("kanban:changed", workspaceId, { boardId, cardId: null }, actorId),
-  );
+  eventBus.publish(createEvent("kanban:changed", workspaceId, { boardId, cardId: null }, actorId));
 }
 
 /** Cria uma User Story no board, numerada por board (em transação) e ao final da ordem. */

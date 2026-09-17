@@ -2,6 +2,7 @@
 // wiring da camada de entrega (as server actions/clients injetados pelo app).
 
 export type { MemberDTO } from "@kerno/core/types";
+
 import type { MemberDTO } from "@kerno/core/types";
 
 export interface ChannelDTO {
@@ -58,19 +59,20 @@ export type ChatResult<T> = { ok: true; data: T } | { ok: false; error: string }
 // só o controller usa) — o tipo é reexportado aqui porque o client do chat
 // (web) também precisa da forma do body que envia.
 export type {
-  SendMessageInput,
-  EditMessageInput,
   CreateChannelInput,
+  EditMessageInput,
   OpenDirectInput,
   SendDirectMessageInput,
+  SendMessageInput,
   ToggleReactionInput,
 } from "./chat.dto";
+
 import type {
-  SendMessageInput,
-  EditMessageInput,
   CreateChannelInput,
+  EditMessageInput,
   OpenDirectInput,
   SendDirectMessageInput,
+  SendMessageInput,
   ToggleReactionInput,
 } from "./chat.dto";
 
@@ -81,6 +83,7 @@ import type {
 // `searchTasks`, cujo retorno é estruturalmente compatível. Mantém o hub Chat
 // sem conhecimento do hub Kanban.
 export type { TaskRef } from "@kerno/editor/types";
+
 import type { TaskRef } from "@kerno/editor/types";
 
 /** Busca tarefas do workspace p/ o typeahead `!` (injetada pelo app, opcional). */

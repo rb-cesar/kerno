@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, type ReactNode } from "react";
-import { Hash } from "lucide-react";
+import { kanbanClient, TaskSidePanel } from "@kerno/kanban";
 import { TabDock, useDockTabs } from "@kerno/ui";
-import { TaskSidePanel, kanbanClient } from "@kerno/kanban";
+import { Hash } from "lucide-react";
+import { createContext, type ReactNode, useCallback, useContext } from "react";
 
 type WorkspaceDock = {
   /** Abre uma tarefa no dock do workspace. `pin` força aba fixada (senão preview). */

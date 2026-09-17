@@ -1,7 +1,7 @@
-import { eventBus } from "@kerno/core/events";
-import { prisma } from "@kerno/db";
 import { defaultChannelId, postSystemMessage } from "@kerno/chat/server";
+import { eventBus } from "@kerno/core/events";
 import type { AnyKernoEvent } from "@kerno/core/types";
+import { prisma } from "@kerno/db";
 
 let registered = false;
 

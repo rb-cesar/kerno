@@ -1,16 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@kerno/ui";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
-} from "@kerno/ui";
+import { useActionState } from "react";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { loginAction } from "./actions";
 
@@ -39,9 +31,7 @@ export function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          {state?.error ? (
-            <p className="text-sm text-destructive">{state.error}</p>
-          ) : null}
+          {state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
           <SubmitButton className="w-full">Entrar</SubmitButton>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">

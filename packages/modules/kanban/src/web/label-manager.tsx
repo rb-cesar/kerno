@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Tag, Trash2 } from "lucide-react";
 import {
   Badge,
   Button,
@@ -12,6 +10,8 @@ import {
   DialogTrigger,
   Input,
 } from "@kerno/ui";
+import { Tag, Trash2 } from "lucide-react";
+import { useState, useTransition } from "react";
 import { useKanban } from "./kanban-context";
 
 export function LabelManager({ boardId }: { boardId: string }) {

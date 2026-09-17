@@ -1,28 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
-import { createPortal } from "react-dom";
-import {
-  Bold,
-  Braces,
-  Code,
-  Italic,
-  List,
-  ListOrdered,
-  Quote,
-  Strikethrough,
-  type LucideIcon,
-} from "lucide-react";
+import { cn } from "@kerno/ui";
+import { $createCodeNode } from "@lexical/code";
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
   MenuOption,
   type MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import { $setBlocksType } from "@lexical/selection";
 import { $createQuoteNode } from "@lexical/rich-text";
-import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
-import { $createCodeNode } from "@lexical/code";
+import { $setBlocksType } from "@lexical/selection";
 import {
   $createParagraphNode,
   $createTextNode,
@@ -32,7 +20,19 @@ import {
   type LexicalEditor,
   type TextFormatType,
 } from "lexical";
-import { cn } from "@kerno/ui";
+import {
+  Bold,
+  Braces,
+  Code,
+  Italic,
+  List,
+  ListOrdered,
+  type LucideIcon,
+  Quote,
+  Strikethrough,
+} from "lucide-react";
+import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 function applyFormat(editor: LexicalEditor, format: TextFormatType) {
   editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
@@ -70,14 +70,62 @@ type SlashCommand = {
 };
 
 const COMMANDS: SlashCommand[] = [
-  { key: "bold", title: "Negrito", keywords: ["negrito", "bold", "b"], Icon: Bold, run: (e) => applyFormat(e, "bold") },
-  { key: "italic", title: "Itálico", keywords: ["italico", "italic", "i"], Icon: Italic, run: (e) => applyFormat(e, "italic") },
-  { key: "strike", title: "Tachado", keywords: ["tachado", "strike", "riscado"], Icon: Strikethrough, run: (e) => applyFormat(e, "strikethrough") },
-  { key: "code", title: "Código", keywords: ["codigo", "code", "inline"], Icon: Code, run: (e) => applyFormat(e, "code") },
-  { key: "ul", title: "Lista", keywords: ["lista", "bullet", "list"], Icon: List, run: (e) => e.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined) },
-  { key: "ol", title: "Lista numerada", keywords: ["lista", "numerada", "ordered", "numero"], Icon: ListOrdered, run: (e) => e.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined) },
-  { key: "quote", title: "Citação", keywords: ["citacao", "quote", "citar"], Icon: Quote, run: (e) => applyBlock(e, () => $createQuoteNode()) },
-  { key: "codeblock", title: "Bloco de código", keywords: ["bloco", "codigo", "code", "codeblock"], Icon: Braces, run: applyCodeBlock },
+  {
+    key: "bold",
+    title: "Negrito",
+    keywords: ["negrito", "bold", "b"],
+    Icon: Bold,
+    run: (e) => applyFormat(e, "bold"),
+  },
+  {
+    key: "italic",
+    title: "Itálico",
+    keywords: ["italico", "italic", "i"],
+    Icon: Italic,
+    run: (e) => applyFormat(e, "italic"),
+  },
+  {
+    key: "strike",
+    title: "Tachado",
+    keywords: ["tachado", "strike", "riscado"],
+    Icon: Strikethrough,
+    run: (e) => applyFormat(e, "strikethrough"),
+  },
+  {
+    key: "code",
+    title: "Código",
+    keywords: ["codigo", "code", "inline"],
+    Icon: Code,
+    run: (e) => applyFormat(e, "code"),
+  },
+  {
+    key: "ul",
+    title: "Lista",
+    keywords: ["lista", "bullet", "list"],
+    Icon: List,
+    run: (e) => e.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined),
+  },
+  {
+    key: "ol",
+    title: "Lista numerada",
+    keywords: ["lista", "numerada", "ordered", "numero"],
+    Icon: ListOrdered,
+    run: (e) => e.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined),
+  },
+  {
+    key: "quote",
+    title: "Citação",
+    keywords: ["citacao", "quote", "citar"],
+    Icon: Quote,
+    run: (e) => applyBlock(e, () => $createQuoteNode()),
+  },
+  {
+    key: "codeblock",
+    title: "Bloco de código",
+    keywords: ["bloco", "codigo", "code", "codeblock"],
+    Icon: Braces,
+    run: applyCodeBlock,
+  },
 ];
 
 class SlashOption extends MenuOption {
@@ -123,7 +171,11 @@ export function SlashCommandPlugin({
   }, []);
 
   const onSelectOption = useCallback(
-    (selectedOption: SlashOption, nodeToReplace: ReturnType<typeof $createTextNode> | null, closeMenu: () => void) => {
+    (
+      selectedOption: SlashOption,
+      nodeToReplace: ReturnType<typeof $createTextNode> | null,
+      closeMenu: () => void,
+    ) => {
       editor.update(() => {
         if (nodeToReplace) {
           const empty = $createTextNode("");
@@ -143,7 +195,10 @@ export function SlashCommandPlugin({
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
+      menuRenderFn={(
+        anchorElementRef,
+        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
+      ) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

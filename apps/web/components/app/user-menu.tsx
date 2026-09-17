@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { LogOut, Palette } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -12,8 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@kerno/ui";
-import { signOutAction } from "@/lib/auth-actions";
+import { LogOut, Palette } from "lucide-react";
+import { useState } from "react";
 import { ThemePicker } from "@/components/app/theme-picker";
+import { signOutAction } from "@/lib/auth-actions";
 
 function initialsOf(name: string): string {
   return name

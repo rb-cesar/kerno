@@ -1,11 +1,11 @@
-import { notFound } from "next/navigation";
 import type { WorkspaceView } from "@kerno/core/workspaces";
-import { requireUser } from "@/lib/auth-helpers";
-import { container } from "@/server/container";
-import { SocketProvider } from "@/components/providers/socket-provider";
-import { WorkspaceDockProvider } from "@/components/providers/workspace-dock-provider";
+import { notFound } from "next/navigation";
 import { HubRail } from "@/components/app/hub-rail";
 import { WorkspaceHeader } from "@/components/app/workspace-header";
+import { SocketProvider } from "@/components/providers/socket-provider";
+import { WorkspaceDockProvider } from "@/components/providers/workspace-dock-provider";
+import { requireUser } from "@/lib/auth-helpers";
+import { container } from "@/server/container";
 
 export default async function WorkspaceLayout({
   params,

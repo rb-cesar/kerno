@@ -1,25 +1,18 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type HTMLAttributes,
-} from "react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { BarChart3, BookMarked, LayoutGrid, List, Map as MapIcon, Search } from "lucide-react";
-import type { Socket } from "socket.io-client";
 import {
+  cn,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
   TooltipProvider,
-  cn,
 } from "@kerno/ui";
+import { BarChart3, BookMarked, LayoutGrid, List, Map as MapIcon, Search } from "lucide-react";
+import { type HTMLAttributes, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Socket } from "socket.io-client";
 import type {
   BoardData,
   ColumnDTO,
@@ -29,17 +22,17 @@ import type {
   KanbanMutate,
   Priority,
 } from "../types";
-import { useKanbanRealtime } from "./use-kanban-realtime";
-import { KanbanProvider } from "./kanban-context";
+import { AddColumn } from "./add-column";
+import { BoardSwitcher } from "./board-switcher";
+import { BoardMinimap } from "./column-minimap";
+import { CommandPalette } from "./command-palette";
 import { KanbanColumn } from "./kanban-column";
+import { KanbanProvider } from "./kanban-context";
 import { KanbanList } from "./kanban-list";
 import { KanbanMetrics } from "./kanban-metrics";
-import { BoardSwitcher } from "./board-switcher";
-import { AddColumn } from "./add-column";
 import { KanbanSidebar } from "./kanban-sidebar";
-import { CommandPalette } from "./command-palette";
 import { StoriesView } from "./stories-view";
-import { BoardMinimap } from "./column-minimap";
+import { useKanbanRealtime } from "./use-kanban-realtime";
 
 function toggleInSet(prev: Set<string>, id: string): Set<string> {
   const next = new Set(prev);
@@ -65,7 +58,11 @@ function buildLanes(
   columns: ColumnDTO[],
   members: { id: string; name: string }[],
 ): Lane[] {
-  const lane = (key: string, label: string, keep: (c: ColumnDTO["cards"][number]) => boolean): Lane | null => {
+  const lane = (
+    key: string,
+    label: string,
+    keep: (c: ColumnDTO["cards"][number]) => boolean,
+  ): Lane | null => {
     const laneColumns = columns.map((col) => ({ ...col, cards: col.cards.filter(keep) }));
     const total = laneColumns.reduce((n, col) => n + col.cards.length, 0);
     return total > 0 ? { key, label, columns: laneColumns } : null;
@@ -331,10 +328,7 @@ export function KanbanBoard({
     if (grouped) return; // em swimlanes o arrastar fica desativado (MVP)
     const { source, destination, draggableId } = result;
     if (!destination) return;
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) {
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
       return;
     }
 
@@ -401,237 +395,239 @@ export function KanbanBoard({
       }}
     >
       <TooltipProvider delayDuration={200}>
-      <div className="flex h-full">
-        <KanbanSidebar
-          boardId={data.id}
-          boardName={data.name}
-          workspaceId={data.workspaceId}
-          labels={data.labels}
-          members={data.members}
-          cycles={data.cycles}
-          labelFilter={labelFilter}
-          assigneeFilter={assigneeFilter}
-          priorityFilter={priorityFilter}
-          cycleFilter={cycleFilter}
-          onToggleLabel={(id) => setLabelFilter((prev) => toggleInSet(prev, id))}
-          onToggleAssignee={(id) => setAssigneeFilter((prev) => toggleInSet(prev, id))}
-          onToggleCycle={(id) => setCycleFilter((prev) => toggleInSet(prev, id))}
-          onTogglePriority={(p) =>
-            setPriorityFilter((prev) => {
-              const next = new Set(prev);
-              if (next.has(p)) next.delete(p);
-              else next.add(p);
-              return next;
-            })
-          }
-          onClear={clearFilters}
-        />
-        <div className="flex h-full min-w-0 flex-1 flex-col">
-          <div className="flex items-center justify-between gap-2 border-b px-4 py-1.5">
-            <div className="flex items-center gap-3">
-              <BoardSwitcher
-                boards={data.boards}
-                activeId={data.id}
-                activeName={data.name}
-                onSwitch={switchBoard}
-                onCreate={handleCreateBoard}
-                onRename={handleRenameBoard}
-                onDelete={handleDeleteBoard}
-              />
-              <div className="flex items-center rounded-md border p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setView("board")}
-                  title="Quadro"
-                  className={cn(
-                    "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                    view === "board" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5" /> Quadro
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setView("list")}
-                  title="Lista"
-                  className={cn(
-                    "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                    view === "list" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  <List className="h-3.5 w-3.5" /> Lista
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setView("metrics")}
-                  title="Métricas"
-                  className={cn(
-                    "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                    view === "metrics"
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  <BarChart3 className="h-3.5 w-3.5" /> Métricas
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setView("stories")}
-                  title="Histórias"
-                  className={cn(
-                    "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                    view === "stories"
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  <BookMarked className="h-3.5 w-3.5" /> Histórias
-                </button>
+        <div className="flex h-full">
+          <KanbanSidebar
+            boardId={data.id}
+            boardName={data.name}
+            workspaceId={data.workspaceId}
+            labels={data.labels}
+            members={data.members}
+            cycles={data.cycles}
+            labelFilter={labelFilter}
+            assigneeFilter={assigneeFilter}
+            priorityFilter={priorityFilter}
+            cycleFilter={cycleFilter}
+            onToggleLabel={(id) => setLabelFilter((prev) => toggleInSet(prev, id))}
+            onToggleAssignee={(id) => setAssigneeFilter((prev) => toggleInSet(prev, id))}
+            onToggleCycle={(id) => setCycleFilter((prev) => toggleInSet(prev, id))}
+            onTogglePriority={(p) =>
+              setPriorityFilter((prev) => {
+                const next = new Set(prev);
+                if (next.has(p)) next.delete(p);
+                else next.add(p);
+                return next;
+              })
+            }
+            onClear={clearFilters}
+          />
+          <div className="flex h-full min-w-0 flex-1 flex-col">
+            <div className="flex items-center justify-between gap-2 border-b px-4 py-1.5">
+              <div className="flex items-center gap-3">
+                <BoardSwitcher
+                  boards={data.boards}
+                  activeId={data.id}
+                  activeName={data.name}
+                  onSwitch={switchBoard}
+                  onCreate={handleCreateBoard}
+                  onRename={handleRenameBoard}
+                  onDelete={handleDeleteBoard}
+                />
+                <div className="flex items-center rounded-md border p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setView("board")}
+                    title="Quadro"
+                    className={cn(
+                      "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
+                      view === "board"
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" /> Quadro
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("list")}
+                    title="Lista"
+                    className={cn(
+                      "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
+                      view === "list"
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    <List className="h-3.5 w-3.5" /> Lista
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("metrics")}
+                    title="Métricas"
+                    className={cn(
+                      "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
+                      view === "metrics"
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" /> Métricas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("stories")}
+                    title="Histórias"
+                    className={cn(
+                      "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
+                      view === "stories"
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    <BookMarked className="h-3.5 w-3.5" /> Histórias
+                  </button>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  Agrupar:
+                  <Select
+                    value={groupBy}
+                    disabled={view !== "board"}
+                    onValueChange={(v) => setGroupBy(v as GroupBy)}
+                  >
+                    <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum</SelectItem>
+                      <SelectItem value="assignee">Responsável</SelectItem>
+                      <SelectItem value="priority">Prioridade</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {grouped ? "Arrastar desativado ao agrupar." : null}
+                </span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                Agrupar:
-                <Select
-                  value={groupBy}
-                  disabled={view !== "board"}
-                  onValueChange={(v) => setGroupBy(v as GroupBy)}
-                >
-                  <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    <SelectItem value="assignee">Responsável</SelectItem>
-                    <SelectItem value="priority">Prioridade</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {grouped
-                  ? "Arrastar desativado ao agrupar."
-                  : null}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {view === "board" ? (
-                <button
-                  type="button"
-                  onClick={toggleMinimap}
-                  aria-pressed={minimapOpen}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
-                    minimapOpen
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                  )}
-                  title="Minimapa de colunas"
-                >
-                  <MapIcon className="h-3.5 w-3.5" />
-                  Minimapa
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setPaletteOpen(true)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground",
-                  "transition-colors hover:bg-accent hover:text-accent-foreground",
-                )}
-                title="Buscar (Ctrl+K)"
-              >
-                <Search className="h-3.5 w-3.5" />
-                Buscar
-                <kbd className="rounded bg-muted px-1 font-mono text-[10px]">Ctrl K</kbd>
-              </button>
-            </div>
-          </div>
-          {view === "stories" ? (
-            <StoriesView
-              boardId={data.id}
-              stories={data.stories}
-              workspaceKey={data.workspaceKey}
-              cards={data.columns.flatMap((c) => c.cards)}
-            />
-          ) : view === "metrics" ? (
-            <KanbanMetrics boardId={data.id} fetchMetrics={fetchMetrics} />
-          ) : view === "list" ? (
-            <KanbanList columns={visibleColumns} />
-          ) : (
-          <DragDropContext onDragEnd={onDragEnd}>
-            {grouped ? (
-              <div className="flex-1 space-y-6 overflow-auto px-4 py-4">
-                {lanes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum card para agrupar.</p>
-                ) : (
-                  lanes.map((lane) => (
-                    <div key={lane.key}>
-                      <div className="mb-2 text-sm font-semibold">{lane.label}</div>
-                      <div className="flex gap-4 overflow-x-auto pb-1">
-                        {lane.columns.map((column) => (
-                          <KanbanColumn
-                            key={column.id}
-                            column={column}
-                            droppableId={`${lane.key}::${column.id}`}
-                            dragDisabled
-                            laneMode
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            ) : (
-              <>
-                {minimapOpen ? (
-                  <BoardMinimap columns={visibleColumns} scrollRef={boardScrollRef} />
+              <div className="flex items-center gap-2">
+                {view === "board" ? (
+                  <button
+                    type="button"
+                    onClick={toggleMinimap}
+                    aria-pressed={minimapOpen}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
+                      minimapOpen
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    )}
+                    title="Minimapa de colunas"
+                  >
+                    <MapIcon className="h-3.5 w-3.5" />
+                    Minimapa
+                  </button>
                 ) : null}
-                <Droppable droppableId="board" direction="horizontal" type="column">
-                  {(dropProvided) => (
-                    <div
-                      ref={(el) => {
-                        dropProvided.innerRef(el);
-                        boardScrollRef.current = el;
-                      }}
-                      {...dropProvided.droppableProps}
-                      className="flex flex-1 gap-4 overflow-x-auto px-4 py-4"
-                    >
-                      {visibleColumns.map((column, index) => (
-                        <Draggable key={column.id} draggableId={column.id} index={index}>
-                          {(dragProvided) => (
-                            <div
-                              ref={dragProvided.innerRef}
-                              {...(dragProvided.draggableProps as HTMLAttributes<HTMLDivElement>)}
-                              data-col-id={column.id}
-                            >
-                              <KanbanColumn
-                                column={column}
-                                dragDisabled={false}
-                                handleProps={dragProvided.dragHandleProps}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {dropProvided.placeholder}
-                      <AddColumn boardId={data.id} />
-                    </div>
+                <button
+                  type="button"
+                  onClick={() => setPaletteOpen(true)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground",
+                    "transition-colors hover:bg-accent hover:text-accent-foreground",
                   )}
-                </Droppable>
-              </>
+                  title="Buscar (Ctrl+K)"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  Buscar
+                  <kbd className="rounded bg-muted px-1 font-mono text-[10px]">Ctrl K</kbd>
+                </button>
+              </div>
+            </div>
+            {view === "stories" ? (
+              <StoriesView
+                boardId={data.id}
+                stories={data.stories}
+                workspaceKey={data.workspaceKey}
+                cards={data.columns.flatMap((c) => c.cards)}
+              />
+            ) : view === "metrics" ? (
+              <KanbanMetrics boardId={data.id} fetchMetrics={fetchMetrics} />
+            ) : view === "list" ? (
+              <KanbanList columns={visibleColumns} />
+            ) : (
+              <DragDropContext onDragEnd={onDragEnd}>
+                {grouped ? (
+                  <div className="flex-1 space-y-6 overflow-auto px-4 py-4">
+                    {lanes.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Nenhum card para agrupar.</p>
+                    ) : (
+                      lanes.map((lane) => (
+                        <div key={lane.key}>
+                          <div className="mb-2 text-sm font-semibold">{lane.label}</div>
+                          <div className="flex gap-4 overflow-x-auto pb-1">
+                            {lane.columns.map((column) => (
+                              <KanbanColumn
+                                key={column.id}
+                                column={column}
+                                droppableId={`${lane.key}::${column.id}`}
+                                dragDisabled
+                                laneMode
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {minimapOpen ? (
+                      <BoardMinimap columns={visibleColumns} scrollRef={boardScrollRef} />
+                    ) : null}
+                    <Droppable droppableId="board" direction="horizontal" type="column">
+                      {(dropProvided) => (
+                        <div
+                          ref={(el) => {
+                            dropProvided.innerRef(el);
+                            boardScrollRef.current = el;
+                          }}
+                          {...dropProvided.droppableProps}
+                          className="flex flex-1 gap-4 overflow-x-auto px-4 py-4"
+                        >
+                          {visibleColumns.map((column, index) => (
+                            <Draggable key={column.id} draggableId={column.id} index={index}>
+                              {(dragProvided) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...(dragProvided.draggableProps as HTMLAttributes<HTMLDivElement>)}
+                                  data-col-id={column.id}
+                                >
+                                  <KanbanColumn
+                                    column={column}
+                                    dragDisabled={false}
+                                    handleProps={dragProvided.dragHandleProps}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {dropProvided.placeholder}
+                          <AddColumn boardId={data.id} />
+                        </div>
+                      )}
+                    </Droppable>
+                  </>
+                )}
+              </DragDropContext>
             )}
-          </DragDropContext>
-          )}
+          </div>
         </div>
-      </div>
 
-      <CommandPalette
-        open={paletteOpen}
-        onOpenChange={setPaletteOpen}
-        data={data}
-        onOpenCard={(id) => openCard(id, { pin: true })}
-        filtersActive={filtersActive}
-        onClearFilters={clearFilters}
-      />
+        <CommandPalette
+          open={paletteOpen}
+          onOpenChange={setPaletteOpen}
+          data={data}
+          onOpenCard={(id) => openCard(id, { pin: true })}
+          filtersActive={filtersActive}
+          onClearFilters={clearFilters}
+        />
       </TooltipProvider>
     </KanbanProvider>
   );

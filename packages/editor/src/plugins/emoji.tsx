@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type MutableRefObject,
-} from "react";
-import { createPortal } from "react-dom";
-import { Smile } from "lucide-react";
+import { cn } from "@kerno/ui";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
@@ -18,7 +8,17 @@ import {
   type MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { $createTextNode, $getRoot, $getSelection, $isRangeSelection } from "lexical";
-import { cn } from "@kerno/ui";
+import { Smile } from "lucide-react";
+import {
+  lazy,
+  type MutableRefObject,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { searchEmojis } from "./emoji-data";
 
 // O picker completo (e seu dataset) só é baixado quando o botão é aberto.
@@ -39,11 +39,7 @@ class EmojiOption extends MenuOption {
  * nativo. `menuOpenRef` (opcional) avisa quem embrulha o campo — ex.: um plugin
  * de Enter-to-send — que o menu está aberto e não deve tratar o Enter.
  */
-export function EmojiTypeaheadPlugin({
-  menuOpenRef,
-}: {
-  menuOpenRef?: MutableRefObject<boolean>;
-}) {
+export function EmojiTypeaheadPlugin({ menuOpenRef }: { menuOpenRef?: MutableRefObject<boolean> }) {
   const [editor] = useLexicalComposerContext();
   const [query, setQuery] = useState<string | null>(null);
   const [options, setOptions] = useState<EmojiOption[]>([]);
@@ -89,7 +85,11 @@ export function EmojiTypeaheadPlugin({
   }, []);
 
   const onSelectOption = useCallback(
-    (selectedOption: EmojiOption, nodeToReplace: ReturnType<typeof $createTextNode> | null, closeMenu: () => void) => {
+    (
+      selectedOption: EmojiOption,
+      nodeToReplace: ReturnType<typeof $createTextNode> | null,
+      closeMenu: () => void,
+    ) => {
       editor.update(() => {
         if (nodeToReplace) {
           const textNode = $createTextNode(selectedOption.native);
@@ -108,7 +108,10 @@ export function EmojiTypeaheadPlugin({
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
+      menuRenderFn={(
+        anchorElementRef,
+        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
+      ) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

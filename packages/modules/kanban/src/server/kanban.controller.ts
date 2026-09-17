@@ -1,7 +1,7 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { type AuthEnv, requireUser } from "@kerno/core/http";
+import { Hono } from "hono";
 import { kanbanCommandSchema } from "../kanban.dto";
-import { requireUser, type AuthEnv } from "@kerno/core/http";
 import type { KanbanService } from "./kanban.service";
 
 export function createKanbanController(kanban: KanbanService) {
@@ -21,11 +21,7 @@ export function createKanbanController(kanban: KanbanService) {
   /** Busca tarefas do workspace por KERN-N/título — menção `!` no chat. */
   app.get("/workspaces/:workspaceId/cards/search", async (c) =>
     c.json(
-      await kanban.searchCards(
-        c.get("userId"),
-        c.req.param("workspaceId"),
-        c.req.query("q") ?? "",
-      ),
+      await kanban.searchCards(c.get("userId"), c.req.param("workspaceId"), c.req.query("q") ?? ""),
     ),
   );
 

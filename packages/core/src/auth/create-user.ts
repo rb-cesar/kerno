@@ -1,5 +1,5 @@
-import bcrypt from "bcryptjs";
 import { prisma } from "@kerno/db";
+import bcrypt from "bcryptjs";
 import { RuleViolation } from "../errors";
 
 export interface NewUser {

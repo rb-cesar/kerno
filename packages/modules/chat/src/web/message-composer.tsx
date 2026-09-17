@@ -1,13 +1,67 @@
 "use client";
 
 import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-  type MutableRefObject,
-} from "react";
+  type ActiveFormats,
+  ActiveFormatsPlugin,
+  TRANSFORMERS as BASE_TRANSFORMERS,
+  CodeHighlightPlugin,
+  EmojiPickerButton,
+  EmojiShortcutPlugin,
+  EmojiTypeaheadPlugin,
+  ExitBlockOnArrowDownPlugin,
+  editorTheme,
+  MENTION_TRANSFORMER,
+  MentionNode,
+  MentionTypeaheadPlugin,
+  NO_FORMATS,
+  PasteMarkdownPlugin,
+  SlashCommandPlugin,
+  SubmitPlugin,
+  TASK_MENTION_TRANSFORMER,
+  TaskMentionNode,
+  TaskMentionTypeaheadPlugin,
+  URL_MATCHER,
+} from "@kerno/editor";
+import { Button, cn } from "@kerno/ui";
+import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
+import { AutoLinkNode, LinkNode } from "@lexical/link";
+import {
+  INSERT_ORDERED_LIST_COMMAND,
+  INSERT_UNORDERED_LIST_COMMAND,
+  ListItemNode,
+  ListNode,
+} from "@lexical/list";
+import {
+  $convertFromMarkdownString,
+  $convertToMarkdownString,
+  type Transformer,
+} from "@lexical/markdown";
+import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { $createQuoteNode, QuoteNode } from "@lexical/rich-text";
+import { $setBlocksType } from "@lexical/selection";
+import {
+  $createParagraphNode,
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_NORMAL,
+  FORMAT_TEXT_COMMAND,
+  KEY_ARROW_UP_COMMAND,
+  KEY_ESCAPE_COMMAND,
+  KEY_MODIFIER_COMMAND,
+  type LexicalEditor,
+  type LexicalNode,
+} from "lexical";
 import {
   Bold,
   Braces,
@@ -21,68 +75,14 @@ import {
   Strikethrough,
   X,
 } from "lucide-react";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { ListPlugin } from "@lexical/react/LexicalListPlugin";
-import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
-import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
-import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
-  $convertFromMarkdownString,
-  $convertToMarkdownString,
-  type Transformer,
-} from "@lexical/markdown";
-import { $createQuoteNode, QuoteNode } from "@lexical/rich-text";
-import { $setBlocksType } from "@lexical/selection";
-import {
-  INSERT_ORDERED_LIST_COMMAND,
-  INSERT_UNORDERED_LIST_COMMAND,
-  ListItemNode,
-  ListNode,
-} from "@lexical/list";
-import { AutoLinkNode, LinkNode } from "@lexical/link";
-import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
-import {
-  $createParagraphNode,
-  $getRoot,
-  $getSelection,
-  $isRangeSelection,
-  FORMAT_TEXT_COMMAND,
-  KEY_ARROW_UP_COMMAND,
-  KEY_ESCAPE_COMMAND,
-  KEY_MODIFIER_COMMAND,
-  COMMAND_PRIORITY_HIGH,
-  COMMAND_PRIORITY_NORMAL,
-  type LexicalEditor,
-  type LexicalNode,
-} from "lexical";
-import { Button, cn } from "@kerno/ui";
-import {
-  MENTION_TRANSFORMER,
-  MentionNode,
-  MentionTypeaheadPlugin,
-  TASK_MENTION_TRANSFORMER,
-  TaskMentionNode,
-  TaskMentionTypeaheadPlugin,
-  EmojiPickerButton,
-  EmojiTypeaheadPlugin,
-  SlashCommandPlugin,
-  ActiveFormatsPlugin,
-  CodeHighlightPlugin,
-  EmojiShortcutPlugin,
-  ExitBlockOnArrowDownPlugin,
-  NO_FORMATS,
-  PasteMarkdownPlugin,
-  SubmitPlugin,
-  TRANSFORMERS as BASE_TRANSFORMERS,
-  URL_MATCHER,
-  editorTheme,
-  type ActiveFormats,
-} from "@kerno/editor";
+  type MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useChat } from "./chat-context";
 
 // Plugins e nós de menção/emoji/comando vêm de @kerno/editor (fonte única —
@@ -133,13 +133,7 @@ function FormatShortcutsPlugin() {
 }
 
 /** Carrega um markdown inicial no editor (edição) e foca no fim, uma única vez. */
-function InitialContentPlugin({
-  markdown,
-  autoFocus,
-}: {
-  markdown?: string;
-  autoFocus?: boolean;
-}) {
+function InitialContentPlugin({ markdown, autoFocus }: { markdown?: string; autoFocus?: boolean }) {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     if (markdown) {
@@ -315,29 +309,69 @@ function Toolbar({
 
   return (
     <div className="flex items-center gap-0.5 border-b px-1.5 py-1">
-      <ToolbarButton title="Negrito (Ctrl+B)" busy={busy} active={active.bold} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}>
+      <ToolbarButton
+        title="Negrito (Ctrl+B)"
+        busy={busy}
+        active={active.bold}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+      >
         <Bold className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Itálico (Ctrl+I)" busy={busy} active={active.italic} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}>
+      <ToolbarButton
+        title="Itálico (Ctrl+I)"
+        busy={busy}
+        active={active.italic}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
+      >
         <Italic className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Tachado (Ctrl+Shift+X)" busy={busy} active={active.strikethrough} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}>
+      <ToolbarButton
+        title="Tachado (Ctrl+Shift+X)"
+        busy={busy}
+        active={active.strikethrough}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}
+      >
         <Strikethrough className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Código (Ctrl+Shift+C)" busy={busy} active={active.code} onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}>
+      <ToolbarButton
+        title="Código (Ctrl+Shift+C)"
+        busy={busy}
+        active={active.code}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
+      >
         <Code className="h-3.5 w-3.5" />
       </ToolbarButton>
       <span className="mx-1 h-4 w-px bg-border" />
-      <ToolbarButton title="Lista" busy={busy} active={active.ul} onClick={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}>
+      <ToolbarButton
+        title="Lista"
+        busy={busy}
+        active={active.ul}
+        onClick={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}
+      >
         <List className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Lista numerada" busy={busy} active={active.ol} onClick={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}>
+      <ToolbarButton
+        title="Lista numerada"
+        busy={busy}
+        active={active.ol}
+        onClick={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}
+      >
         <ListOrdered className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Citação" busy={busy} active={active.quote} onClick={() => setBlock(() => $createQuoteNode())}>
+      <ToolbarButton
+        title="Citação"
+        busy={busy}
+        active={active.quote}
+        onClick={() => setBlock(() => $createQuoteNode())}
+      >
         <Quote className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton title="Bloco de código" busy={busy} active={active.codeblock} onClick={toggleCodeBlock}>
+      <ToolbarButton
+        title="Bloco de código"
+        busy={busy}
+        active={active.codeblock}
+        onClick={toggleCodeBlock}
+      >
         <Braces className="h-3.5 w-3.5" />
       </ToolbarButton>
       <span className="mx-1 h-4 w-px bg-border" />
@@ -451,9 +485,7 @@ function ComposerInner({
         </Button>
       </div>
 
-      {editMode ? (
-        <InitialContentPlugin markdown={initialMarkdown} autoFocus />
-      ) : null}
+      {editMode ? <InitialContentPlugin markdown={initialMarkdown} autoFocus /> : null}
       {draftKey ? <DraftPlugin draftKey={draftKey} /> : null}
       <EditLastPlugin onRequestEditLast={onRequestEditLast} />
       <PasteMarkdownPlugin transformers={TRANSFORMERS} />
@@ -537,13 +569,11 @@ export function MessageComposer({
         />
       </LexicalComposer>
       {editMode ? (
-        <p className="mt-1 px-1 text-[11px] text-muted-foreground">
-          Enter salva · Esc cancela
-        </p>
+        <p className="mt-1 px-1 text-[11px] text-muted-foreground">Enter salva · Esc cancela</p>
       ) : (
         <p className="mt-1 px-1 text-[11px] text-muted-foreground">
-          Enter envia · Shift+Enter quebra linha · / abre comandos · :emoji: vira emoji ·
-          Ctrl+Enter envia
+          Enter envia · Shift+Enter quebra linha · / abre comandos · :emoji: vira emoji · Ctrl+Enter
+          envia
         </p>
       )}
     </div>

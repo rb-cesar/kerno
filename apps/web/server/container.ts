@@ -1,6 +1,6 @@
+import { createChatService } from "@kerno/chat/server";
 import { createWorkspaceService } from "@kerno/core/workspaces";
 import { createKanbanService } from "@kerno/kanban/server";
-import { createChatService } from "@kerno/chat/server";
 
 /**
  * Composição do app: o único arquivo que conhece mais de um módulo ao mesmo

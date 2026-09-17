@@ -1,8 +1,8 @@
-import { Hono } from "hono";
+import { createChatController } from "@kerno/chat/server";
 import { Forbidden, NotFound, RuleViolation } from "@kerno/core/errors";
 import { createWorkspaceController } from "@kerno/core/workspaces";
 import { createKanbanController } from "@kerno/kanban/server";
-import { createChatController } from "@kerno/chat/server";
+import { Hono } from "hono";
 import { container } from "./container";
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
+import * as React from "react";
 import { cn } from "../utils";
 import {
   Command,
@@ -90,10 +90,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(function Com
                   }}
                 >
                   <Check
-                    className={cn(
-                      "h-4 w-4",
-                      option.value === value ? "opacity-100" : "opacity-0",
-                    )}
+                    className={cn("h-4 w-4", option.value === value ? "opacity-100" : "opacity-0")}
                   />
                   {option.label}
                 </CommandItem>

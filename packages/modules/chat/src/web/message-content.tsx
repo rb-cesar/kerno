@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, createContext, useContext, useState, type ReactNode } from "react";
-import { Highlight, themes } from "prism-react-renderer";
 import { Check, Copy, Hash } from "lucide-react";
+import { Highlight, themes } from "prism-react-renderer";
+import { createContext, Fragment, type ReactNode, useContext, useState } from "react";
 
 // onOpenTask flui por contexto para que as regras inline (estáticas) possam abrir
 // a tarefa sem receber o handler por parâmetro em toda a recursão de parsing.

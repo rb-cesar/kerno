@@ -1,5 +1,5 @@
+import { createEvent, eventBus } from "@kerno/core/events";
 import { prisma } from "@kerno/db";
-import { eventBus, createEvent } from "@kerno/core/events";
 import type { Priority } from "../types";
 
 /** Máximo de tarefas (cards) por board. */

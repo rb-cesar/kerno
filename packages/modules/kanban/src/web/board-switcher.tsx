@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Check, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   Button,
+  cn,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -15,8 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
-  cn,
 } from "@kerno/ui";
+import { Check, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import type { BoardSummaryDTO } from "../types";
 
 const MAX_BOARDS = 5;

@@ -1,10 +1,9 @@
 "use client";
 
-import { Suspense, lazy, useCallback, useEffect, useState, useTransition } from "react";
-import { Clock, MessageSquare, Plus, Trash2, X } from "lucide-react";
 import {
   Button,
   Combobox,
+  cn,
   DatePicker,
   Field,
   FieldControl,
@@ -17,8 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
   Skeleton,
-  cn,
 } from "@kerno/ui";
+import { Clock, MessageSquare, Plus, Trash2, X } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useState, useTransition } from "react";
 import type { CardDetailDTO, CardDTO, Priority } from "../types";
 
 // Lazy: o editor Lexical (+prism) só baixa quando um card é aberto, mantendo o
@@ -27,14 +27,15 @@ const RichTextEditor = lazy(() =>
   import("@kerno/editor").then((m) => ({ default: m.RichTextEditor })),
 );
 const RichTextView = lazy(() => import("@kerno/editor").then((m) => ({ default: m.RichTextView })));
+
 import { CardChecklists } from "./card-checklists";
 import { useKanban } from "./kanban-context";
 import {
+  activityText,
   CATEGORY_COLOR,
+  formatStamp,
   PRIORITY_LABEL,
   PRIORITY_ORDER,
-  activityText,
-  formatStamp,
   toDateInput,
 } from "./meta";
 
@@ -70,8 +71,18 @@ function CardSkeleton() {
  * `TaskSidePanel`, pelo chat.
  */
 export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: () => void }) {
-  const { mutate, refresh, members, labels, cycles, stories, workspaceKey, fetchCardDetail, remoteRev, currentUserId } =
-    useKanban();
+  const {
+    mutate,
+    refresh,
+    members,
+    labels,
+    cycles,
+    stories,
+    workspaceKey,
+    fetchCardDetail,
+    remoteRev,
+    currentUserId,
+  } = useKanban();
   const [pending, startTransition] = useTransition();
 
   const [title, setTitle] = useState(card.title);

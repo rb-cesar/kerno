@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { CornerUpLeft, Pencil, SmilePlus } from "lucide-react";
 import { cn } from "@kerno/ui";
+import { CornerUpLeft, Pencil, SmilePlus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { ChatResult, MessageDTO } from "../types";
 import { useChat } from "./chat-context";
-import { MessageContent } from "./message-content";
 import { MessageComposer } from "./message-composer";
+import { MessageContent } from "./message-content";
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "🎉", "👀", "✅", "🙏", "🔥"];
 

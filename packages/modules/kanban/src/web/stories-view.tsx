@@ -1,10 +1,9 @@
 "use client";
 
-import { Suspense, lazy, useEffect, useState, useTransition } from "react";
-import { BookMarked, Plus, Trash2 } from "lucide-react";
 import {
   Button,
   Combobox,
+  cn,
   DatePicker,
   Field,
   FieldControl,
@@ -16,8 +15,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  cn,
 } from "@kerno/ui";
+import { BookMarked, Plus, Trash2 } from "lucide-react";
+import { lazy, Suspense, useEffect, useState, useTransition } from "react";
 import type { CardDTO, Priority, StatusCategory, StoryDTO } from "../types";
 import { useKanban } from "./kanban-context";
 import { CATEGORY_COLOR, PRIORITY_LABEL, PRIORITY_ORDER, toDateInput } from "./meta";
@@ -27,13 +27,7 @@ const RichTextEditor = lazy(() =>
   import("@kerno/editor").then((m) => ({ default: m.RichTextEditor })),
 );
 
-const STATUS_ORDER: StatusCategory[] = [
-  "BACKLOG",
-  "UNSTARTED",
-  "STARTED",
-  "COMPLETED",
-  "CANCELED",
-];
+const STATUS_ORDER: StatusCategory[] = ["BACKLOG", "UNSTARTED", "STARTED", "COMPLETED", "CANCELED"];
 const STATUS_LABEL: Record<StatusCategory, string> = {
   BACKLOG: "Backlog",
   UNSTARTED: "A fazer",
@@ -95,7 +89,10 @@ export function StoriesView({
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <BookMarked className="h-3.5 w-3.5 shrink-0" style={{ color: s.color ?? undefined }} />
+                    <BookMarked
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: s.color ?? undefined }}
+                    />
                     <span className="font-mono text-xs text-muted-foreground">
                       {workspaceKey}-S{s.number}
                     </span>

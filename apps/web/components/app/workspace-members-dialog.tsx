@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { UserPlus, Users, X } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -18,10 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@kerno/ui";
-import {
-  inviteWorkspaceMember,
-  removeWorkspaceMember,
-} from "@/lib/workspace-members-actions";
+import { UserPlus, Users, X } from "lucide-react";
+import { useState, useTransition } from "react";
+import { inviteWorkspaceMember, removeWorkspaceMember } from "@/lib/workspace-members-actions";
 
 type Member = { id: string; name: string; role: string };
 type Role = "ADMIN" | "MEMBER" | "VIEWER";
@@ -96,7 +93,9 @@ export function WorkspaceMembersDialog({
               {isManager ? (
                 <button
                   disabled={pending}
-                  onClick={() => run(() => removeWorkspaceMember({ workspaceId, slug, userId: m.id }))}
+                  onClick={() =>
+                    run(() => removeWorkspaceMember({ workspaceId, slug, userId: m.id }))
+                  }
                   className="text-muted-foreground hover:text-destructive disabled:opacity-50"
                   title="Remover do workspace"
                 >

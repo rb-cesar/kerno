@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useState, type ReactNode } from "react";
-import { Highlight, themes } from "prism-react-renderer";
 import { Check, Copy } from "lucide-react";
+import { Highlight, themes } from "prism-react-renderer";
+import { Fragment, type ReactNode, useState } from "react";
 
 // Renderizador de Markdown (subconjunto estilo Discord/Slack), SEM dependências
 // pesadas e SEM dangerouslySetInnerHTML: tudo vira nó React, então o conteúdo do

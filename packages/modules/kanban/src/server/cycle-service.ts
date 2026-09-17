@@ -1,11 +1,6 @@
 import { prisma } from "@kerno/db";
 
-export async function createCycle(
-  workspaceId: string,
-  name: string,
-  startsAt: Date,
-  endsAt: Date,
-) {
+export async function createCycle(workspaceId: string, name: string, startsAt: Date, endsAt: Date) {
   return prisma.cycle.create({ data: { workspaceId, name, startsAt, endsAt } });
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 
 /** Uma aba do dock. `preview` = aba reaproveitável (VSCode), título em itálico. */
 export type DockTab = { id: string; title: string; icon?: ReactNode; preview?: boolean };
@@ -66,7 +66,7 @@ export function useDockTabs(): DockController {
       const idx = prev.findIndex((t) => t.id === id);
       if (idx < 0) return prev;
       const next = prev.filter((t) => t.id !== id);
-      setActiveId((cur) => (cur === id ? next[idx]?.id ?? next[idx - 1]?.id ?? null : cur));
+      setActiveId((cur) => (cur === id ? (next[idx]?.id ?? next[idx - 1]?.id ?? null) : cur));
       return next;
     });
   }, []);
