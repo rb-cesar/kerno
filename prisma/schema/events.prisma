@@ -8,7 +8,8 @@ model Event {
   userId      String?
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  notifications Notification[]
 
   @@index([workspaceId])
   @@index([type])

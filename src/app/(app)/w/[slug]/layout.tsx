@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { SocketProvider } from "@/components/providers/socket-provider";
+import { WorkspacePresenceProvider } from "@/components/providers/workspace-presence-provider";
 import { HubRail } from "@/components/shell/hub-rail";
 import { WorkspaceDockProvider } from "@/components/shell/workspace-dock-provider";
 import { requireSession } from "@/core/auth/require-session";
@@ -25,7 +25,7 @@ export default async function WorkspaceLayout({
   const isManager = workspace.myRole === "ADMIN";
 
   return (
-    <SocketProvider workspaceId={workspace.id}>
+    <WorkspacePresenceProvider workspaceId={workspace.id}>
       <div className="flex h-screen overflow-hidden">
         <HubRail basePath={`/w/${slug}`} userName={user.name ?? "Usuário"} userEmail={user.email ?? ""} />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -41,6 +41,6 @@ export default async function WorkspaceLayout({
           </div>
         </div>
       </div>
-    </SocketProvider>
+    </WorkspacePresenceProvider>
   );
 }

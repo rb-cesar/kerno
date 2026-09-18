@@ -3,6 +3,7 @@
 import { LayoutGrid, type LucideIcon, MessageSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/shell/notification-bell";
 import { UserMenu } from "@/components/shell/user-menu";
 import { cn } from "@/components/ui";
 
@@ -71,6 +72,8 @@ export function HubRail({ basePath, userName, userEmail }: { basePath: string; u
         </button>
       </div>
 
+      <NotificationBell side="right" align="end" />
+      <div className="my-3 h-px w-8 bg-sidebar-border" />
       <UserMenu name={userName} email={userEmail} side="right" align="end" />
     </nav>
   );

@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useSocket } from "@/components/providers/socket-provider";
+import { useWorkspacePresence } from "@/components/providers/workspace-presence-provider";
 import { useWorkspaceDock } from "@/components/shell/workspace-dock-provider";
 import { chatClient } from "@/modules/chat/client";
 import { ChatPanel } from "@/modules/chat/components/chat-panel";
@@ -9,7 +10,8 @@ import type { ChatData } from "@/modules/chat/types";
 import { kanbanClient } from "@/modules/kanban/client";
 
 export function ChatClient({ initial, currentUserId }: { initial: ChatData; currentUserId: string }) {
-  const { socket, onlineUserIds } = useSocket();
+  const { socket } = useSocket();
+  const onlineUserIds = useWorkspacePresence();
   const { openCard } = useWorkspaceDock();
 
   // Liga a menção `!` à API do kanban (busca por workspace).
