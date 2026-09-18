@@ -1,17 +1,32 @@
 import { Forbidden, NotFound } from "@/core/errors";
-import { requireWorkspaceMember } from "@/modules/workspaces/server/permissions";
+import type { WorkspaceRole } from "@/modules/workspaces/server";
+import { requireWorkspaceRole } from "@/modules/workspaces/server/permissions";
 import { conversationAccess, workspaceIdOfChannel } from "./domain";
 
-/** Resolve o workspace dono do recurso e exige membership (fonte única em @/modules/workspaces/server/permissions). */
-export async function assertMember(userId: string, workspaceId: string | null): Promise<void> {
+/**
+ * Resolve o workspace dono do recurso e exige membership com o papel mínimo
+ * (fonte única em @/modules/workspaces/server/permissions). Default "VIEWER"
+ * (qualquer membro lê); chamadas de escrita em service.ts passam "MEMBER".
+ */
+export async function assertMember(
+  userId: string,
+  workspaceId: string | null,
+  minRole: WorkspaceRole = "VIEWER",
+): Promise<void> {
   if (!workspaceId) throw new NotFound("Recurso não encontrado");
-  await requireWorkspaceMember(userId, workspaceId);
+  await requireWorkspaceRole(userId, workspaceId, minRole);
 }
 
-export const guardChannel = async (userId: string, channelId: string) =>
-  assertMember(userId, await workspaceIdOfChannel(channelId));
-export const guardWorkspace = (userId: string, workspaceId: string) =>
-  assertMember(userId, workspaceId);
+export const guardChannel = async (
+  userId: string,
+  channelId: string,
+  minRole: WorkspaceRole = "VIEWER",
+) => assertMember(userId, await workspaceIdOfChannel(channelId), minRole);
+export const guardWorkspace = (
+  userId: string,
+  workspaceId: string,
+  minRole: WorkspaceRole = "VIEWER",
+) => assertMember(userId, workspaceId, minRole);
 
 /**
  * Só os participantes da conversa podem lê-la/escrever nela — ser membro do

@@ -55,7 +55,7 @@ export class ChatService {
 
   async sendMessage(userId: string, input: SendMessageInput): Promise<ChatResult<MessageDTO>> {
     try {
-      await guardChannel(userId, input.channelId);
+      await guardChannel(userId, input.channelId, "MEMBER");
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
@@ -72,7 +72,7 @@ export class ChatService {
       if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
 
       // Acesso ao canal/conversa da mensagem (a autoria é checada no domínio).
-      if (ctx.channelId) await guardChannel(userId, ctx.channelId);
+      if (ctx.channelId) await guardChannel(userId, ctx.channelId, "MEMBER");
       else if (ctx.conversationId) await guardConversation(userId, ctx.conversationId);
       else return { ok: false, error: "Mensagem inválida" };
 
@@ -89,7 +89,7 @@ export class ChatService {
 
   async createChannel(userId: string, input: CreateChannelInput): Promise<ChatResult<ChannelDTO>> {
     try {
-      await guardWorkspace(userId, input.workspaceId);
+      await guardWorkspace(userId, input.workspaceId, "MEMBER");
       const name = input.name.trim().toLowerCase().replace(/\s+/g, "-");
       if (!name) return { ok: false, error: "Nome inválido" };
       const channel = await domain.createChannel(input.workspaceId, name);
@@ -107,7 +107,7 @@ export class ChatService {
     input: OpenDirectInput,
   ): Promise<ChatResult<DirectConversationDTO>> {
     try {
-      await guardWorkspace(userId, input.workspaceId);
+      await guardWorkspace(userId, input.workspaceId, "MEMBER");
       if (input.userId === userId) return { ok: false, error: "Conversa inválida" };
       // O destinatário também precisa ser membro do workspace.
       await assertMember(input.userId, input.workspaceId);
@@ -132,7 +132,7 @@ export class ChatService {
       if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
 
       // Garante que o usuário tem acesso ao canal/conversa da mensagem.
-      if (ctx.channelId) await guardChannel(userId, ctx.channelId);
+      if (ctx.channelId) await guardChannel(userId, ctx.channelId, "MEMBER");
       else if (ctx.conversationId) await guardConversation(userId, ctx.conversationId);
       else return { ok: false, error: "Mensagem inválida" };
 

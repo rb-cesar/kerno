@@ -84,36 +84,40 @@ export class KanbanService {
    */
   async runCommand(userId: string, command: KanbanCommand): Promise<KanbanMutationResult> {
     try {
+      // Todo caso aqui é escrita — guard exige "MEMBER" (VIEWER só lê; ver
+      // guards.ts/permissions.ts). Métodos de leitura acima (snapshot,
+      // cardDetail, metrics, boardForWorkspace, searchCards, cardBoard) ficam
+      // no default "VIEWER" do guard, sem mudança.
       switch (command.type) {
         case "createBoard": {
-          await assertMember(userId, command.workspaceId);
+          await assertMember(userId, command.workspaceId, "MEMBER");
           const name = command.name.trim();
           if (!name) return { ok: false, error: "Nome inválido" };
           await domain.createBoard(command.workspaceId, name);
           break;
         }
         case "renameBoard": {
-          await guardBoard(userId, command.boardId);
+          await guardBoard(userId, command.boardId, "MEMBER");
           await domain.renameBoard(command.boardId, command.name);
           break;
         }
         case "deleteBoard": {
-          await guardBoard(userId, command.boardId);
+          await guardBoard(userId, command.boardId, "MEMBER");
           await domain.deleteBoard(command.boardId);
           break;
         }
         case "createColumn": {
-          await guardBoard(userId, command.boardId);
+          await guardBoard(userId, command.boardId, "MEMBER");
           await domain.createColumn(command.boardId, command.name, command.category);
           break;
         }
         case "renameColumn": {
-          await guardColumn(userId, command.columnId);
+          await guardColumn(userId, command.columnId, "MEMBER");
           await domain.renameColumn(command.columnId, command.name);
           break;
         }
         case "updateColumn": {
-          await guardColumn(userId, command.columnId);
+          await guardColumn(userId, command.columnId, "MEMBER");
           const name = command.name.trim();
           if (!name) return { ok: false, error: "Nome inválido" };
           const wipLimit =
@@ -126,22 +130,22 @@ export class KanbanService {
           break;
         }
         case "reorderColumns": {
-          await guardBoard(userId, command.boardId);
+          await guardBoard(userId, command.boardId, "MEMBER");
           await domain.reorderColumns(command.boardId, command.columnIds);
           break;
         }
         case "deleteColumn": {
-          await guardColumn(userId, command.columnId);
+          await guardColumn(userId, command.columnId, "MEMBER");
           await domain.deleteColumn(command.columnId);
           break;
         }
         case "createCard": {
-          await guardColumn(userId, command.columnId);
+          await guardColumn(userId, command.columnId, "MEMBER");
           await domain.createCard(command.columnId, command.title, userId);
           break;
         }
         case "updateCard": {
-          await guardCard(userId, command.cardId);
+          await guardCard(userId, command.cardId, "MEMBER");
           await domain.updateCard(
             {
               cardId: command.cardId,
@@ -160,7 +164,7 @@ export class KanbanService {
           break;
         }
         case "moveCard": {
-          await guardCard(userId, command.cardId);
+          await guardCard(userId, command.cardId, "MEMBER");
           await domain.moveCard(
             {
               cardId: command.cardId,
@@ -174,58 +178,58 @@ export class KanbanService {
           break;
         }
         case "deleteCard": {
-          await guardCard(userId, command.cardId);
+          await guardCard(userId, command.cardId, "MEMBER");
           await domain.deleteCard(command.cardId, userId);
           break;
         }
         case "createSubtask": {
-          await guardCard(userId, command.parentId);
+          await guardCard(userId, command.parentId, "MEMBER");
           const title = command.title.trim();
           if (!title) return { ok: false, error: "Título vazio" };
           await domain.createSubtask(command.parentId, title, userId);
           break;
         }
         case "createChecklist": {
-          await guardCard(userId, command.cardId);
+          await guardCard(userId, command.cardId, "MEMBER");
           await domain.createChecklist(command.cardId, command.title?.trim() || null, userId);
           break;
         }
         case "renameChecklist": {
-          await guardChecklist(userId, command.checklistId);
+          await guardChecklist(userId, command.checklistId, "MEMBER");
           await domain.renameChecklist(command.checklistId, command.title?.trim() || null, userId);
           break;
         }
         case "deleteChecklist": {
-          await guardChecklist(userId, command.checklistId);
+          await guardChecklist(userId, command.checklistId, "MEMBER");
           await domain.deleteChecklist(command.checklistId, userId);
           break;
         }
         case "addChecklistItem": {
-          await guardChecklist(userId, command.checklistId);
+          await guardChecklist(userId, command.checklistId, "MEMBER");
           const text = command.text.trim();
           if (!text) return { ok: false, error: "Item vazio" };
           await domain.addChecklistItem(command.checklistId, text, userId);
           break;
         }
         case "toggleChecklistItem": {
-          await guardChecklistItem(userId, command.itemId);
+          await guardChecklistItem(userId, command.itemId, "MEMBER");
           await domain.toggleChecklistItem(command.itemId, command.done, userId);
           break;
         }
         case "updateChecklistItem": {
-          await guardChecklistItem(userId, command.itemId);
+          await guardChecklistItem(userId, command.itemId, "MEMBER");
           const text = command.text.trim();
           if (!text) return { ok: false, error: "Item vazio" };
           await domain.updateChecklistItem(command.itemId, text, userId);
           break;
         }
         case "deleteChecklistItem": {
-          await guardChecklistItem(userId, command.itemId);
+          await guardChecklistItem(userId, command.itemId, "MEMBER");
           await domain.deleteChecklistItem(command.itemId, userId);
           break;
         }
         case "addComment": {
-          await guardCard(userId, command.cardId);
+          await guardCard(userId, command.cardId, "MEMBER");
           const body = command.body.trim();
           if (!body) return { ok: false, error: "Comentário vazio" };
           if (body.length > 4000) return { ok: false, error: "Comentário muito longo" };
@@ -233,22 +237,22 @@ export class KanbanService {
           break;
         }
         case "deleteComment": {
-          await guardComment(userId, command.commentId);
+          await guardComment(userId, command.commentId, "MEMBER");
           await domain.deleteComment(command.commentId, userId);
           break;
         }
         case "createLabel": {
-          await guardBoard(userId, command.boardId);
+          await guardBoard(userId, command.boardId, "MEMBER");
           await domain.createLabel(command.boardId, command.name, command.color);
           break;
         }
         case "deleteLabel": {
-          await guardLabel(userId, command.labelId);
+          await guardLabel(userId, command.labelId, "MEMBER");
           await domain.deleteLabel(command.labelId);
           break;
         }
         case "createCycle": {
-          await assertMember(userId, command.workspaceId);
+          await assertMember(userId, command.workspaceId, "MEMBER");
           const name = command.name.trim();
           if (!name) return { ok: false, error: "Nome inválido" };
           const startsAt = new Date(command.startsAt);
@@ -261,19 +265,19 @@ export class KanbanService {
           break;
         }
         case "deleteCycle": {
-          await guardCycle(userId, command.cycleId);
+          await guardCycle(userId, command.cycleId, "MEMBER");
           await domain.deleteCycle(command.cycleId);
           break;
         }
         case "createStory": {
-          await guardBoard(userId, command.boardId);
+          await guardBoard(userId, command.boardId, "MEMBER");
           const title = command.title.trim();
           if (!title) return { ok: false, error: "Título vazio" };
           await domain.createStory(command.boardId, title, userId);
           break;
         }
         case "updateStory": {
-          await guardStory(userId, command.storyId);
+          await guardStory(userId, command.storyId, "MEMBER");
           const title = command.title.trim();
           if (!title) return { ok: false, error: "Título vazio" };
           await domain.updateStory(
@@ -292,7 +296,7 @@ export class KanbanService {
           break;
         }
         case "deleteStory": {
-          await guardStory(userId, command.storyId);
+          await guardStory(userId, command.storyId, "MEMBER");
           await domain.deleteStory(command.storyId, userId);
           break;
         }

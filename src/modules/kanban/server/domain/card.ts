@@ -1,4 +1,5 @@
 import { prisma } from "@/core/db";
+import { RuleViolation } from "@/core/errors";
 import { createEvent, eventBus } from "@/core/events";
 import type { Priority } from "../../types";
 
@@ -79,6 +80,35 @@ export async function updateCard(
     select: { boardId: true, assignedTo: true, board: { select: { workspaceId: true } } },
   });
 
+  // Os três campos abaixo são referência livre (id de outra tabela) vinda do
+  // client — sem checar aqui, um membro de QUALQUER workspace podia vincular
+  // este card a uma label/cycle/story de um board que não é o dele (a FK do
+  // Prisma só garante que o id existe em algum lugar, não que é do mesmo dono).
+  if (input.labelIds.length > 0) {
+    const owned = await prisma.label.count({
+      where: { id: { in: input.labelIds }, boardId: existing.boardId },
+    });
+    if (owned !== input.labelIds.length) throw new RuleViolation("Etiqueta de outro board");
+  }
+  if (input.cycleId) {
+    const cycle = await prisma.cycle.findUnique({
+      where: { id: input.cycleId },
+      select: { workspaceId: true },
+    });
+    if (!cycle || cycle.workspaceId !== existing.board.workspaceId) {
+      throw new RuleViolation("Cycle de outro workspace");
+    }
+  }
+  if (input.storyId) {
+    const story = await prisma.story.findUnique({
+      where: { id: input.storyId },
+      select: { boardId: true },
+    });
+    if (!story || story.boardId !== existing.boardId) {
+      throw new RuleViolation("História de outro board");
+    }
+  }
+
   const card = await prisma.$transaction(async (tx) => {
     const updated = await tx.card.update({
       where: { id: input.cardId },
@@ -145,6 +175,17 @@ export async function moveCard(
     where: { id: input.cardId },
     select: { title: true, boardId: true, board: { select: { workspaceId: true } } },
   });
+
+  // destCardIds/sourceCardIds vêm do client (a ordem da coluna depois do
+  // drag) — sem checar, um id de card de outro board seria movido junto
+  // (é um prisma.card.update por id, não um updateMany filtrado por board).
+  const reorderedIds = [...input.destCardIds, ...input.sourceCardIds];
+  if (reorderedIds.length > 0) {
+    const owned = await prisma.card.count({
+      where: { id: { in: reorderedIds }, boardId: card.boardId },
+    });
+    if (owned !== reorderedIds.length) throw new RuleViolation("Card de outro board");
+  }
 
   const changedColumn = input.fromColumnId !== input.toColumnId;
   // Categoria do estado de destino — registrada no histórico p/ métricas (F6).
