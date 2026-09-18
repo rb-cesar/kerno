@@ -1,7 +1,7 @@
 import { prisma } from "@/core/db";
 import type { AnyKernoEvent } from "@/core/events";
 import { eventBus } from "@/core/events";
-import { defaultChannelId, postSystemMessage } from "@/modules/chat/server";
+import { chatDomain } from "@/modules/chat/server";
 
 let registered = false;
 
@@ -50,9 +50,9 @@ export function initKanbanChatIntegration(): void {
     try {
       const text = await describe(event);
       if (!text) return;
-      const channelId = await defaultChannelId(event.workspaceId);
+      const channelId = await chatDomain.defaultChannelId(event.workspaceId);
       if (!channelId) return;
-      await postSystemMessage(channelId, text);
+      await chatDomain.postSystemMessage(channelId, text);
     } catch (err) {
       console.error("[integration:kanban-chat] falha ao anunciar evento", event.type, err);
     }

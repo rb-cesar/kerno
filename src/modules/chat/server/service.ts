@@ -12,7 +12,7 @@ import type {
   SendMessageInput,
   ToggleReactionInput,
 } from "../types";
-import * as domain from "./domain";
+import { chatDomain } from "./domain";
 import { assertMember, guardChannel, guardConversation, guardWorkspace } from "./guards";
 
 function errorMessage(error: unknown): string {
@@ -25,8 +25,8 @@ export class ChatService {
     await assertMember(userId, workspaceId);
 
     const [channels, conversations, workspaceUsers] = await Promise.all([
-      domain.listChannels(workspaceId),
-      domain.listConversations(workspaceId, userId),
+      chatDomain.listChannels(workspaceId),
+      chatDomain.listConversations(workspaceId, userId),
       prisma.workspaceUser.findMany({
         where: { workspaceId },
         include: { user: { select: { id: true, name: true } } },
@@ -35,7 +35,7 @@ export class ChatService {
 
     const initialChannelId = channels[0]?.id ?? null;
     const initialMessages = initialChannelId
-      ? await domain.getMessages(initialChannelId, userId)
+      ? await chatDomain.getMessages(initialChannelId, userId)
       : [];
 
     return {
@@ -50,7 +50,7 @@ export class ChatService {
 
   async fetchMessages(userId: string, channelId: string): Promise<MessageDTO[]> {
     await guardChannel(userId, channelId);
-    return domain.getMessages(channelId, userId);
+    return chatDomain.getMessages(channelId, userId);
   }
 
   async sendMessage(userId: string, input: SendMessageInput): Promise<ChatResult<MessageDTO>> {
@@ -59,7 +59,12 @@ export class ChatService {
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
-      const message = await domain.sendMessage(input.channelId, content, userId, input.replyToId);
+      const message = await chatDomain.sendMessage(
+        input.channelId,
+        content,
+        userId,
+        input.replyToId,
+      );
       return { ok: true, data: message };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -68,7 +73,7 @@ export class ChatService {
 
   async editMessage(userId: string, input: EditMessageInput): Promise<ChatResult<MessageDTO>> {
     try {
-      const ctx = await domain.messageContext(input.messageId);
+      const ctx = await chatDomain.messageContext(input.messageId);
       if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
 
       // Acesso ao canal/conversa da mensagem (a autoria é checada no domínio).
@@ -80,7 +85,7 @@ export class ChatService {
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
 
-      const message = await domain.editMessage(input.messageId, content, userId);
+      const message = await chatDomain.editMessage(input.messageId, content, userId);
       return { ok: true, data: message };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -92,7 +97,7 @@ export class ChatService {
       await guardWorkspace(userId, input.workspaceId, "MEMBER");
       const name = input.name.trim().toLowerCase().replace(/\s+/g, "-");
       if (!name) return { ok: false, error: "Nome inválido" };
-      const channel = await domain.createChannel(input.workspaceId, name);
+      const channel = await chatDomain.createChannel(input.workspaceId, name);
       return { ok: true, data: channel };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -111,7 +116,7 @@ export class ChatService {
       if (input.userId === userId) return { ok: false, error: "Conversa inválida" };
       // O destinatário também precisa ser membro do workspace.
       await assertMember(input.userId, input.workspaceId);
-      const conversation = await domain.openDirect(input.workspaceId, userId, input.userId);
+      const conversation = await chatDomain.openDirect(input.workspaceId, userId, input.userId);
       return { ok: true, data: conversation };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -120,7 +125,7 @@ export class ChatService {
 
   async directMessages(userId: string, conversationId: string): Promise<MessageDTO[]> {
     await guardConversation(userId, conversationId);
-    return domain.getDirectMessages(conversationId, userId);
+    return chatDomain.getDirectMessages(conversationId, userId);
   }
 
   async toggleReaction(
@@ -128,7 +133,7 @@ export class ChatService {
     input: ToggleReactionInput,
   ): Promise<ChatResult<{ messageId: string }>> {
     try {
-      const ctx = await domain.messageContext(input.messageId);
+      const ctx = await chatDomain.messageContext(input.messageId);
       if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
 
       // Garante que o usuário tem acesso ao canal/conversa da mensagem.
@@ -139,7 +144,7 @@ export class ChatService {
       const emoji = input.emoji?.trim();
       if (!emoji || emoji.length > 16) return { ok: false, error: "Emoji inválido" };
 
-      await domain.toggleReaction(input.messageId, emoji, userId);
+      await chatDomain.toggleReaction(input.messageId, emoji, userId);
       return { ok: true, data: { messageId: input.messageId } };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -152,7 +157,7 @@ export class ChatService {
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
-      const message = await domain.sendDirectMessage(
+      const message = await chatDomain.sendDirectMessage(
         input.conversationId,
         content,
         userId,

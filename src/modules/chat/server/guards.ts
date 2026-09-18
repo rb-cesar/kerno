@@ -1,7 +1,7 @@
 import { Forbidden, NotFound } from "@/core/errors";
 import type { WorkspaceRole } from "@/modules/workspaces/server";
 import { requireWorkspaceRole } from "@/modules/workspaces/server/permissions";
-import { conversationAccess, workspaceIdOfChannel } from "./domain";
+import { chatDomain } from "./domain";
 
 /**
  * Resolve o workspace dono do recurso e exige membership com o papel mínimo
@@ -21,7 +21,7 @@ export const guardChannel = async (
   userId: string,
   channelId: string,
   minRole: WorkspaceRole = "VIEWER",
-) => assertMember(userId, await workspaceIdOfChannel(channelId), minRole);
+) => assertMember(userId, await chatDomain.workspaceIdOfChannel(channelId), minRole);
 export const guardWorkspace = (
   userId: string,
   workspaceId: string,
@@ -33,7 +33,7 @@ export const guardWorkspace = (
  * workspace não basta.
  */
 export async function guardConversation(userId: string, conversationId: string): Promise<void> {
-  const access = await conversationAccess(conversationId);
+  const access = await chatDomain.conversationAccess(conversationId);
   if (!access) throw new NotFound("Conversa não encontrada");
   if (!access.participantIds.includes(userId)) {
     throw new Forbidden("Você não participa desta conversa");

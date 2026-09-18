@@ -1,17 +1,7 @@
 import { NotFound } from "@/core/errors";
 import type { WorkspaceRole } from "@/modules/workspaces/server";
 import { requireWorkspaceRole } from "@/modules/workspaces/server/permissions";
-import {
-  cardIdOfChecklist,
-  cardIdOfChecklistItem,
-  cardIdOfComment,
-  workspaceIdOfBoard,
-  workspaceIdOfCard,
-  workspaceIdOfColumn,
-  workspaceIdOfCycle,
-  workspaceIdOfLabel,
-  workspaceIdOfStory,
-} from "./domain";
+import * as domain from "./domain";
 
 /**
  * Resolve o workspace dono do recurso e exige membership com o papel mínimo
@@ -33,56 +23,64 @@ export const guardBoard = async (
   userId: string,
   boardId: string,
   minRole: WorkspaceRole = "VIEWER",
-) => assertMember(userId, await workspaceIdOfBoard(boardId), minRole);
+) => assertMember(userId, await domain.board.workspaceIdOfBoard(boardId), minRole);
+
 export const guardColumn = async (
   userId: string,
   columnId: string,
   minRole: WorkspaceRole = "VIEWER",
-) => assertMember(userId, await workspaceIdOfColumn(columnId), minRole);
+) => assertMember(userId, await domain.board.workspaceIdOfColumn(columnId), minRole);
+
 export const guardCard = async (
   userId: string,
   cardId: string,
   minRole: WorkspaceRole = "VIEWER",
-) => assertMember(userId, await workspaceIdOfCard(cardId), minRole);
+) => assertMember(userId, await domain.board.workspaceIdOfCard(cardId), minRole);
+
 export const guardLabel = async (
   userId: string,
   labelId: string,
   minRole: WorkspaceRole = "VIEWER",
-) => assertMember(userId, await workspaceIdOfLabel(labelId), minRole);
+) => assertMember(userId, await domain.board.workspaceIdOfLabel(labelId), minRole);
+
 export const guardCycle = async (
   userId: string,
   cycleId: string,
   minRole: WorkspaceRole = "VIEWER",
-) => assertMember(userId, await workspaceIdOfCycle(cycleId), minRole);
+) => assertMember(userId, await domain.cycle.workspaceIdOfCycle(cycleId), minRole);
+
 export const guardStory = async (
   userId: string,
   storyId: string,
   minRole: WorkspaceRole = "VIEWER",
-) => assertMember(userId, await workspaceIdOfStory(storyId), minRole);
+) => assertMember(userId, await domain.story.workspaceIdOfStory(storyId), minRole);
+
 export async function guardComment(
   userId: string,
   commentId: string,
   minRole: WorkspaceRole = "VIEWER",
 ): Promise<void> {
-  const cardId = await cardIdOfComment(commentId);
+  const cardId = await domain.cardDetail.cardIdOfComment(commentId);
   if (!cardId) throw new NotFound("Comentário não encontrado");
   await guardCard(userId, cardId, minRole);
 }
+
 export async function guardChecklist(
   userId: string,
   checklistId: string,
   minRole: WorkspaceRole = "VIEWER",
 ): Promise<void> {
-  const cardId = await cardIdOfChecklist(checklistId);
+  const cardId = await domain.checklist.cardIdOfChecklist(checklistId);
   if (!cardId) throw new NotFound("Checklist não encontrada");
   await guardCard(userId, cardId, minRole);
 }
+
 export async function guardChecklistItem(
   userId: string,
   itemId: string,
   minRole: WorkspaceRole = "VIEWER",
 ): Promise<void> {
-  const cardId = await cardIdOfChecklistItem(itemId);
+  const cardId = await domain.checklist.cardIdOfChecklistItem(itemId);
   if (!cardId) throw new NotFound("Item não encontrado");
   await guardCard(userId, cardId, minRole);
 }
