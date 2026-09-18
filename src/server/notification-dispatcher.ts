@@ -6,10 +6,15 @@ import type { NotificationDTO } from "@/modules/notifications/types";
 // Tipos de evento que podem virar notificação — filtra antes de gastar
 // consulta em eventos irrelevantes (card:moved, reaction:changed, ...). O type
 // guard (em vez de um Set.has) é o que deixa o TS estreitar o payload abaixo.
-type RelevantEvent = Extract<AnyKernoEvent, { type: "card:assigned" | "message:sent" | "dm:sent" }>;
+type RelevantEvent = Extract<AnyKernoEvent, { type: "card:assigned" | "card:commented" | "message:sent" | "dm:sent" }>;
 
 function isRelevant(event: AnyKernoEvent): event is RelevantEvent {
-  return event.type === "card:assigned" || event.type === "message:sent" || event.type === "dm:sent";
+  return (
+    event.type === "card:assigned" ||
+    event.type === "card:commented" ||
+    event.type === "message:sent" ||
+    event.type === "dm:sent"
+  );
 }
 
 async function actorName(userId?: string): Promise<string> {
@@ -43,19 +48,38 @@ type Recipient = { userId: string; title: string; body?: string | null; link?: s
 async function recipientsFor(event: RelevantEvent, workspaceSlug: string): Promise<Recipient[]> {
   const out = new Map<string, Recipient>();
   const who = await actorName(event.userId);
-  const link = `/w/${workspaceSlug}/chat`;
 
   if (event.type === "card:assigned") {
-    const { assignedTo, title } = event.payload;
+    const { assignedTo, title, cardId } = event.payload;
     if (assignedTo && assignedTo !== event.userId) {
       out.set(assignedTo, {
         userId: assignedTo,
         title: `${who} atribuiu "${title}" a você`,
-        link: `/w/${workspaceSlug}/boards`,
+        link: `/w/${workspaceSlug}/boards?card=${cardId}`,
       });
     }
     return [...out.values()];
   }
+
+  if (event.type === "card:commented") {
+    const { assignedTo, title, cardId, excerpt } = event.payload;
+    if (assignedTo && assignedTo !== event.userId) {
+      out.set(assignedTo, {
+        userId: assignedTo,
+        title: `${who} comentou em "${title}"`,
+        body: excerpt,
+        link: `/w/${workspaceSlug}/boards?card=${cardId}`,
+      });
+    }
+    return [...out.values()];
+  }
+
+  // Deep-link pro canal ou pra DM específica — não pra mensagem em si (não há
+  // scroll-to-message hoje, só troca o canal/DM ativo).
+  const link =
+    event.type === "dm:sent"
+      ? `/w/${workspaceSlug}/chat?dm=${event.payload.conversationId}`
+      : `/w/${workspaceSlug}/chat?channel=${event.payload.channelId}`;
 
   // message:sent (canal) e dm:sent compartilham a mesma origem: a mensagem em
   // si não carrega replyToId/conteúdo completo no payload do evento, então

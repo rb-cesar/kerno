@@ -1,4 +1,5 @@
 import { prisma } from "@/core/db";
+import { createEvent, eventBus } from "@/core/events";
 import type { CardDetailDTO, MemberDTO } from "../../types";
 import { card } from "./card";
 
@@ -13,7 +14,30 @@ export class CardDetailDomain {
   }
 
   async addComment(cardId: string, body: string, actorId: string) {
-    return prisma.cardComment.create({ data: { cardId, body, userId: actorId } });
+    const [comment, cardRow] = await Promise.all([
+      prisma.cardComment.create({ data: { cardId, body, userId: actorId } }),
+      prisma.card.findUniqueOrThrow({
+        where: { id: cardId },
+        select: { title: true, boardId: true, assignedTo: true, board: { select: { workspaceId: true } } },
+      }),
+    ]);
+
+    eventBus.publish(
+      createEvent(
+        "card:commented",
+        cardRow.board.workspaceId,
+        {
+          cardId,
+          boardId: cardRow.boardId,
+          title: cardRow.title,
+          assignedTo: cardRow.assignedTo,
+          excerpt: body.length > 120 ? `${body.slice(0, 120)}…` : body,
+        },
+        actorId,
+      ),
+    );
+
+    return comment;
   }
 
   /** Remove um comentário — apenas o próprio autor pode. */

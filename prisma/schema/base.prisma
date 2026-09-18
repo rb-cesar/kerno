@@ -1,13 +1,14 @@
 // Núcleo — identidade + contexto (workspace / membership).
 // generator + datasource vivem aqui (precisam estar em um único arquivo).
+// A URL de conexão mora em prisma.config.ts (Prisma 7) — aqui só o provider.
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {

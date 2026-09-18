@@ -1,7 +1,7 @@
 import { prisma } from "@/core/db";
 import type { NotificationDTO, NotificationRecipient } from "../types";
 
-const LIST_LIMIT = 50;
+export const NOTIFICATIONS_PAGE_SIZE = 50;
 
 export class NotificationDomain {
   private toDTO(row: {
@@ -24,11 +24,12 @@ export class NotificationDomain {
     };
   }
 
-  async list(userId: string): Promise<NotificationDTO[]> {
+  /** `before`: só notificações criadas antes desse instante — paginação por cursor. */
+  async list(userId: string, before?: Date): Promise<NotificationDTO[]> {
     const rows = await prisma.notification.findMany({
-      where: { userId },
+      where: { userId, ...(before ? { createdAt: { lt: before } } : {}) },
       orderBy: { createdAt: "desc" },
-      take: LIST_LIMIT,
+      take: NOTIFICATIONS_PAGE_SIZE,
       include: { event: { select: { type: true } } },
     });
     return rows.map((row) => this.toDTO(row));

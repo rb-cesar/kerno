@@ -1,7 +1,7 @@
 "use client";
 
 import { AtSign, CornerUpLeft, Hash, X } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { cn } from "@/components/ui";
 import type {
@@ -68,6 +68,7 @@ export function ChatPanel({
   toggleReaction,
   searchTasks,
   onOpenTask,
+  initialTarget,
 }: {
   initial: ChatData;
   currentUserId: string;
@@ -85,6 +86,8 @@ export function ChatPanel({
   searchTasks?: ChatSearchTasks;
   /** Abre o painel de uma tarefa mencionada (opcional). `label` = KERN-N p/ a aba. */
   onOpenTask?: (cardId: string, label?: string) => void;
+  /** Deep-link de notificação: canal ou DM pra abrir na montagem. */
+  initialTarget?: { channelId?: string; conversationId?: string };
 }) {
   const [channels, setChannels] = useState<ChannelDTO[]>(initial.channels);
   const [conversations, setConversations] = useState<DirectConversationDTO[]>(initial.conversations);
@@ -119,6 +122,12 @@ export function ChatPanel({
     },
     [loadMessages],
   );
+
+  // Deep-link de notificação: abre o canal/DM indicado na URL, uma vez na montagem.
+  useEffect(() => {
+    if (initialTarget?.channelId) select({ kind: "channel", id: initialTarget.channelId });
+    else if (initialTarget?.conversationId) select({ kind: "dm", id: initialTarget.conversationId });
+  }, []);
 
   const memberById = useMemo(() => new Map(initial.members.map((m) => [m.id, m])), [initial.members]);
 

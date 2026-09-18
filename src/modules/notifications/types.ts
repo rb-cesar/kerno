@@ -13,6 +13,8 @@ export interface NotificationDTO {
 export interface NotificationsData {
   items: NotificationDTO[];
   unreadCount: number;
+  /** Se true, a página veio cheia — provavelmente há mais itens mais antigos. */
+  hasMore: boolean;
 }
 
 /** Destinatário de um evento — decidido pela composição do app (ver server/notification-dispatcher). */

@@ -6,6 +6,7 @@ export type KernoEventType =
   | "card:moved"
   | "card:deleted"
   | "card:assigned"
+  | "card:commented"
   | "kanban:changed"
   | "message:sent"
   | "message:edited"
@@ -40,6 +41,14 @@ export interface CardAssignedPayload {
   boardId: string;
   assignedTo: string | null;
   title: string;
+}
+
+export interface CardCommentedPayload {
+  cardId: string;
+  boardId: string;
+  title: string;
+  assignedTo: string | null;
+  excerpt: string;
 }
 
 /**
@@ -102,6 +111,7 @@ export interface KernoEventMap {
   "card:moved": CardMovedPayload;
   "card:deleted": CardDeletedPayload;
   "card:assigned": CardAssignedPayload;
+  "card:commented": CardCommentedPayload;
   "kanban:changed": KanbanChangedPayload;
   "message:sent": MessageSentPayload;
   "message:edited": MessageEditedPayload;

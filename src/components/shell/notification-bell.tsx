@@ -51,7 +51,7 @@ export function NotificationBell({
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
 }) {
-  const { items, unreadCount, markRead, markAllRead } = useNotifications();
+  const { items, unreadCount, hasMore, loadingMore, markRead, markAllRead, loadMore } = useNotifications();
 
   return (
     <Popover>
@@ -85,6 +85,17 @@ export function NotificationBell({
           ) : (
             items.map((n) => <NotificationRow key={n.id} notification={n} onRead={() => !n.read && markRead(n.id)} />)
           )}
+          {hasMore ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="mt-1 w-full text-xs text-muted-foreground"
+            >
+              {loadingMore ? "Carregando…" : "Carregar mais"}
+            </Button>
+          ) : null}
         </div>
       </PopoverContent>
     </Popover>
