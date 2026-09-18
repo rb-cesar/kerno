@@ -4,7 +4,7 @@
     {
       "name": "web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@kerno/web", "dev"],
+      "runtimeArgs": ["dev"],
       "port": 3000
     }
   ]

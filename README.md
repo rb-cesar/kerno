@@ -6,10 +6,9 @@ Plataforma modular para times de TI — um núcleo compartilhado (identidade, co
 
 ## Stack
 
-- **Monorepo:** pnpm workspaces (`pnpm -r`, sem orquestrador à parte)
-- **App:** Next.js 15 (App Router) fullstack — Next, a API (Hono) e o Socket.io no
-  mesmo processo (custom `server.ts`)
-- **API:** Hono, montada como route handler do Next (`app/api/[[...route]]`)
+- **App único:** um `package.json`, um Next.js 15 (App Router) fullstack — Next, a
+  API (Hono) e o Socket.io no mesmo processo (custom `server.ts`)
+- **API:** Hono, montada como route handler do Next (`src/app/api/[[...route]]`)
 - **Realtime:** Socket.io (self-hosted, mesma origem — sessão via cookie)
 - **Auth:** NextAuth v5 / Auth.js (Credentials) — sessão única, sem BFF
 - **DB:** PostgreSQL + Prisma (schema multi-arquivo, um `.prisma` por dono)
@@ -20,19 +19,24 @@ Plataforma modular para times de TI — um núcleo compartilhado (identidade, co
 
 ```
 kerno/
-├── apps/web/                    # Next.js + server.ts (Next + API Hono + Socket.io)
-│   └── server/                  # composition root, api.ts, realtime, integrações
-├── packages/
-│   ├── core/                    # núcleo: events, errors, http (sessão), workspaces
-│   ├── db/                      # Prisma client + schema (um .prisma por dono) + migrations
-│   ├── editor/                  # editor Lexical compartilhado (kanban + chat)
-│   ├── ui/                      # componentes compartilhados (Radix)
-│   └── modules/
-│       ├── kanban/
-│       └── chat/
-├── docker-compose.yml            # Postgres local
-└── biome.json
+├── server.ts                    # Next + API Hono + Socket.io, um processo só
+├── prisma/                      # schema (um .prisma por dono) + migrations + seed
+└── src/
+    ├── app/                     # rotas do Next — finas, só montam a página
+    ├── modules/                 # o produto: um diretório por hub (mesmo formato)
+    │   ├── workspaces/
+    │   ├── kanban/
+    │   └── chat/
+    ├── core/                    # núcleo: db, errors, events, auth, request
+    ├── server/                  # composição: api.ts, container.ts, realtime, integrações
+    └── components/              # React compartilhado, sem regra de negócio
+        ├── ui/                  # Radix
+        ├── editor/              # editor Lexical (kanban + chat)
+        ├── theme/
+        └── shell/
 ```
+
+Ver [ARCHITECTURE.md](ARCHITECTURE.md) para o detalhe de cada camada.
 
 ## Pré-requisitos
 

@@ -1,7 +1,0 @@
-packages:
-  - "apps/*"
-  - "packages/core"
-  - "packages/db"
-  - "packages/editor"
-  - "packages/ui"
-  - "packages/modules/*"

@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "noEmit": true,
-    "moduleResolution": "Bundler",
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts", "prisma/**/*.ts"]
-}
