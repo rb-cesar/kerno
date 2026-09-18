@@ -218,10 +218,7 @@ export function RichTextView({ content }: { content: string }): ReactNode {
         i += 1;
       }
       blocks.push(
-        <blockquote
-          key={`q.${i}`}
-          className="border-l-2 border-muted-foreground/40 pl-3 text-muted-foreground"
-        >
+        <blockquote key={`q.${i}`} className="border-l-2 border-muted-foreground/40 pl-3 text-muted-foreground">
           {renderParagraph(quote, `q.${i}.p`)}
         </blockquote>,
       );

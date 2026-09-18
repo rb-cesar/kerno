@@ -13,7 +13,7 @@ import type {
   ToggleReactionInput,
 } from "../types";
 import { chatDomain } from "./domain";
-import { assertMember, guardChannel, guardConversation, guardWorkspace } from "./guards";
+import { chatGuards } from "./guards";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Erro inesperado";
@@ -22,7 +22,7 @@ function errorMessage(error: unknown): string {
 export class ChatService {
   /** Carga inicial da tela de chat (antes na page.tsx). */
   async chatForWorkspace(userId: string, workspaceId: string): Promise<ChatData> {
-    await assertMember(userId, workspaceId);
+    await chatGuards.assertMember(userId, workspaceId);
 
     const [channels, conversations, workspaceUsers] = await Promise.all([
       chatDomain.listChannels(workspaceId),
@@ -49,13 +49,13 @@ export class ChatService {
   }
 
   async fetchMessages(userId: string, channelId: string): Promise<MessageDTO[]> {
-    await guardChannel(userId, channelId);
+    await chatGuards.guardChannel(userId, channelId);
     return chatDomain.getMessages(channelId, userId);
   }
 
   async sendMessage(userId: string, input: SendMessageInput): Promise<ChatResult<MessageDTO>> {
     try {
-      await guardChannel(userId, input.channelId, "MEMBER");
+      await chatGuards.guardChannel(userId, input.channelId, "MEMBER");
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
@@ -77,8 +77,8 @@ export class ChatService {
       if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
 
       // Acesso ao canal/conversa da mensagem (a autoria é checada no domínio).
-      if (ctx.channelId) await guardChannel(userId, ctx.channelId, "MEMBER");
-      else if (ctx.conversationId) await guardConversation(userId, ctx.conversationId);
+      if (ctx.channelId) await chatGuards.guardChannel(userId, ctx.channelId, "MEMBER");
+      else if (ctx.conversationId) await chatGuards.guardConversation(userId, ctx.conversationId);
       else return { ok: false, error: "Mensagem inválida" };
 
       const content = input.content.trim();
@@ -94,7 +94,7 @@ export class ChatService {
 
   async createChannel(userId: string, input: CreateChannelInput): Promise<ChatResult<ChannelDTO>> {
     try {
-      await guardWorkspace(userId, input.workspaceId, "MEMBER");
+      await chatGuards.guardWorkspace(userId, input.workspaceId, "MEMBER");
       const name = input.name.trim().toLowerCase().replace(/\s+/g, "-");
       if (!name) return { ok: false, error: "Nome inválido" };
       const channel = await chatDomain.createChannel(input.workspaceId, name);
@@ -112,10 +112,10 @@ export class ChatService {
     input: OpenDirectInput,
   ): Promise<ChatResult<DirectConversationDTO>> {
     try {
-      await guardWorkspace(userId, input.workspaceId, "MEMBER");
+      await chatGuards.guardWorkspace(userId, input.workspaceId, "MEMBER");
       if (input.userId === userId) return { ok: false, error: "Conversa inválida" };
       // O destinatário também precisa ser membro do workspace.
-      await assertMember(input.userId, input.workspaceId);
+      await chatGuards.assertMember(input.userId, input.workspaceId);
       const conversation = await chatDomain.openDirect(input.workspaceId, userId, input.userId);
       return { ok: true, data: conversation };
     } catch (error) {
@@ -124,7 +124,7 @@ export class ChatService {
   }
 
   async directMessages(userId: string, conversationId: string): Promise<MessageDTO[]> {
-    await guardConversation(userId, conversationId);
+    await chatGuards.guardConversation(userId, conversationId);
     return chatDomain.getDirectMessages(conversationId, userId);
   }
 
@@ -137,8 +137,8 @@ export class ChatService {
       if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
 
       // Garante que o usuário tem acesso ao canal/conversa da mensagem.
-      if (ctx.channelId) await guardChannel(userId, ctx.channelId, "MEMBER");
-      else if (ctx.conversationId) await guardConversation(userId, ctx.conversationId);
+      if (ctx.channelId) await chatGuards.guardChannel(userId, ctx.channelId, "MEMBER");
+      else if (ctx.conversationId) await chatGuards.guardConversation(userId, ctx.conversationId);
       else return { ok: false, error: "Mensagem inválida" };
 
       const emoji = input.emoji?.trim();
@@ -153,7 +153,7 @@ export class ChatService {
 
   async sendDirect(userId: string, input: SendDirectMessageInput): Promise<ChatResult<MessageDTO>> {
     try {
-      await guardConversation(userId, input.conversationId);
+      await chatGuards.guardConversation(userId, input.conversationId);
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };

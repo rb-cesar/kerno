@@ -1,13 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import {
-  type ReactNode,
-  type PointerEvent as ReactPointerEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from "react";
 import type { DockTab } from "./hooks/use-dock-tabs";
 import { cn } from "./utils";
 
@@ -114,9 +108,7 @@ export function TabDock({
               title={tab.title}
               className={cn(
                 "group flex max-w-[12rem] shrink-0 cursor-pointer select-none items-center gap-1.5 border-r px-3 py-1.5 text-xs",
-                active
-                  ? "bg-background text-foreground"
-                  : "bg-muted/40 text-muted-foreground hover:bg-muted",
+                active ? "bg-background text-foreground" : "bg-muted/40 text-muted-foreground hover:bg-muted",
               )}
             >
               {tab.icon}
@@ -144,10 +136,7 @@ export function TabDock({
       {/* Conteúdo: todas as abas montadas; só a ativa visível (preserva edição). */}
       <div className="relative min-h-0 flex-1">
         {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            className={cn("absolute inset-0 flex flex-col", tab.id === activeId ? "" : "hidden")}
-          >
+          <div key={tab.id} className={cn("absolute inset-0 flex flex-col", tab.id === activeId ? "" : "hidden")}>
             {renderContent(tab)}
           </div>
         ))}

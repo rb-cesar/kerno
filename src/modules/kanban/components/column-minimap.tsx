@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type PointerEvent as ReactPointerEvent,
-  type RefObject,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type PointerEvent as ReactPointerEvent, type RefObject, useEffect, useRef, useState } from "react";
 import { cn } from "@/components/ui";
 import type { ColumnDTO } from "../types";
 import { CATEGORY_COLOR, PRIORITY_META } from "./meta";
@@ -106,10 +100,7 @@ export function BoardMinimap({
                       style={{ backgroundColor: PRIORITY_META[card.priority].color }}
                     />
                   ) : (
-                    <div
-                      key={card.id}
-                      className="h-1.5 w-full shrink-0 rounded-[1px] bg-muted-foreground/40"
-                    />
+                    <div key={card.id} className="h-1.5 w-full shrink-0 rounded-[1px] bg-muted-foreground/40" />
                   ),
                 )}
             </div>
@@ -118,9 +109,7 @@ export function BoardMinimap({
 
         {/* Retângulo de viewport (reflete o scroll horizontal do board). */}
         <div
-          className={cn(
-            "pointer-events-none absolute inset-y-0 rounded-sm border-2 border-primary/70 bg-primary/10",
-          )}
+          className={cn("pointer-events-none absolute inset-y-0 rounded-sm border-2 border-primary/70 bg-primary/10")}
           style={{ left: `${view.left}%`, width: `${view.width}%` }}
         />
       </div>

@@ -60,7 +60,5 @@ export function isOverdue(iso: string): boolean {
 
 export function activityText(a: CardActivityDTO): string {
   const who = a.actorName ?? "Alguém";
-  return a.initial
-    ? `${who} criou em "${a.toColumnName}"`
-    : `${who} moveu para "${a.toColumnName}"`;
+  return a.initial ? `${who} criou em "${a.toColumnName}"` : `${who} moveu para "${a.toColumnName}"`;
 }

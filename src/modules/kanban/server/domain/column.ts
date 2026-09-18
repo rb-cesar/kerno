@@ -11,10 +11,7 @@ export class ColumnDomain {
     return prisma.column.update({ where: { id: columnId }, data: { name } });
   }
 
-  async updateColumn(
-    columnId: string,
-    input: { name: string; category: StatusCategory; wipLimit: number | null },
-  ) {
+  async updateColumn(columnId: string, input: { name: string; category: StatusCategory; wipLimit: number | null }) {
     return prisma.column.update({
       where: { id: columnId },
       data: { name: input.name, category: input.category, wipLimit: input.wipLimit },
@@ -25,9 +22,7 @@ export class ColumnDomain {
     // updateMany com `boardId` no where garante que só colunas DESTE board sejam
     // reordenadas (ignora ids de outros boards).
     await prisma.$transaction(
-      columnIds.map((id, index) =>
-        prisma.column.updateMany({ where: { id, boardId }, data: { order: index } }),
-      ),
+      columnIds.map((id, index) => prisma.column.updateMany({ where: { id, boardId }, data: { order: index } })),
     );
   }
 

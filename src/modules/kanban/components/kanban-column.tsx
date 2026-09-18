@@ -31,13 +31,7 @@ const CATEGORY_COLOR: Record<StatusCategory, string> = {
   COMPLETED: "#22c55e",
   CANCELED: "#ef4444",
 };
-const CATEGORY_ORDER: StatusCategory[] = [
-  "BACKLOG",
-  "UNSTARTED",
-  "STARTED",
-  "COMPLETED",
-  "CANCELED",
-];
+const CATEGORY_ORDER: StatusCategory[] = ["BACKLOG", "UNSTARTED", "STARTED", "COMPLETED", "CANCELED"];
 const CATEGORY_LABEL: Record<StatusCategory, string> = {
   BACKLOG: "Backlog",
   UNSTARTED: "A fazer",
@@ -224,20 +218,10 @@ export function KanbanColumn({
   const overLimit = column.wipLimit != null && column.cards.length > column.wipLimit;
 
   return (
-    <div
-      className={cn(
-        "flex w-72 shrink-0 flex-col rounded-lg bg-muted/40",
-        laneMode ? "self-start" : "h-full",
-      )}
-    >
+    <div className={cn("flex w-72 shrink-0 flex-col rounded-lg bg-muted/40", laneMode ? "self-start" : "h-full")}>
       <div className="flex items-center justify-between gap-2 p-2">
-        <div
-          {...(laneMode ? {} : handleProps)}
-          className="flex flex-1 items-center gap-1.5 text-sm font-semibold"
-        >
-          {laneMode ? null : (
-            <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab text-muted-foreground/60" />
-          )}
+        <div {...(laneMode ? {} : handleProps)} className="flex flex-1 items-center gap-1.5 text-sm font-semibold">
+          {laneMode ? null : <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab text-muted-foreground/60" />}
           <span
             className="h-2 w-2 shrink-0 rounded-full"
             style={{ backgroundColor: CATEGORY_COLOR[column.category] }}
@@ -245,15 +229,10 @@ export function KanbanColumn({
           />
           <span className="truncate">{column.name}</span>
           <span
-            className={cn(
-              "text-xs font-normal text-muted-foreground",
-              overLimit && "font-semibold text-destructive",
-            )}
+            className={cn("text-xs font-normal text-muted-foreground", overLimit && "font-semibold text-destructive")}
             title={column.wipLimit != null ? `Limite de WIP: ${column.wipLimit}` : undefined}
           >
-            {column.wipLimit != null
-              ? `${column.cards.length}/${column.wipLimit}`
-              : column.cards.length}
+            {column.wipLimit != null ? `${column.cards.length}/${column.wipLimit}` : column.cards.length}
           </span>
         </div>
         {laneMode ? null : <ColumnSettings column={column} />}

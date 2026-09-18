@@ -5,10 +5,7 @@ import { signIn } from "@/core/auth/next-auth";
 
 export type AuthFormState = { error?: string } | null;
 
-export async function loginAction(
-  _prev: AuthFormState,
-  formData: FormData,
-): Promise<AuthFormState> {
+export async function loginAction(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
   try {
     await signIn("credentials", {
       email: String(formData.get("email") ?? ""),

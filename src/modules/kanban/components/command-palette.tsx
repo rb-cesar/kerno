@@ -104,9 +104,7 @@ export function CommandPalette({
         </div>
         <ul className="max-h-80 overflow-y-auto p-1">
           {results.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-muted-foreground">
-              Nada encontrado.
-            </li>
+            <li className="px-3 py-6 text-center text-sm text-muted-foreground">Nada encontrado.</li>
           ) : (
             results.map((item, i) => (
               <li key={`${item.kind}:${item.id}`}>
@@ -122,9 +120,7 @@ export function CommandPalette({
                   {item.kind === "card" ? (
                     <>
                       <span className="truncate">{item.label}</span>
-                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                        {item.sub}
-                      </span>
+                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">{item.sub}</span>
                     </>
                   ) : (
                     <span className="text-muted-foreground">{item.label}</span>

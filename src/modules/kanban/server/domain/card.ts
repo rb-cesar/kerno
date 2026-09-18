@@ -7,12 +7,7 @@ import type { Priority } from "../../types";
 export const MAX_CARDS_PER_BOARD = 1000;
 
 export class CardDomain {
-  async createCard(
-    columnId: string,
-    title: string,
-    actorId: string,
-    parentId: string | null = null,
-  ) {
+  async createCard(columnId: string, title: string, actorId: string, parentId: string | null = null) {
     const column = await prisma.column.findUniqueOrThrow({
       where: { id: columnId },
       select: { boardId: true, category: true, board: { select: { workspaceId: true } } },

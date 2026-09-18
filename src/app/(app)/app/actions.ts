@@ -7,10 +7,7 @@ import { container } from "@/server/container";
 
 type FormState = { error?: string } | null;
 
-export async function createWorkspaceAction(
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
+export async function createWorkspaceAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireSession();
 
   const parsed = createWorkspaceInputSchema.safeParse({ name: formData.get("name") });

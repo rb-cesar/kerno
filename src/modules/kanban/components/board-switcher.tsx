@@ -95,14 +95,8 @@ export function BoardSwitcher({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
           {boards.map((b) => (
-            <DropdownMenuItem
-              key={b.id}
-              onClick={() => onSwitch(b.id)}
-              className="flex items-center gap-2"
-            >
-              <Check
-                className={cn("h-3.5 w-3.5", b.id === activeId ? "opacity-100" : "opacity-0")}
-              />
+            <DropdownMenuItem key={b.id} onClick={() => onSwitch(b.id)} className="flex items-center gap-2">
+              <Check className={cn("h-3.5 w-3.5", b.id === activeId ? "opacity-100" : "opacity-0")} />
               <span className="truncate">{b.name}</span>
             </DropdownMenuItem>
           ))}

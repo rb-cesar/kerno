@@ -9,14 +9,7 @@ export class ChecklistDomain {
       select: { boardId: true, board: { select: { workspaceId: true } } },
     });
     if (!card) return;
-    eventBus.publish(
-      createEvent(
-        "kanban:changed",
-        card.board.workspaceId,
-        { boardId: card.boardId, cardId },
-        actorId,
-      ),
-    );
+    eventBus.publish(createEvent("kanban:changed", card.board.workspaceId, { boardId: card.boardId, cardId }, actorId));
   }
 
   /** Cria uma nova todolist no card, posicionada ao final. */

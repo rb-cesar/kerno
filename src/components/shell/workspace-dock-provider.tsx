@@ -26,13 +26,7 @@ export function useWorkspaceDock(): WorkspaceDock {
  * abertas persistem ao navegar entre as telas. O conteúdo de cada aba é o painel
  * self-contained da tarefa (TaskSidePanel), alimentado pelas actions do kanban.
  */
-export function WorkspaceDockProvider({
-  currentUserId,
-  children,
-}: {
-  currentUserId: string;
-  children: ReactNode;
-}) {
+export function WorkspaceDockProvider({ currentUserId, children }: { currentUserId: string; children: ReactNode }) {
   const dock = useDockTabs();
 
   const openCard = useCallback(

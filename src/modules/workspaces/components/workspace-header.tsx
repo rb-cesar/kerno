@@ -27,11 +27,7 @@ export function WorkspaceHeader({
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4">
       <div className="flex items-center gap-3">
-        <Link
-          href="/app"
-          title="Voltar aos workspaces"
-          className="text-sm text-muted-foreground hover:underline"
-        >
+        <Link href="/app" title="Voltar aos workspaces" className="text-sm text-muted-foreground hover:underline">
           ←
         </Link>
         <h1 className="font-semibold">{workspaceName}</h1>
@@ -40,20 +36,12 @@ export function WorkspaceHeader({
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span
-            className={cn(
-              "inline-block h-2 w-2 rounded-full",
-              connected ? "bg-emerald-500" : "bg-neutral-500",
-            )}
+            className={cn("inline-block h-2 w-2 rounded-full", connected ? "bg-emerald-500" : "bg-neutral-500")}
             title={connected ? "Conectado" : "Desconectado"}
           />
           {online.length > 0 ? `${online.length} online` : connected ? "Só você" : "Conectando…"}
         </div>
-        <WorkspaceMembersDialog
-          workspaceId={workspaceId}
-          slug={slug}
-          isManager={isManager}
-          members={members}
-        />
+        <WorkspaceMembersDialog workspaceId={workspaceId} slug={slug} isManager={isManager} members={members} />
       </div>
     </header>
   );

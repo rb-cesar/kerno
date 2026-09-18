@@ -47,9 +47,7 @@ export class MetricsDomain {
       }),
     ]);
 
-    const startedColumns = new Set(
-      columns.filter((c) => c.category === "STARTED").map((c) => c.id),
-    );
+    const startedColumns = new Set(columns.filter((c) => c.category === "STARTED").map((c) => c.id));
     const createdAtById = new Map(cards.map((c) => [c.id, c.createdAt]));
 
     const events = await prisma.cardStatusEvent.findMany({

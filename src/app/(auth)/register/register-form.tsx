@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
-} from "@/components/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { registerAction } from "./actions";
 
@@ -35,14 +27,7 @@ export function RegisterForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              minLength={8}
-            />
+            <Input id="password" name="password" type="password" required autoComplete="new-password" minLength={8} />
           </div>
           {state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
           <SubmitButton className="w-full">Criar conta</SubmitButton>

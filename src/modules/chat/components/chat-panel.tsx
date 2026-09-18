@@ -40,9 +40,7 @@ function ReplyBanner({ reply, onCancel }: { reply: MessageDTO; onCancel: () => v
       <CornerUpLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <span className="text-muted-foreground">Respondendo a</span>
       <span className="font-medium">{reply.author?.name ?? "Desconhecido"}</span>
-      <span className="min-w-0 flex-1 truncate text-muted-foreground">
-        {reply.content.replace(/\s+/g, " ").trim()}
-      </span>
+      <span className="min-w-0 flex-1 truncate text-muted-foreground">{reply.content.replace(/\s+/g, " ").trim()}</span>
       <button
         type="button"
         onClick={onCancel}
@@ -89,9 +87,7 @@ export function ChatPanel({
   onOpenTask?: (cardId: string, label?: string) => void;
 }) {
   const [channels, setChannels] = useState<ChannelDTO[]>(initial.channels);
-  const [conversations, setConversations] = useState<DirectConversationDTO[]>(
-    initial.conversations,
-  );
+  const [conversations, setConversations] = useState<DirectConversationDTO[]>(initial.conversations);
   const [active, setActive] = useState<ActiveTarget | null>(
     initial.initialChannelId ? { kind: "channel", id: initial.initialChannelId } : null,
   );
@@ -102,10 +98,7 @@ export function ChatPanel({
 
   const loadMessages = useCallback(
     async (target: ActiveTarget) => {
-      const msgs =
-        target.kind === "channel"
-          ? await fetchMessages(target.id)
-          : await fetchDirectMessages(target.id);
+      const msgs = target.kind === "channel" ? await fetchMessages(target.id) : await fetchDirectMessages(target.id);
       setMessages(msgs);
     },
     [fetchMessages, fetchDirectMessages],
@@ -127,10 +120,7 @@ export function ChatPanel({
     [loadMessages],
   );
 
-  const memberById = useMemo(
-    () => new Map(initial.members.map((m) => [m.id, m])),
-    [initial.members],
-  );
+  const memberById = useMemo(() => new Map(initial.members.map((m) => [m.id, m])), [initial.members]);
 
   const onRealtime = useCallback(
     (target: ChatTarget, fromSelf: boolean, kind: ChatEventKind) => {
@@ -152,10 +142,7 @@ export function ChatPanel({
             .filter((id) => id !== currentUserId)
             .map((id) => memberById.get(id))
             .filter((m): m is NonNullable<typeof m> => Boolean(m));
-          return [
-            { id: target.id, participants: others, lastMessageAt: new Date().toISOString() },
-            ...prev,
-          ];
+          return [{ id: target.id, participants: others, lastMessageAt: new Date().toISOString() }, ...prev];
         });
       }
 
@@ -184,10 +171,7 @@ export function ChatPanel({
     }
   };
 
-  const handleEdit = async (
-    messageId: string,
-    content: string,
-  ): Promise<ChatResult<MessageDTO>> => {
+  const handleEdit = async (messageId: string, content: string): Promise<ChatResult<MessageDTO>> => {
     const res = await editMessage({ messageId, content });
     if (res.ok) {
       setMessages((prev) => prev.map((m) => (m.id === res.data.id ? res.data : m)));
@@ -214,9 +198,7 @@ export function ChatPanel({
   const handleStartDirect = async (userId: string) => {
     const res = await openDirect({ workspaceId: initial.workspaceId, userId });
     if (!res.ok) return;
-    setConversations((prev) =>
-      prev.some((c) => c.id === res.data.id) ? prev : [res.data, ...prev],
-    );
+    setConversations((prev) => (prev.some((c) => c.id === res.data.id) ? prev : [res.data, ...prev]));
     select({ kind: "dm", id: res.data.id });
   };
 
@@ -225,10 +207,8 @@ export function ChatPanel({
     if (res.ok && active) void loadMessages(active);
   };
 
-  const activeChannel =
-    active?.kind === "channel" ? (channels.find((c) => c.id === active.id) ?? null) : null;
-  const activeConversation =
-    active?.kind === "dm" ? (conversations.find((c) => c.id === active.id) ?? null) : null;
+  const activeChannel = active?.kind === "channel" ? (channels.find((c) => c.id === active.id) ?? null) : null;
+  const activeConversation = active?.kind === "dm" ? (conversations.find((c) => c.id === active.id) ?? null) : null;
 
   return (
     <ChatProvider
@@ -307,11 +287,7 @@ export function ChatPanel({
               />
             </>
           ) : (
-            <div
-              className={cn(
-                "flex flex-1 items-center justify-center text-sm text-muted-foreground",
-              )}
-            >
+            <div className={cn("flex flex-1 items-center justify-center text-sm text-muted-foreground")}>
               Selecione um canal ou inicie uma conversa.
             </div>
           )}

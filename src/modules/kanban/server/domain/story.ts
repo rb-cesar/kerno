@@ -5,9 +5,7 @@ import type { Priority, StatusCategory } from "../../types";
 export class StoryDomain {
   /** Publica o resync genérico do Kanban p/ os outros clientes do workspace. */
   private notifyChanged(boardId: string, workspaceId: string, actorId: string) {
-    eventBus.publish(
-      createEvent("kanban:changed", workspaceId, { boardId, cardId: null }, actorId),
-    );
+    eventBus.publish(createEvent("kanban:changed", workspaceId, { boardId, cardId: null }, actorId));
   }
 
   /** Cria uma User Story no board, numerada por board (em transação) e ao final da ordem. */

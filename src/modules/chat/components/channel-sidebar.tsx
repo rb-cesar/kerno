@@ -49,9 +49,7 @@ export function ChannelSidebar({
   };
 
   // Membros que ainda não têm uma conversa aberta (para a lista de "iniciar DM").
-  const conversationUserIds = new Set(
-    conversations.flatMap((c) => c.participants.map((p) => p.id)),
-  );
+  const conversationUserIds = new Set(conversations.flatMap((c) => c.participants.map((p) => p.id)));
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r">
@@ -164,12 +162,7 @@ export function ChannelSidebar({
                     self ? "cursor-default" : "hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "h-2 w-2 shrink-0 rounded-full",
-                      online ? "bg-emerald-500" : "bg-neutral-600",
-                    )}
-                  />
+                  <span className={cn("h-2 w-2 shrink-0 rounded-full", online ? "bg-emerald-500" : "bg-neutral-600")} />
                   <span className={cn("flex-1 truncate", !online && "text-muted-foreground")}>
                     {m.name}
                     {self ? " (você)" : ""}

@@ -2,16 +2,7 @@
 
 import { Tag, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import {
-  Badge,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Input,
-} from "@/components/ui";
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Input } from "@/components/ui";
 import { useKanban } from "./kanban-context";
 
 export function LabelManager({ boardId }: { boardId: string }) {

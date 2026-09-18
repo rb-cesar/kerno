@@ -37,12 +37,7 @@ export function CardChecklists({
         <ChecklistBlock key={cl.id} checklist={cl} pending={pending} run={run} />
       ))}
 
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={pending}
-        onClick={() => run({ type: "createChecklist", cardId })}
-      >
+      <Button variant="outline" size="sm" disabled={pending} onClick={() => run({ type: "createChecklist", cardId })}>
         <Plus /> Nova checklist
       </Button>
     </div>
@@ -117,13 +112,9 @@ function ChecklistBlock({
               <Checkbox
                 checked={item.done}
                 disabled={pending}
-                onCheckedChange={(c) =>
-                  run({ type: "toggleChecklistItem", itemId: item.id, done: c === true })
-                }
+                onCheckedChange={(c) => run({ type: "toggleChecklistItem", itemId: item.id, done: c === true })}
               />
-              <span
-                className={cn("flex-1 text-sm", item.done && "text-muted-foreground line-through")}
-              >
+              <span className={cn("flex-1 text-sm", item.done && "text-muted-foreground line-through")}>
                 {item.text}
               </span>
               <button
@@ -154,13 +145,7 @@ function ChecklistBlock({
           }}
           className="h-8"
         />
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          disabled={pending}
-          onClick={addItem}
-        >
+        <Button variant="outline" size="icon" className="h-8 w-8" disabled={pending} onClick={addItem}>
           <Plus />
         </Button>
       </div>

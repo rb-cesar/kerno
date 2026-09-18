@@ -94,9 +94,7 @@ export function WorkspaceMembersDialog({
                 <button
                   type="button"
                   disabled={pending}
-                  onClick={() =>
-                    run(() => removeWorkspaceMember({ workspaceId, slug, userId: m.id }))
-                  }
+                  onClick={() => run(() => removeWorkspaceMember({ workspaceId, slug, userId: m.id }))}
                   className="text-muted-foreground hover:text-destructive disabled:opacity-50"
                   title="Remover do workspace"
                 >
@@ -132,14 +130,10 @@ export function WorkspaceMembersDialog({
                 <UserPlus /> Convidar
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              No MVP, só é possível convidar quem já tem conta no Kerno.
-            </p>
+            <p className="text-xs text-muted-foreground">No MVP, só é possível convidar quem já tem conta no Kerno.</p>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            Apenas administradores do workspace podem gerenciar membros.
-          </p>
+          <p className="text-xs text-muted-foreground">Apenas administradores do workspace podem gerenciar membros.</p>
         )}
       </DialogContent>
     </Dialog>

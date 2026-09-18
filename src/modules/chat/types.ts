@@ -99,10 +99,6 @@ export type ChatFetchMessages = (channelId: string) => Promise<MessageDTO[]>;
 // ── Mensagens diretas (DM) ──────────────────────────────────────────────────
 
 export type ChatOpenDirect = (input: OpenDirectInput) => Promise<ChatResult<DirectConversationDTO>>;
-export type ChatSendDirectMessage = (
-  input: SendDirectMessageInput,
-) => Promise<ChatResult<MessageDTO>>;
+export type ChatSendDirectMessage = (input: SendDirectMessageInput) => Promise<ChatResult<MessageDTO>>;
 export type ChatFetchDirectMessages = (conversationId: string) => Promise<MessageDTO[]>;
-export type ChatToggleReaction = (
-  input: ToggleReactionInput,
-) => Promise<ChatResult<{ messageId: string }>>;
+export type ChatToggleReaction = (input: ToggleReactionInput) => Promise<ChatResult<{ messageId: string }>>;

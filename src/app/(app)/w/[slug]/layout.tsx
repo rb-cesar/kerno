@@ -19,9 +19,7 @@ export default async function WorkspaceLayout({
 
   // Gate de acesso + dados do workspace — direto no service (mesmo processo),
   // sem HTTP. 404 se não for membro.
-  const workspace: WorkspaceView | null = await container.workspaces
-    .getBySlug(user.id, slug)
-    .catch(() => null);
+  const workspace: WorkspaceView | null = await container.workspaces.getBySlug(user.id, slug).catch(() => null);
   if (!workspace) notFound();
 
   const isManager = workspace.myRole === "ADMIN";
@@ -29,11 +27,7 @@ export default async function WorkspaceLayout({
   return (
     <SocketProvider workspaceId={workspace.id}>
       <div className="flex h-screen overflow-hidden">
-        <HubRail
-          basePath={`/w/${slug}`}
-          userName={user.name ?? "Usuário"}
-          userEmail={user.email ?? ""}
-        />
+        <HubRail basePath={`/w/${slug}`} userName={user.name ?? "Usuário"} userEmail={user.email ?? ""} />
         <div className="flex min-w-0 flex-1 flex-col">
           <WorkspaceHeader
             workspaceName={workspace.name}

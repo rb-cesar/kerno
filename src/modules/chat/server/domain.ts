@@ -1,12 +1,6 @@
 import { prisma } from "@/core/db";
 import { createEvent, eventBus } from "@/core/events";
-import type {
-  ChannelDTO,
-  DirectConversationDTO,
-  MemberDTO,
-  MessageDTO,
-  ReactionDTO,
-} from "../types";
+import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO, ReactionDTO } from "../types";
 
 const MESSAGE_PAGE_SIZE = 50;
 
@@ -80,16 +74,13 @@ export class ChatDomain {
       createdAt: row.createdAt.toISOString(),
       // updatedAt só difere de createdAt quando o conteúdo foi editado (reações e
       // respostas vivem em tabelas próprias e não tocam a mensagem).
-      editedAt:
-        row.updatedAt.getTime() !== row.createdAt.getTime() ? row.updatedAt.toISOString() : null,
+      editedAt: row.updatedAt.getTime() !== row.createdAt.getTime() ? row.updatedAt.toISOString() : null,
       isSystem: row.isSystem,
       author: row.user ? { id: row.user.id, name: row.user.name } : null,
       replyTo: row.replyTo
         ? {
             id: row.replyTo.id,
-            authorName: row.replyTo.isSystem
-              ? "Sistema"
-              : (row.replyTo.user?.name ?? "Desconhecido"),
+            authorName: row.replyTo.isSystem ? "Sistema" : (row.replyTo.user?.name ?? "Desconhecido"),
             excerpt: this.makeExcerpt(row.replyTo.content),
           }
         : null,
@@ -98,10 +89,7 @@ export class ChatDomain {
   }
 
   /** Garante que a mensagem citada pertence ao mesmo canal (senão ignora). */
-  private async replyIdIfInChannel(
-    replyToId: string | null | undefined,
-    channelId: string,
-  ): Promise<string | null> {
+  private async replyIdIfInChannel(replyToId: string | null | undefined, channelId: string): Promise<string | null> {
     if (!replyToId) return null;
     const target = await prisma.message.findUnique({
       where: { id: replyToId },
@@ -144,11 +132,7 @@ export class ChatDomain {
     return channels.map((c) => ({ id: c.id, name: c.name, isDefault: c.isDefault }));
   }
 
-  async getMessages(
-    channelId: string,
-    viewerId: string,
-    limit = MESSAGE_PAGE_SIZE,
-  ): Promise<MessageDTO[]> {
+  async getMessages(channelId: string, viewerId: string, limit = MESSAGE_PAGE_SIZE): Promise<MessageDTO[]> {
     const rows = await prisma.message.findMany({
       where: { channelId },
       orderBy: { createdAt: "desc" },
@@ -185,12 +169,7 @@ export class ChatDomain {
     });
 
     eventBus.publish(
-      createEvent(
-        "message:sent",
-        channel.workspaceId,
-        { messageId: message.id, channelId, content },
-        actorId,
-      ),
+      createEvent("message:sent", channel.workspaceId, { messageId: message.id, channelId, content }, actorId),
     );
 
     return this.toMessageDTO(message, actorId);
@@ -295,11 +274,7 @@ export class ChatDomain {
   }
 
   /** Abre (ou cria) a conversa 1:1 entre dois membros do projeto. */
-  async openDirect(
-    workspaceId: string,
-    viewerId: string,
-    otherUserId: string,
-  ): Promise<DirectConversationDTO> {
+  async openDirect(workspaceId: string, viewerId: string, otherUserId: string): Promise<DirectConversationDTO> {
     const key = pairKey(viewerId, otherUserId);
     const conv = await prisma.directConversation.upsert({
       where: { workspaceId_pairKey: { workspaceId, pairKey: key } },
@@ -314,11 +289,7 @@ export class ChatDomain {
     return this.toConversationDTO(conv, viewerId);
   }
 
-  async getDirectMessages(
-    conversationId: string,
-    viewerId: string,
-    limit = MESSAGE_PAGE_SIZE,
-  ): Promise<MessageDTO[]> {
+  async getDirectMessages(conversationId: string, viewerId: string, limit = MESSAGE_PAGE_SIZE): Promise<MessageDTO[]> {
     const rows = await prisma.message.findMany({
       where: { conversationId },
       orderBy: { createdAt: "desc" },
@@ -366,9 +337,7 @@ export class ChatDomain {
   }
 
   /** Para os guards da API: projeto + participantes de uma conversa. */
-  async conversationAccess(
-    conversationId: string,
-  ): Promise<{ workspaceId: string; participantIds: string[] } | null> {
+  async conversationAccess(conversationId: string): Promise<{ workspaceId: string; participantIds: string[] } | null> {
     const conv = await prisma.directConversation.findUnique({
       where: { id: conversationId },
       select: { workspaceId: true, participants: { select: { userId: true } } },

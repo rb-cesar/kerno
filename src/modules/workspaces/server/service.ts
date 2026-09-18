@@ -45,10 +45,7 @@ function workspaceKeyFromName(name: string): string {
 }
 
 /** Snapshot do workspace + membros consumido pelo layout. */
-async function getWorkspaceWithMembers(
-  workspaceId: string,
-  userId: string,
-): Promise<WorkspaceWithMembers | null> {
+async function getWorkspaceWithMembers(workspaceId: string, userId: string): Promise<WorkspaceWithMembers | null> {
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
     include: {
@@ -71,19 +68,14 @@ async function getWorkspaceWithMembers(
   };
 }
 
-async function addWorkspaceMember(input: {
-  workspaceId: string;
-  userId: string;
-  role?: WorkspaceRole;
-}): Promise<void> {
+async function addWorkspaceMember(input: { workspaceId: string; userId: string; role?: WorkspaceRole }): Promise<void> {
   const workspace = await prisma.workspace.findUnique({
     where: { id: input.workspaceId },
     select: { id: true },
   });
   if (!workspace) throw new NotFound("Workspace não encontrado");
 
-  const role: WorkspaceRole =
-    input.role && WORKSPACE_ROLES.includes(input.role) ? input.role : "MEMBER";
+  const role: WorkspaceRole = input.role && WORKSPACE_ROLES.includes(input.role) ? input.role : "MEMBER";
 
   await prisma.workspaceUser.upsert({
     where: { userId_workspaceId: { userId: input.userId, workspaceId: input.workspaceId } },
@@ -92,10 +84,7 @@ async function addWorkspaceMember(input: {
   });
 }
 
-async function removeWorkspaceMember(input: {
-  workspaceId: string;
-  userId: string;
-}): Promise<void> {
+async function removeWorkspaceMember(input: { workspaceId: string; userId: string }): Promise<void> {
   const target = await prisma.workspaceUser.findUnique({
     where: { userId_workspaceId: { userId: input.userId, workspaceId: input.workspaceId } },
   });
@@ -187,11 +176,7 @@ export class WorkspaceService {
     return { slug: workspace.slug };
   }
 
-  async invite(
-    userId: string,
-    workspaceId: string,
-    input: InviteMemberInput,
-  ): Promise<ActionResult> {
+  async invite(userId: string, workspaceId: string, input: InviteMemberInput): Promise<ActionResult> {
     try {
       await requireWorkspaceAdmin(userId, workspaceId);
 
@@ -215,11 +200,7 @@ export class WorkspaceService {
     }
   }
 
-  async updateMember(
-    userId: string,
-    workspaceId: string,
-    input: UpdateMemberInput,
-  ): Promise<ActionResult> {
+  async updateMember(userId: string, workspaceId: string, input: UpdateMemberInput): Promise<ActionResult> {
     try {
       await requireWorkspaceAdmin(userId, workspaceId);
       await addWorkspaceMember({ workspaceId, userId: input.userId, role: input.role });
@@ -229,11 +210,7 @@ export class WorkspaceService {
     }
   }
 
-  async removeMember(
-    userId: string,
-    workspaceId: string,
-    targetUserId: string,
-  ): Promise<ActionResult> {
+  async removeMember(userId: string, workspaceId: string, targetUserId: string): Promise<ActionResult> {
     try {
       await requireWorkspaceAdmin(userId, workspaceId);
       await removeWorkspaceMember({ workspaceId, userId: targetUserId });

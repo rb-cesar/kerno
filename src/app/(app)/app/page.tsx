@@ -15,9 +15,7 @@ export default async function WorkspacesPage() {
         <h1 className="text-2xl font-bold">Seus workspaces</h1>
 
         {workspaces.length === 0 ? (
-          <p className="text-muted-foreground">
-            Você ainda não participa de nenhum workspace. Crie o primeiro abaixo.
-          </p>
+          <p className="text-muted-foreground">Você ainda não participa de nenhum workspace. Crie o primeiro abaixo.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {workspaces.map((ws) => (

@@ -23,9 +23,7 @@ import { useKanban } from "./kanban-context";
 import { CATEGORY_COLOR, PRIORITY_LABEL, PRIORITY_ORDER, toDateInput } from "./meta";
 
 // Lazy: o editor Lexical só baixa ao abrir uma história (mantém a aba leve).
-const RichTextEditor = lazy(() =>
-  import("@/components/editor").then((m) => ({ default: m.RichTextEditor })),
-);
+const RichTextEditor = lazy(() => import("@/components/editor").then((m) => ({ default: m.RichTextEditor })));
 
 const STATUS_ORDER: StatusCategory[] = ["BACKLOG", "UNSTARTED", "STARTED", "COMPLETED", "CANCELED"];
 const STATUS_LABEL: Record<StatusCategory, string> = {
@@ -74,9 +72,7 @@ export function StoriesView({
         </div>
         <ul className="flex-1 overflow-y-auto p-2">
           {stories.length === 0 ? (
-            <p className="px-1 py-6 text-center text-sm text-muted-foreground">
-              Nenhuma história ainda.
-            </p>
+            <p className="px-1 py-6 text-center text-sm text-muted-foreground">Nenhuma história ainda.</p>
           ) : (
             stories.map((s) => (
               <li key={s.id}>
@@ -89,10 +85,7 @@ export function StoriesView({
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <BookMarked
-                      className="h-3.5 w-3.5 shrink-0"
-                      style={{ color: s.color ?? undefined }}
-                    />
+                    <BookMarked className="h-3.5 w-3.5 shrink-0" style={{ color: s.color ?? undefined }} />
                     <span className="font-mono text-xs text-muted-foreground">
                       {workspaceKey}-S{s.number}
                     </span>
@@ -199,11 +192,7 @@ function StoryEditor({
         <div className="space-y-2">
           <Label>Descrição</Label>
           <Suspense
-            fallback={
-              <div className="rounded-md border p-3 text-sm text-muted-foreground">
-                Carregando editor…
-              </div>
-            }
+            fallback={<div className="rounded-md border p-3 text-sm text-muted-foreground">Carregando editor…</div>}
           >
             <RichTextEditor
               value={description}
@@ -249,9 +238,7 @@ function StoryEditor({
 
       {/* Detalhes */}
       <div className="w-64 shrink-0 space-y-4 overflow-y-auto border-l bg-muted/20 p-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Detalhes
-        </div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Detalhes</div>
 
         <Field>
           <FieldLabel>Status</FieldLabel>
@@ -265,10 +252,7 @@ function StoryEditor({
               {STATUS_ORDER.map((s) => (
                 <SelectItem key={s} value={s}>
                   <span className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: CATEGORY_COLOR[s] }}
-                    />
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: CATEGORY_COLOR[s] }} />
                     {STATUS_LABEL[s]}
                   </span>
                 </SelectItem>
@@ -322,10 +306,7 @@ function StoryEditor({
             <button
               type="button"
               onClick={() => setColor(null)}
-              className={cn(
-                "h-6 w-6 rounded-full border text-xs",
-                color === null && "ring-2 ring-ring",
-              )}
+              className={cn("h-6 w-6 rounded-full border text-xs", color === null && "ring-2 ring-ring")}
               title="Sem cor"
             >
               —

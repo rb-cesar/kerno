@@ -78,9 +78,7 @@ export class CardDetailDomain {
       where: { id: { in: [...userIds] } },
       select: { id: true, name: true },
     });
-    const userById = new Map<string, MemberDTO>(
-      users.map((u) => [u.id, { id: u.id, name: u.name }]),
-    );
+    const userById = new Map<string, MemberDTO>(users.map((u) => [u.id, { id: u.id, name: u.name }]));
 
     return {
       cardId,

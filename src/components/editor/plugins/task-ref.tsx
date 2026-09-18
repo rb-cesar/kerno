@@ -2,11 +2,7 @@
 
 import type { TextMatchTransformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  LexicalTypeaheadMenuPlugin,
-  MenuOption,
-  type MenuTextMatch,
-} from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { LexicalTypeaheadMenuPlugin, MenuOption, type MenuTextMatch } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import {
   $applyNodeReplacement,
   $createTextNode,
@@ -87,8 +83,7 @@ export function $isTaskMentionNode(node: LexicalNode | null | undefined): node i
 /** Transformer markdown: TaskMentionNode ⇄ `!task[KERN-12](task:ID)`. */
 export const TASK_MENTION_TRANSFORMER: TextMatchTransformer = {
   dependencies: [TaskMentionNode],
-  export: (node) =>
-    $isTaskMentionNode(node) ? `!task[${node.getTextContent()}](task:${node.getCardId()})` : null,
+  export: (node) => ($isTaskMentionNode(node) ? `!task[${node.getTextContent()}](task:${node.getCardId()})` : null),
   importRegExp: /!task\[([^\]]+)\]\(task:([^)]+)\)/,
   regExp: /!task\[([^\]]+)\]\(task:([^)]+)\)$/,
   replace: (textNode, match) => {
@@ -144,10 +139,7 @@ export function TaskMentionTypeaheadPlugin({
   }, [query, search]);
 
   const options = useMemo(
-    () =>
-      results
-        .slice(0, 8)
-        .map((t) => new TaskOption(t.id, `${t.workspaceKey}-${t.number}`, t.title)),
+    () => results.slice(0, 8).map((t) => new TaskOption(t.id, `${t.workspaceKey}-${t.number}`, t.title)),
     [results],
   );
 
@@ -193,10 +185,7 @@ export function TaskMentionTypeaheadPlugin({
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(
-        anchorElementRef,
-        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
-      ) => {
+      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-72 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
@@ -217,9 +206,7 @@ export function TaskMentionTypeaheadPlugin({
                 }}
               >
                 <Hash className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {option.label}
-                </span>
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">{option.label}</span>
                 <span className="truncate">{option.title}</span>
               </button>
             ))}

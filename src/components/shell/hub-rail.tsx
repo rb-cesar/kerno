@@ -17,15 +17,7 @@ const HUBS: Hub[] = [
  * Barra fixa de hubs (estilo Discord): logo no topo, hubs do projeto no meio,
  * usuário no rodapé. Só ícones — o rótulo aparece como tooltip no hover.
  */
-export function HubRail({
-  basePath,
-  userName,
-  userEmail,
-}: {
-  basePath: string;
-  userName: string;
-  userEmail: string;
-}) {
+export function HubRail({ basePath, userName, userEmail }: { basePath: string; userName: string; userEmail: string }) {
   const pathname = usePathname();
 
   return (
