@@ -34,9 +34,7 @@ export class ChatService {
     ]);
 
     const initialChannelId = channels[0]?.id ?? null;
-    const initialMessages = initialChannelId
-      ? await chatDomain.getMessages(initialChannelId, userId)
-      : [];
+    const initialMessages = initialChannelId ? await chatDomain.getMessages(initialChannelId, userId) : [];
 
     return {
       workspaceId,
@@ -59,12 +57,7 @@ export class ChatService {
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
-      const message = await chatDomain.sendMessage(
-        input.channelId,
-        content,
-        userId,
-        input.replyToId,
-      );
+      const message = await chatDomain.sendMessage(input.channelId, content, userId, input.replyToId);
       return { ok: true, data: message };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };
@@ -107,10 +100,7 @@ export class ChatService {
   // ── Mensagens diretas (DM) ────────────────────────────────────────────────
 
   /** Abre/recupera a conversa privada com outro membro do workspace. */
-  async openDirect(
-    userId: string,
-    input: OpenDirectInput,
-  ): Promise<ChatResult<DirectConversationDTO>> {
+  async openDirect(userId: string, input: OpenDirectInput): Promise<ChatResult<DirectConversationDTO>> {
     try {
       await chatGuards.guardWorkspace(userId, input.workspaceId, "MEMBER");
       if (input.userId === userId) return { ok: false, error: "Conversa inválida" };
@@ -128,10 +118,7 @@ export class ChatService {
     return chatDomain.getDirectMessages(conversationId, userId);
   }
 
-  async toggleReaction(
-    userId: string,
-    input: ToggleReactionInput,
-  ): Promise<ChatResult<{ messageId: string }>> {
+  async toggleReaction(userId: string, input: ToggleReactionInput): Promise<ChatResult<{ messageId: string }>> {
     try {
       const ctx = await chatDomain.messageContext(input.messageId);
       if (!ctx) return { ok: false, error: "Mensagem não encontrada" };
@@ -157,12 +144,7 @@ export class ChatService {
       const content = input.content.trim();
       if (!content) return { ok: false, error: "Mensagem vazia" };
       if (content.length > 4000) return { ok: false, error: "Mensagem muito longa" };
-      const message = await chatDomain.sendDirectMessage(
-        input.conversationId,
-        content,
-        userId,
-        input.replyToId,
-      );
+      const message = await chatDomain.sendDirectMessage(input.conversationId, content, userId, input.replyToId);
       return { ok: true, data: message };
     } catch (error) {
       return { ok: false, error: errorMessage(error) };

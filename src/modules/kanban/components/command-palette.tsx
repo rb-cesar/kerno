@@ -38,18 +38,23 @@ export function CommandPalette({
   );
 
   const results = useMemo<Item[]>(() => {
-    const q = query.trim().toLowerCase();
+    const queryString = query.trim().toLowerCase();
     const items: Item[] = [];
-    if (filtersActive && (q === "" || "limpar filtros".includes(q))) {
+
+    if (filtersActive && (queryString === "" || "limpar filtros".includes(queryString))) {
       items.push({ kind: "action", id: "clear", label: "Limpar filtros", run: onClearFilters });
     }
+
     for (const { card, columnName } of cards) {
       const key = `${data.workspaceKey}-${card.number}`;
-      if (q === "" || `${key} ${card.title}`.toLowerCase().includes(q)) {
+
+      if (queryString === "" || `${key} ${card.title}`.toLowerCase().includes(queryString)) {
         items.push({ kind: "card", id: card.id, label: `${key}  ${card.title}`, sub: columnName });
       }
+
       if (items.length >= 50) break;
     }
+
     return items;
   }, [query, cards, data.workspaceKey, filtersActive, onClearFilters]);
 
