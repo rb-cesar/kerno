@@ -1,7 +1,7 @@
 "use client";
 
 import { request } from "@/core/request";
-import type { ChannelDTO, ChatResult, DirectConversationDTO, MessageDTO } from "./types";
+import type { ChannelDTO, ChatResult, DirectConversationDTO, MessageDTO, MessagesPage } from "./types";
 
 // Chamadas HTTP do módulo Chat — mesma origem (/api/chat/...), sem BFF.
 
@@ -10,8 +10,12 @@ function chatError(error: unknown): { ok: false; error: string } {
 }
 
 export const chatClient = {
-  fetchMessages: (channelId: string): Promise<MessageDTO[]> =>
-    request<MessageDTO[]>(`/chat/channels/${channelId}/messages`).catch(() => []),
+  fetchMessages: (channelId: string, beforeId?: string): Promise<MessagesPage> =>
+    request<MessagesPage>(
+      beforeId
+        ? `/chat/channels/${channelId}/messages?before=${encodeURIComponent(beforeId)}`
+        : `/chat/channels/${channelId}/messages`,
+    ).catch(() => ({ items: [], hasMore: false })),
 
   sendMessage: (input: {
     channelId: string;
@@ -34,8 +38,12 @@ export const chatClient = {
       body: input,
     }).catch(chatError),
 
-  fetchDirectMessages: (conversationId: string): Promise<MessageDTO[]> =>
-    request<MessageDTO[]>(`/chat/direct/${conversationId}/messages`).catch(() => []),
+  fetchDirectMessages: (conversationId: string, beforeId?: string): Promise<MessagesPage> =>
+    request<MessagesPage>(
+      beforeId
+        ? `/chat/direct/${conversationId}/messages?before=${encodeURIComponent(beforeId)}`
+        : `/chat/direct/${conversationId}/messages`,
+    ).catch(() => ({ items: [], hasMore: false })),
 
   toggleReaction: (input: { messageId: string; emoji: string }): Promise<ChatResult<{ messageId: string }>> =>
     request<ChatResult<{ messageId: string }>>(`/chat/reactions`, {

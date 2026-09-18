@@ -7,6 +7,7 @@ import type {
   DirectConversationDTO,
   EditMessageInput,
   MessageDTO,
+  MessagesPage,
   OpenDirectInput,
   SendDirectMessageInput,
   SendMessageInput,
@@ -34,7 +35,9 @@ export class ChatService {
     ]);
 
     const initialChannelId = channels[0]?.id ?? null;
-    const initialMessages = initialChannelId ? await chatDomain.getMessages(initialChannelId, userId) : [];
+    const initialPage = initialChannelId
+      ? await chatDomain.getMessages(initialChannelId, userId)
+      : { items: [], hasMore: false };
 
     return {
       workspaceId,
@@ -42,13 +45,14 @@ export class ChatService {
       conversations,
       members: workspaceUsers.map((m) => ({ id: m.user.id, name: m.user.name })),
       initialChannelId,
-      initialMessages,
+      initialMessages: initialPage.items,
+      initialHasMore: initialPage.hasMore,
     };
   }
 
-  async fetchMessages(userId: string, channelId: string): Promise<MessageDTO[]> {
+  async fetchMessages(userId: string, channelId: string, beforeId?: string): Promise<MessagesPage> {
     await chatGuards.guardChannel(userId, channelId);
-    return chatDomain.getMessages(channelId, userId);
+    return chatDomain.getMessages(channelId, userId, beforeId);
   }
 
   async sendMessage(userId: string, input: SendMessageInput): Promise<ChatResult<MessageDTO>> {
@@ -113,9 +117,9 @@ export class ChatService {
     }
   }
 
-  async directMessages(userId: string, conversationId: string): Promise<MessageDTO[]> {
+  async directMessages(userId: string, conversationId: string, beforeId?: string): Promise<MessagesPage> {
     await chatGuards.guardConversation(userId, conversationId);
-    return chatDomain.getDirectMessages(conversationId, userId);
+    return chatDomain.getDirectMessages(conversationId, userId, beforeId);
   }
 
   async toggleReaction(userId: string, input: ToggleReactionInput): Promise<ChatResult<{ messageId: string }>> {

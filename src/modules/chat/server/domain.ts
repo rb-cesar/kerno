@@ -1,6 +1,6 @@
 import { prisma } from "@/core/db";
 import { createEvent, eventBus } from "@/core/events";
-import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO, ReactionDTO } from "../types";
+import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO, MessagesPage, ReactionDTO } from "../types";
 
 const MESSAGE_PAGE_SIZE = 50;
 
@@ -132,14 +132,26 @@ export class ChatDomain {
     return channels.map((c) => ({ id: c.id, name: c.name, isDefault: c.isDefault }));
   }
 
-  async getMessages(channelId: string, viewerId: string, limit = MESSAGE_PAGE_SIZE): Promise<MessageDTO[]> {
+  /**
+   * `beforeId`: id da mensagem mais antiga já carregada — usa o cursor nativo
+   * do Prisma (busca a linha por id, pula ela, segue na ordem) em vez de
+   * filtrar por `createdAt` sozinho, que pode pular/duplicar linha quando
+   * duas mensagens caem no mesmo milissegundo.
+   */
+  async getMessages(
+    channelId: string,
+    viewerId: string,
+    beforeId?: string,
+    limit = MESSAGE_PAGE_SIZE,
+  ): Promise<MessagesPage> {
     const rows = await prisma.message.findMany({
       where: { channelId },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(beforeId ? { cursor: { id: beforeId }, skip: 1 } : {}),
       take: limit,
       include: MESSAGE_INCLUDE,
     });
-    return rows.reverse().map((row) => this.toMessageDTO(row, viewerId));
+    return { items: rows.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: rows.length === limit };
   }
 
   async createChannel(workspaceId: string, name: string): Promise<ChannelDTO> {
@@ -289,14 +301,20 @@ export class ChatDomain {
     return this.toConversationDTO(conv, viewerId);
   }
 
-  async getDirectMessages(conversationId: string, viewerId: string, limit = MESSAGE_PAGE_SIZE): Promise<MessageDTO[]> {
+  async getDirectMessages(
+    conversationId: string,
+    viewerId: string,
+    beforeId?: string,
+    limit = MESSAGE_PAGE_SIZE,
+  ): Promise<MessagesPage> {
     const rows = await prisma.message.findMany({
       where: { conversationId },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(beforeId ? { cursor: { id: beforeId }, skip: 1 } : {}),
       take: limit,
       include: MESSAGE_INCLUDE,
     });
-    return rows.reverse().map((row) => this.toMessageDTO(row, viewerId));
+    return { items: rows.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: rows.length === limit };
   }
 
   async sendDirectMessage(

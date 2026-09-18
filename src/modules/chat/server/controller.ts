@@ -21,7 +21,7 @@ export function createChatController(chat: ChatService) {
   );
 
   app.get("/channels/:channelId/messages", async (c) =>
-    c.json(await chat.fetchMessages(c.get("userId"), c.req.param("channelId"))),
+    c.json(await chat.fetchMessages(c.get("userId"), c.req.param("channelId"), c.req.query("before"))),
   );
 
   app.post("/messages", zValidator("json", sendMessageInputSchema), async (c) =>
@@ -48,7 +48,7 @@ export function createChatController(chat: ChatService) {
   );
 
   app.get("/direct/:conversationId/messages", async (c) =>
-    c.json(await chat.directMessages(c.get("userId"), c.req.param("conversationId"))),
+    c.json(await chat.directMessages(c.get("userId"), c.req.param("conversationId"), c.req.query("before"))),
   );
 
   app.post("/direct/messages", zValidator("json", sendDirectMessageInputSchema), async (c) =>

@@ -44,6 +44,12 @@ export interface DirectConversationDTO {
   lastMessageAt: string | null; // ISO — para ordenar por atividade
 }
 
+/** Página de mensagens — `hasMore` indica se há mensagens mais antigas ainda não carregadas. */
+export interface MessagesPage {
+  items: MessageDTO[];
+  hasMore: boolean;
+}
+
 export interface ChatData {
   workspaceId: string;
   channels: ChannelDTO[];
@@ -51,6 +57,7 @@ export interface ChatData {
   members: MemberDTO[];
   initialChannelId: string | null;
   initialMessages: MessageDTO[];
+  initialHasMore: boolean;
 }
 
 export type ChatResult<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -94,11 +101,11 @@ export type ChatSearchTasks = (query: string) => Promise<TaskRef[]>;
 export type ChatSendMessage = (input: SendMessageInput) => Promise<ChatResult<MessageDTO>>;
 export type ChatEditMessage = (input: EditMessageInput) => Promise<ChatResult<MessageDTO>>;
 export type ChatCreateChannel = (input: CreateChannelInput) => Promise<ChatResult<ChannelDTO>>;
-export type ChatFetchMessages = (channelId: string) => Promise<MessageDTO[]>;
+export type ChatFetchMessages = (channelId: string, beforeId?: string) => Promise<MessagesPage>;
 
 // ── Mensagens diretas (DM) ──────────────────────────────────────────────────
 
 export type ChatOpenDirect = (input: OpenDirectInput) => Promise<ChatResult<DirectConversationDTO>>;
 export type ChatSendDirectMessage = (input: SendDirectMessageInput) => Promise<ChatResult<MessageDTO>>;
-export type ChatFetchDirectMessages = (conversationId: string) => Promise<MessageDTO[]>;
+export type ChatFetchDirectMessages = (conversationId: string, beforeId?: string) => Promise<MessagesPage>;
 export type ChatToggleReaction = (input: ToggleReactionInput) => Promise<ChatResult<{ messageId: string }>>;

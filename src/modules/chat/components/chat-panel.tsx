@@ -95,17 +95,38 @@ export function ChatPanel({
     initial.initialChannelId ? { kind: "channel", id: initial.initialChannelId } : null,
   );
   const [messages, setMessages] = useState<MessageDTO[]>(initial.initialMessages);
+  const [hasMoreMessages, setHasMoreMessages] = useState(initial.initialHasMore);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [unread, setUnread] = useState<Set<string>>(new Set());
   const [replyTo, setReplyTo] = useState<MessageDTO | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const loadMessages = useCallback(
     async (target: ActiveTarget) => {
-      const msgs = target.kind === "channel" ? await fetchMessages(target.id) : await fetchDirectMessages(target.id);
-      setMessages(msgs);
+      const page = target.kind === "channel" ? await fetchMessages(target.id) : await fetchDirectMessages(target.id);
+      setMessages(page.items);
+      setHasMoreMessages(page.hasMore);
     },
     [fetchMessages, fetchDirectMessages],
   );
+
+  /** Carrega mensagens mais antigas e prepende — mantém as já carregadas. */
+  const loadOlderMessages = useCallback(async () => {
+    if (!active || loadingOlder) return;
+    const oldest = messages[0];
+    if (!oldest) return;
+    setLoadingOlder(true);
+    try {
+      const page =
+        active.kind === "channel"
+          ? await fetchMessages(active.id, oldest.id)
+          : await fetchDirectMessages(active.id, oldest.id);
+      setMessages((prev) => [...page.items, ...prev]);
+      setHasMoreMessages(page.hasMore);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [active, messages, loadingOlder, fetchMessages, fetchDirectMessages]);
 
   const select = useCallback(
     (target: ActiveTarget) => {
@@ -256,6 +277,9 @@ export function ChatPanel({
               </div>
               <MessageList
                 messages={messages}
+                hasMore={hasMoreMessages}
+                loadingOlder={loadingOlder}
+                onLoadOlder={loadOlderMessages}
                 editingId={editingId}
                 onEditingChange={setEditingId}
                 onReply={setReplyTo}
@@ -281,6 +305,9 @@ export function ChatPanel({
               </div>
               <MessageList
                 messages={messages}
+                hasMore={hasMoreMessages}
+                loadingOlder={loadingOlder}
+                onLoadOlder={loadOlderMessages}
                 editingId={editingId}
                 onEditingChange={setEditingId}
                 onReply={setReplyTo}
