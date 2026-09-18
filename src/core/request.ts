@@ -6,10 +6,7 @@
 export class ApiError extends Error {}
 
 /** Chama `/api${path}`. Lança `ApiError` em resposta não-2xx. */
-export async function request<T>(
-  path: string,
-  init?: { method?: string; body?: unknown },
-): Promise<T> {
+export async function request<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`/api${path}`, {
@@ -31,9 +28,7 @@ export async function request<T>(
 }
 
 /** Envelope `{ ok, error }` para quem prefere não lidar com exceções. */
-export async function asResult<T>(
-  promise: Promise<T>,
-): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+export async function asResult<T>(promise: Promise<T>): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   try {
     return { ok: true, data: await promise };
   } catch (error) {

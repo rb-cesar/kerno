@@ -18,26 +18,17 @@ export const chatClient = {
     content: string;
     replyToId?: string | null;
   }): Promise<ChatResult<MessageDTO>> =>
-    request<ChatResult<MessageDTO>>(`/chat/messages`, { method: "POST", body: input }).catch(
-      chatError,
-    ),
+    request<ChatResult<MessageDTO>>(`/chat/messages`, { method: "POST", body: input }).catch(chatError),
 
   editMessage: (input: { messageId: string; content: string }): Promise<ChatResult<MessageDTO>> =>
-    request<ChatResult<MessageDTO>>(`/chat/messages/edit`, { method: "POST", body: input }).catch(
-      chatError,
-    ),
+    request<ChatResult<MessageDTO>>(`/chat/messages/edit`, { method: "POST", body: input }).catch(chatError),
 
   createChannel: (input: { workspaceId: string; name: string }): Promise<ChatResult<ChannelDTO>> =>
-    request<ChatResult<ChannelDTO>>(`/chat/channels`, { method: "POST", body: input }).catch(
-      chatError,
-    ),
+    request<ChatResult<ChannelDTO>>(`/chat/channels`, { method: "POST", body: input }).catch(chatError),
 
   // ── Mensagens diretas (DM) ─────────────────────────────────────────────────
 
-  openDirect: (input: {
-    workspaceId: string;
-    userId: string;
-  }): Promise<ChatResult<DirectConversationDTO>> =>
+  openDirect: (input: { workspaceId: string; userId: string }): Promise<ChatResult<DirectConversationDTO>> =>
     request<ChatResult<DirectConversationDTO>>(`/chat/direct`, {
       method: "POST",
       body: input,
@@ -46,10 +37,7 @@ export const chatClient = {
   fetchDirectMessages: (conversationId: string): Promise<MessageDTO[]> =>
     request<MessageDTO[]>(`/chat/direct/${conversationId}/messages`).catch(() => []),
 
-  toggleReaction: (input: {
-    messageId: string;
-    emoji: string;
-  }): Promise<ChatResult<{ messageId: string }>> =>
+  toggleReaction: (input: { messageId: string; emoji: string }): Promise<ChatResult<{ messageId: string }>> =>
     request<ChatResult<{ messageId: string }>>(`/chat/reactions`, {
       method: "POST",
       body: input,

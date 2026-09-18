@@ -17,13 +17,7 @@ function weekLabel(iso: string): string {
 }
 
 /** Painel de métricas de fluxo do board (Kanban): throughput, cycle/lead, WIP. */
-export function KanbanMetrics({
-  boardId,
-  fetchMetrics,
-}: {
-  boardId: string;
-  fetchMetrics: KanbanFetchMetrics;
-}) {
+export function KanbanMetrics({ boardId, fetchMetrics }: { boardId: string; fetchMetrics: KanbanFetchMetrics }) {
   const [metrics, setMetrics] = useState<BoardMetricsDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,9 +37,7 @@ export function KanbanMetrics({
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        Carregando métricas…
-      </div>
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">Carregando métricas…</div>
     );
   }
   if (!metrics) {
@@ -78,10 +70,7 @@ export function KanbanMetrics({
           <h3 className="text-sm font-semibold">Throughput — concluídos por semana</h3>
           <div className="flex h-44 items-end gap-2 rounded-lg border p-3">
             {metrics.throughput.map((t) => (
-              <div
-                key={t.weekStart}
-                className="flex h-full flex-1 flex-col items-center justify-end gap-1"
-              >
+              <div key={t.weekStart} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
                 <span className="text-[10px] tabular-nums text-muted-foreground">{t.count}</span>
                 <div
                   className="w-full rounded-t bg-primary/70"

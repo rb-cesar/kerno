@@ -30,13 +30,7 @@ type ChatContextValue = {
 
 const ChatContext = createContext<ChatContextValue | null>(null);
 
-export function ChatProvider({
-  value,
-  children,
-}: {
-  value: ChatContextValue;
-  children: React.ReactNode;
-}) {
+export function ChatProvider({ value, children }: { value: ChatContextValue; children: React.ReactNode }) {
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 

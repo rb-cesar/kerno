@@ -104,19 +104,13 @@ export function MessageList({
                 >
                   <CornerUpLeft className="h-3 w-3 shrink-0" />
                   <span className="font-medium">{message.replyTo.authorName}</span>
-                  <span className="max-w-[16rem] truncate opacity-80">
-                    {message.replyTo.excerpt}
-                  </span>
+                  <span className="max-w-[16rem] truncate opacity-80">{message.replyTo.excerpt}</span>
                 </button>
               ) : null}
 
               <div className={cn("flex items-baseline gap-2", isOwn && "flex-row-reverse")}>
-                <span className="text-sm font-medium">
-                  {message.author?.name ?? "Desconhecido"}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatTime(message.createdAt)}
-                </span>
+                <span className="text-sm font-medium">{message.author?.name ?? "Desconhecido"}</span>
+                <span className="text-xs text-muted-foreground">{formatTime(message.createdAt)}</span>
                 {message.editedAt ? (
                   <span
                     className="text-[11px] text-muted-foreground"
@@ -129,9 +123,7 @@ export function MessageList({
                   <div
                     className={cn(
                       "relative flex items-center gap-1 text-muted-foreground transition-opacity",
-                      reactOpenFor === message.id
-                        ? "opacity-100"
-                        : "opacity-0 group-hover:opacity-100",
+                      reactOpenFor === message.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                     )}
                   >
                     <button
@@ -157,9 +149,7 @@ export function MessageList({
                     ) : null}
                     <button
                       type="button"
-                      onClick={() =>
-                        setReactOpenFor((cur) => (cur === message.id ? null : message.id))
-                      }
+                      onClick={() => setReactOpenFor((cur) => (cur === message.id ? null : message.id))}
                       title="Reagir"
                       className="hover:text-foreground"
                     >
@@ -227,9 +217,7 @@ export function MessageList({
                       onClick={() => onToggleReaction(message.id, reaction.emoji)}
                       className={cn(
                         "flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs transition-colors",
-                        reaction.mine
-                          ? "border-sky-500/60 bg-sky-600/20"
-                          : "border-border bg-muted/40 hover:bg-muted",
+                        reaction.mine ? "border-sky-500/60 bg-sky-600/20" : "border-border bg-muted/40 hover:bg-muted",
                       )}
                     >
                       <span>{reaction.emoji}</span>

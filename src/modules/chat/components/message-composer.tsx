@@ -2,17 +2,8 @@
 
 import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
-import {
-  INSERT_ORDERED_LIST_COMMAND,
-  INSERT_UNORDERED_LIST_COMMAND,
-  ListItemNode,
-  ListNode,
-} from "@lexical/list";
-import {
-  $convertFromMarkdownString,
-  $convertToMarkdownString,
-  type Transformer,
-} from "@lexical/markdown";
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, ListItemNode, ListNode } from "@lexical/list";
+import { $convertFromMarkdownString, $convertToMarkdownString, type Transformer } from "@lexical/markdown";
 import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -52,14 +43,7 @@ import {
   Strikethrough,
   X,
 } from "lucide-react";
-import {
-  type MutableRefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { type MutableRefObject, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   type ActiveFormats,
   ActiveFormatsPlugin,
@@ -89,16 +73,10 @@ import { useChat } from "./chat-context";
 // o kanban usa os mesmos). Aqui ficam só as convenções do chat: Enter envia,
 // rascunho por canal, editar a última mensagem, cancelar com Esc.
 
-const TRANSFORMERS: Transformer[] = [
-  ...BASE_TRANSFORMERS,
-  MENTION_TRANSFORMER,
-  TASK_MENTION_TRANSFORMER,
-];
+const TRANSFORMERS: Transformer[] = [...BASE_TRANSFORMERS, MENTION_TRANSFORMER, TASK_MENTION_TRANSFORMER];
 
 const LINK_MATCHERS = [
-  createLinkMatcherWithRegExp(URL_MATCHER, (text) =>
-    text.startsWith("http") ? text : `https://${text}`,
-  ),
+  createLinkMatcherWithRegExp(URL_MATCHER, (text) => (text.startsWith("http") ? text : `https://${text}`)),
 ];
 
 // ── Plugins específicos do chat ─────────────────────────────────────────────
@@ -175,8 +153,7 @@ function DraftPlugin({ draftKey }: { draftKey: string }) {
 
   // Carrega o rascunho ao montar e a cada troca de alvo (canal/DM).
   useEffect(() => {
-    const saved =
-      typeof window !== "undefined" ? window.localStorage.getItem(DRAFT_PREFIX + draftKey) : null;
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem(DRAFT_PREFIX + draftKey) : null;
     editor.update(
       () => {
         const root = $getRoot();
@@ -264,15 +241,7 @@ function ToolbarButton({
   );
 }
 
-function Toolbar({
-  editor,
-  busy,
-  active,
-}: {
-  editor: LexicalEditor;
-  busy: boolean;
-  active: ActiveFormats;
-}) {
+function Toolbar({ editor, busy, active }: { editor: LexicalEditor; busy: boolean; active: ActiveFormats }) {
   const setBlock = (create: () => ReturnType<typeof $createQuoteNode>) =>
     editor.update(() => {
       const selection = $getSelection();
@@ -366,12 +335,7 @@ function Toolbar({
       >
         <Quote className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton
-        title="Bloco de código"
-        busy={busy}
-        active={active.codeblock}
-        onClick={toggleCodeBlock}
-      >
+      <ToolbarButton title="Bloco de código" busy={busy} active={active.codeblock} onClick={toggleCodeBlock}>
         <Braces className="h-3.5 w-3.5" />
       </ToolbarButton>
       <span className="mx-1 h-4 w-px bg-border" />
@@ -465,22 +429,11 @@ function ComposerInner({
           />
         </div>
         {editMode ? (
-          <Button
-            size="icon"
-            variant="ghost"
-            disabled={busy}
-            onClick={onCancel}
-            title="Cancelar (Esc)"
-          >
+          <Button size="icon" variant="ghost" disabled={busy} onClick={onCancel} title="Cancelar (Esc)">
             <X />
           </Button>
         ) : null}
-        <Button
-          size="icon"
-          disabled={busy}
-          onClick={submit}
-          title={editMode ? "Salvar (Enter)" : "Enviar (Enter)"}
-        >
+        <Button size="icon" disabled={busy} onClick={submit} title={editMode ? "Salvar (Enter)" : "Enviar (Enter)"}>
           {editMode ? <Check /> : <SendHorizonal />}
         </Button>
       </div>
@@ -500,11 +453,7 @@ function ComposerInner({
       <FormatShortcutsPlugin />
       <EmojiShortcutPlugin />
       <EmojiTypeaheadPlugin menuOpenRef={emojiMenuOpen} />
-      <MentionTypeaheadPlugin
-        members={members}
-        currentUserId={currentUserId}
-        menuOpenRef={mentionMenuOpen}
-      />
+      <MentionTypeaheadPlugin members={members} currentUserId={currentUserId} menuOpenRef={mentionMenuOpen} />
       <TaskMentionTypeaheadPlugin search={searchTasks} menuOpenRef={taskMentionMenuOpen} />
       <SlashCommandPlugin menuOpenRef={slashMenuOpen} />
       <SubmitPlugin mode="enter" onSubmit={submit} menuOpenRefs={menuOpenRefs} />
@@ -572,8 +521,7 @@ export function MessageComposer({
         <p className="mt-1 px-1 text-[11px] text-muted-foreground">Enter salva · Esc cancela</p>
       ) : (
         <p className="mt-1 px-1 text-[11px] text-muted-foreground">
-          Enter envia · Shift+Enter quebra linha · / abre comandos · :emoji: vira emoji · Ctrl+Enter
-          envia
+          Enter envia · Shift+Enter quebra linha · / abre comandos · :emoji: vira emoji · Ctrl+Enter envia
         </p>
       )}
     </div>

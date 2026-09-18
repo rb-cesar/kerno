@@ -5,9 +5,7 @@ import type { Socket } from "socket.io-client";
 import type { AnyKernoEvent } from "@/core/events";
 
 /** Alvo de uma mensagem recebida em tempo real. */
-export type ChatTarget =
-  | { kind: "channel"; id: string }
-  | { kind: "dm"; id: string; participantIds: string[] };
+export type ChatTarget = { kind: "channel"; id: string } | { kind: "dm"; id: string; participantIds: string[] };
 
 /**
  * Escuta mensagens novas (de canal e diretas) e notifica o componente,
@@ -44,11 +42,7 @@ export function useChatRealtime(
         if (p.channelId) {
           onEvent({ kind: "channel", id: p.channelId }, fromSelf, kind);
         } else if (p.conversationId) {
-          onEvent(
-            { kind: "dm", id: p.conversationId, participantIds: p.participantIds },
-            fromSelf,
-            kind,
-          );
+          onEvent({ kind: "dm", id: p.conversationId, participantIds: p.participantIds }, fromSelf, kind);
         }
       }
     };

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/core/db";
-import { createBoardWithDefaults } from "./domain/board";
+import { board } from "./domain/board";
 // import { eventBus } from "@/core/events";
 import { KanbanService } from "./service";
 
@@ -33,9 +33,9 @@ beforeAll(async () => {
     },
   });
 
-  const board = await createBoardWithDefaults(workspace.id, workspace.name);
+  const createdBoard = await board.createBoardWithDefaults(workspace.id, workspace.name);
 
-  boardId = board.id;
+  boardId = createdBoard.id;
   userId = user.id;
   outsiderId = outsider.id;
   workspaceId = workspace.id;

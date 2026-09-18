@@ -10,9 +10,7 @@ export default async function ChatPage({ params }: { params: Promise<{ slug: str
 
   // Resolve o workspace pelo slug e carrega o chat direto no service (mesmo
   // processo). Permissão de membro checada lá dentro.
-  const workspace: WorkspaceView | null = await container.workspaces
-    .getBySlug(user.id, slug)
-    .catch(() => null);
+  const workspace: WorkspaceView | null = await container.workspaces.getBySlug(user.id, slug).catch(() => null);
   if (!workspace) notFound();
 
   const initial = await container.chat.chatForWorkspace(user.id, workspace.id).catch(() => null);

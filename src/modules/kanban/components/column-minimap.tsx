@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type PointerEvent as ReactPointerEvent,
-  type RefObject,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type PointerEvent as ReactPointerEvent, type RefObject, useEffect, useRef, useState } from "react";
 import { cn } from "@/components/ui";
 import type { ColumnDTO } from "../types";
 import { CATEGORY_COLOR, PRIORITY_META } from "./meta";
@@ -28,7 +22,10 @@ export function BoardMinimap({
   const trackRef = useRef<HTMLDivElement | null>(null);
   const dragging = useRef(false);
 
-  // Board → minimapa: reflete o scroll/tamanho atual no retângulo.
+  // Board → minimapa: reflete o scroll/tamanho atual no retângulo. `columns` é
+  // gatilho proposital (não lido no corpo): adicionar/remover coluna muda
+  // scrollWidth sem mudar o tamanho do próprio `el`, então o ResizeObserver
+  // sozinho não pegaria essa mudança.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -40,10 +37,13 @@ export function BoardMinimap({
         width: Math.min(100, (clientWidth / scrollWidth) * 100),
       });
     };
+
     update();
     el.addEventListener("scroll", update, { passive: true });
+
     const ro = new ResizeObserver(update);
     ro.observe(el);
+
     return () => {
       el.removeEventListener("scroll", update);
       ro.disconnect();
@@ -54,10 +54,13 @@ export function BoardMinimap({
   const scrollToClientX = (clientX: number) => {
     const el = scrollRef.current;
     const track = trackRef.current;
+
     if (!el || !track) return;
+
     const rect = track.getBoundingClientRect();
     const ratio = (clientX - rect.left) / rect.width;
     const target = ratio * el.scrollWidth - el.clientWidth / 2;
+
     el.scrollTo({
       left: Math.max(0, Math.min(target, el.scrollWidth - el.clientWidth)),
       behavior: dragging.current ? "auto" : "smooth",
@@ -69,9 +72,11 @@ export function BoardMinimap({
     e.currentTarget.setPointerCapture(e.pointerId);
     scrollToClientX(e.clientX);
   };
+
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (dragging.current) scrollToClientX(e.clientX);
   };
+
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     dragging.current = false;
     e.currentTarget.releasePointerCapture(e.pointerId);
@@ -106,10 +111,7 @@ export function BoardMinimap({
                       style={{ backgroundColor: PRIORITY_META[card.priority].color }}
                     />
                   ) : (
-                    <div
-                      key={card.id}
-                      className="h-1.5 w-full shrink-0 rounded-[1px] bg-muted-foreground/40"
-                    />
+                    <div key={card.id} className="h-1.5 w-full shrink-0 rounded-[1px] bg-muted-foreground/40" />
                   ),
                 )}
             </div>
@@ -118,9 +120,7 @@ export function BoardMinimap({
 
         {/* Retângulo de viewport (reflete o scroll horizontal do board). */}
         <div
-          className={cn(
-            "pointer-events-none absolute inset-y-0 rounded-sm border-2 border-primary/70 bg-primary/10",
-          )}
+          className={cn("pointer-events-none absolute inset-y-0 rounded-sm border-2 border-primary/70 bg-primary/10")}
           style={{ left: `${view.left}%`, width: `${view.width}%` }}
         />
       </div>

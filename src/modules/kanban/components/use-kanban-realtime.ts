@@ -9,11 +9,7 @@ import type { AnyKernoEvent } from "@/core/events";
  * resync. Eventos do próprio usuário são ignorados (já aplicados de forma
  * otimista localmente).
  */
-export function useKanbanRealtime(
-  socket: Socket | null,
-  currentUserId: string,
-  onRemoteChange: () => void,
-) {
+export function useKanbanRealtime(socket: Socket | null, currentUserId: string, onRemoteChange: () => void) {
   useEffect(() => {
     if (!socket) return;
 

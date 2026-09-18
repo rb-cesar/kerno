@@ -6,9 +6,7 @@ import { createContext, Fragment, type ReactNode, useContext, useState } from "r
 
 // onOpenTask flui por contexto para que as regras inline (estáticas) possam abrir
 // a tarefa sem receber o handler por parâmetro em toda a recursão de parsing.
-const OpenTaskContext = createContext<((cardId: string, label?: string) => void) | undefined>(
-  undefined,
-);
+const OpenTaskContext = createContext<((cardId: string, label?: string) => void) | undefined>(undefined);
 
 /** Chip clicável de menção de tarefa (`!task[...]`); abre o painel da tarefa. */
 function TaskMentionChip({ cardId, label }: { cardId: string; label: string }) {
@@ -265,10 +263,7 @@ export function MessageContent({
         i += 1;
       }
       blocks.push(
-        <blockquote
-          key={`q.${i}`}
-          className="border-l-2 border-muted-foreground/40 pl-3 text-muted-foreground"
-        >
+        <blockquote key={`q.${i}`} className="border-l-2 border-muted-foreground/40 pl-3 text-muted-foreground">
           {renderParagraph(quote, `q.${i}.p`)}
         </blockquote>,
       );

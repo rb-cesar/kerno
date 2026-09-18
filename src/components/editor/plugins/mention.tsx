@@ -2,11 +2,7 @@
 
 import type { TextMatchTransformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  LexicalTypeaheadMenuPlugin,
-  MenuOption,
-  type MenuTextMatch,
-} from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { LexicalTypeaheadMenuPlugin, MenuOption, type MenuTextMatch } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import {
   $applyNodeReplacement,
   $createTextNode,
@@ -86,8 +82,7 @@ export function $isMentionNode(node: LexicalNode | null | undefined): node is Me
 /** Transformer markdown: MentionNode ⇄ `@[Nome](user:ID)`. */
 export const MENTION_TRANSFORMER: TextMatchTransformer = {
   dependencies: [MentionNode],
-  export: (node) =>
-    $isMentionNode(node) ? `@[${node.getName()}](user:${node.getUserId()})` : null,
+  export: (node) => ($isMentionNode(node) ? `@[${node.getName()}](user:${node.getUserId()})` : null),
   importRegExp: /@\[([^\]]+)\]\(user:([^)]+)\)/,
   regExp: /@\[([^\]]+)\]\(user:([^)]+)\)$/,
   replace: (textNode, match) => {
@@ -179,10 +174,7 @@ export function MentionTypeaheadPlugin({
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(
-        anchorElementRef,
-        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
-      ) => {
+      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

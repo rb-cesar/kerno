@@ -9,11 +9,7 @@ import {
   ListItemNode,
   ListNode,
 } from "@lexical/list";
-import {
-  $convertFromMarkdownString,
-  $convertToMarkdownString,
-  type Transformer,
-} from "@lexical/markdown";
+import { $convertFromMarkdownString, $convertToMarkdownString, type Transformer } from "@lexical/markdown";
 import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -49,12 +45,7 @@ import {
   SubmitPlugin,
 } from "./plugins/behaviors";
 import { EmojiPickerButton, EmojiTypeaheadPlugin } from "./plugins/emoji";
-import {
-  MENTION_TRANSFORMER,
-  type MentionMember,
-  MentionNode,
-  MentionTypeaheadPlugin,
-} from "./plugins/mention";
+import { MENTION_TRANSFORMER, type MentionMember, MentionNode, MentionTypeaheadPlugin } from "./plugins/mention";
 import { SlashCommandPlugin } from "./plugins/slash";
 import {
   TASK_MENTION_TRANSFORMER,
@@ -64,29 +55,13 @@ import {
 } from "./plugins/task-ref";
 
 const LINK_MATCHERS = [
-  createLinkMatcherWithRegExp(URL_MATCHER, (text) =>
-    text.startsWith("http") ? text : `https://${text}`,
-  ),
+  createLinkMatcherWithRegExp(URL_MATCHER, (text) => (text.startsWith("http") ? text : `https://${text}`)),
 ];
 
-const BASE_NODES = [
-  QuoteNode,
-  ListNode,
-  ListItemNode,
-  LinkNode,
-  AutoLinkNode,
-  CodeNode,
-  CodeHighlightNode,
-];
+const BASE_NODES = [QuoteNode, ListNode, ListItemNode, LinkNode, AutoLinkNode, CodeNode, CodeHighlightNode];
 
 /** Carrega o markdown inicial uma única vez (montagem). */
-function InitialMarkdownPlugin({
-  markdown,
-  transformers,
-}: {
-  markdown: string;
-  transformers: Transformer[];
-}) {
+function InitialMarkdownPlugin({ markdown, transformers }: { markdown: string; transformers: Transformer[] }) {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     editor.update(() => {
@@ -148,15 +123,7 @@ function ToolbarButton({
   );
 }
 
-function Toolbar({
-  editor,
-  active,
-  showEmoji,
-}: {
-  editor: LexicalEditor;
-  active: ActiveFormats;
-  showEmoji?: boolean;
-}) {
+function Toolbar({ editor, active, showEmoji }: { editor: LexicalEditor; active: ActiveFormats; showEmoji?: boolean }) {
   const toggleCodeBlock = () =>
     editor.update(() => {
       const selection = $getSelection();
@@ -199,10 +166,7 @@ function Toolbar({
           node = node.getParent();
         }
       }
-      editor.dispatchCommand(
-        ordered ? INSERT_ORDERED_LIST_COMMAND : INSERT_UNORDERED_LIST_COMMAND,
-        undefined,
-      );
+      editor.dispatchCommand(ordered ? INSERT_ORDERED_LIST_COMMAND : INSERT_UNORDERED_LIST_COMMAND, undefined);
     });
 
   return (
@@ -339,32 +303,21 @@ export function RichTextEditor({
   submitOn?: "enter" | "mod-enter";
 }) {
   const transformers = useMemo(() => {
-    const extra = [
-      ...(mentions ? [MENTION_TRANSFORMER] : []),
-      ...(taskRefs ? [TASK_MENTION_TRANSFORMER] : []),
-    ];
+    const extra = [...(mentions ? [MENTION_TRANSFORMER] : []), ...(taskRefs ? [TASK_MENTION_TRANSFORMER] : [])];
     return extra.length > 0 ? [...TRANSFORMERS, ...extra] : TRANSFORMERS;
   }, [mentions, taskRefs]);
 
   const initialConfig = {
     namespace: "kerno-editor",
     theme: editorTheme,
-    nodes: [
-      ...BASE_NODES,
-      ...(mentions ? [MentionNode] : []),
-      ...(taskRefs ? [TaskMentionNode] : []),
-    ],
+    nodes: [...BASE_NODES, ...(mentions ? [MentionNode] : []), ...(taskRefs ? [TaskMentionNode] : [])],
     onError: (error: Error) => console.error("[rich-text-editor] erro:", error),
   };
 
   return (
     <div className="rounded-md border focus-within:ring-1 focus-within:ring-ring">
       <LexicalComposer initialConfig={initialConfig}>
-        <EditorInner
-          placeholder={placeholder}
-          minHeightClass={minHeightClass}
-          showEmoji={enableEmojiPicker}
-        />
+        <EditorInner placeholder={placeholder} minHeightClass={minHeightClass} showEmoji={enableEmojiPicker} />
         <HistoryPlugin />
         <ListPlugin />
         <LinkPlugin />
@@ -374,12 +327,7 @@ export function RichTextEditor({
         <InitialMarkdownPlugin markdown={value} transformers={transformers} />
         <OnChangeMarkdownPlugin onChange={onChange} transformers={transformers} />
         <ExitBlockOnArrowDownPlugin />
-        {mentions ? (
-          <MentionTypeaheadPlugin
-            members={mentions.members}
-            currentUserId={mentions.currentUserId}
-          />
-        ) : null}
+        {mentions ? <MentionTypeaheadPlugin members={mentions.members} currentUserId={mentions.currentUserId} /> : null}
         {taskRefs ? <TaskMentionTypeaheadPlugin search={taskRefs.search} /> : null}
         {enableEmojiShortcodes ? <EmojiShortcutPlugin /> : null}
         {enableEmojiPicker ? <EmojiTypeaheadPlugin /> : null}

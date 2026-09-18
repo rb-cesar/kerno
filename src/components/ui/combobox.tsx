@@ -2,14 +2,7 @@
 
 import { Check, ChevronsUpDown } from "lucide-react";
 import * as React from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "./command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { cn } from "./utils";
 
@@ -89,9 +82,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(function Com
                     setOpen(false);
                   }}
                 >
-                  <Check
-                    className={cn("h-4 w-4", option.value === value ? "opacity-100" : "opacity-0")}
-                  />
+                  <Check className={cn("h-4 w-4", option.value === value ? "opacity-100" : "opacity-0")} />
                   {option.label}
                 </CommandItem>
               ))}

@@ -32,16 +32,14 @@ export const kanbanClient = {
     request<BoardMetricsDTO>(`/kanban/boards/${boardId}/metrics`).catch(() => null),
 
   command: (command: KanbanCommand): Promise<KanbanMutationResult> =>
-    request<KanbanMutationResult>(`/kanban/commands`, { method: "POST", body: command }).catch(
-      (error: unknown) => ({
-        ok: false,
-        error: error instanceof Error ? error.message : "Erro inesperado",
-      }),
-    ),
+    request<KanbanMutationResult>(`/kanban/commands`, { method: "POST", body: command }).catch((error: unknown) => ({
+      ok: false,
+      error: error instanceof Error ? error.message : "Erro inesperado",
+    })),
 
   /** Busca tarefas do workspace p/ a menção `!` no chat. */
   searchTasks: (workspaceId: string, query: string): Promise<TaskRefDTO[]> =>
-    request<TaskRefDTO[]>(
-      `/kanban/workspaces/${workspaceId}/cards/search?q=${encodeURIComponent(query ?? "")}`,
-    ).catch(() => []),
+    request<TaskRefDTO[]>(`/kanban/workspaces/${workspaceId}/cards/search?q=${encodeURIComponent(query ?? "")}`).catch(
+      () => [],
+    ),
 };

@@ -14,15 +14,11 @@ export function createKanbanController(kanban: KanbanService) {
   );
 
   /** Snapshot de um board — refetch após eventos. */
-  app.get("/boards/:boardId", async (c) =>
-    c.json(await kanban.snapshot(c.get("userId"), c.req.param("boardId"))),
-  );
+  app.get("/boards/:boardId", async (c) => c.json(await kanban.snapshot(c.get("userId"), c.req.param("boardId"))));
 
   /** Busca tarefas do workspace por KERN-N/título — menção `!` no chat. */
   app.get("/workspaces/:workspaceId/cards/search", async (c) =>
-    c.json(
-      await kanban.searchCards(c.get("userId"), c.req.param("workspaceId"), c.req.query("q") ?? ""),
-    ),
+    c.json(await kanban.searchCards(c.get("userId"), c.req.param("workspaceId"), c.req.query("q") ?? "")),
   );
 
   /** Detalhe de um card (sub-tarefas, comentários, atividade) — sob demanda. */
@@ -31,9 +27,7 @@ export function createKanbanController(kanban: KanbanService) {
   );
 
   /** Snapshot do board que contém um card — painel da tarefa aberto pelo chat. */
-  app.get("/cards/:cardId/board", async (c) =>
-    c.json(await kanban.cardBoard(c.get("userId"), c.req.param("cardId"))),
-  );
+  app.get("/cards/:cardId/board", async (c) => c.json(await kanban.cardBoard(c.get("userId"), c.req.param("cardId"))));
 
   /** Métricas de fluxo do board. */
   app.get("/boards/:boardId/metrics", async (c) =>

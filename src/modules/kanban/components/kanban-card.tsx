@@ -57,11 +57,7 @@ export function KanbanCard({
             {card.storyId ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span
-                    role="img"
-                    className="flex items-center gap-0.5 text-primary"
-                    aria-label="História vinculada"
-                  >
+                  <span role="img" className="flex items-center gap-0.5 text-primary" aria-label="História vinculada">
                     <BookMarked className="h-3 w-3" />
                   </span>
                 </TooltipTrigger>

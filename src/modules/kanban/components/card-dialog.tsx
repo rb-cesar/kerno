@@ -23,23 +23,12 @@ import type { CardDetailDTO, CardDTO, Priority } from "../types";
 
 // Lazy: o editor Lexical (+prism) só baixa quando um card é aberto, mantendo o
 // bundle inicial da rota /kanban enxuto.
-const RichTextEditor = lazy(() =>
-  import("@/components/editor").then((m) => ({ default: m.RichTextEditor })),
-);
-const RichTextView = lazy(() =>
-  import("@/components/editor").then((m) => ({ default: m.RichTextView })),
-);
+const RichTextEditor = lazy(() => import("@/components/editor").then((m) => ({ default: m.RichTextEditor })));
+const RichTextView = lazy(() => import("@/components/editor").then((m) => ({ default: m.RichTextView })));
 
 import { CardChecklists } from "./card-checklists";
 import { useKanban } from "./kanban-context";
-import {
-  activityText,
-  CATEGORY_COLOR,
-  formatStamp,
-  PRIORITY_LABEL,
-  PRIORITY_ORDER,
-  toDateInput,
-} from "./meta";
+import { activityText, CATEGORY_COLOR, formatStamp, PRIORITY_LABEL, PRIORITY_ORDER, toDateInput } from "./meta";
 
 /** Esqueleto exibido enquanto o detalhe do card carrega (e na troca de tarefa). */
 function CardSkeleton() {
@@ -74,18 +63,8 @@ function CardSkeleton() {
  * `TaskSidePanel`, pelo chat.
  */
 export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: () => void }) {
-  const {
-    mutate,
-    refresh,
-    members,
-    labels,
-    cycles,
-    stories,
-    workspaceKey,
-    fetchCardDetail,
-    remoteRev,
-    currentUserId,
-  } = useKanban();
+  const { mutate, refresh, members, labels, cycles, stories, workspaceKey, fetchCardDetail, remoteRev, currentUserId } =
+    useKanban();
   const [pending, startTransition] = useTransition();
 
   const [title, setTitle] = useState(card.title);
@@ -270,9 +249,7 @@ export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: ()
                         <span className="font-mono text-xs text-muted-foreground">
                           {workspaceKey}-{c.number}
                         </span>
-                        <span
-                          className={cn("truncate", c.done && "text-muted-foreground line-through")}
-                        >
+                        <span className={cn("truncate", c.done && "text-muted-foreground line-through")}>
                           {c.title}
                         </span>
                       </li>
@@ -316,9 +293,7 @@ export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: ()
                     {detail.comments.map((c) => (
                       <li key={c.id} className="rounded-md bg-muted/50 p-2 text-sm">
                         <div className="mb-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">
-                            {c.author?.name ?? "Desconhecido"}
-                          </span>
+                          <span className="font-medium text-foreground">{c.author?.name ?? "Desconhecido"}</span>
                           <span>{formatStamp(c.createdAt)}</span>
                           {c.mine ? (
                             <button
@@ -383,9 +358,7 @@ export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: ()
 
             {/* ── Barra de detalhes ──────────────────────────────────────── */}
             <div className="w-64 shrink-0 space-y-4 overflow-y-auto border-l bg-muted/20 p-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Detalhes
-              </div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Detalhes</div>
 
               <Field>
                 <FieldLabel>Prioridade</FieldLabel>
@@ -429,12 +402,7 @@ export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: ()
               <Field>
                 <FieldLabel>Estimativa (pts)</FieldLabel>
                 <FieldControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={estimate}
-                    onChange={(e) => setEstimate(e.target.value)}
-                  />
+                  <Input type="number" min={0} value={estimate} onChange={(e) => setEstimate(e.target.value)} />
                 </FieldControl>
               </Field>
 
@@ -485,10 +453,7 @@ export function CardPanelContent({ card, onClose }: { card: CardDTO; onClose: ()
                           type="button"
                           onClick={() => toggleLabel(l.id)}
                           style={active ? { backgroundColor: l.color, color: "#fff" } : undefined}
-                          className={cn(
-                            "rounded-full border px-2 py-0.5 text-xs",
-                            !active && "text-muted-foreground",
-                          )}
+                          className={cn("rounded-full border px-2 py-0.5 text-xs", !active && "text-muted-foreground")}
                         >
                           {l.name}
                         </button>

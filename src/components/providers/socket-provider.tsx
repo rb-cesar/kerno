@@ -19,13 +19,7 @@ export function useSocket() {
   return useContext(SocketContext);
 }
 
-export function SocketProvider({
-  workspaceId,
-  children,
-}: {
-  workspaceId: string;
-  children: React.ReactNode;
-}) {
+export function SocketProvider({ workspaceId, children }: { workspaceId: string; children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
@@ -51,9 +45,5 @@ export function SocketProvider({
     };
   }, [workspaceId]);
 
-  return (
-    <SocketContext.Provider value={{ socket, connected, onlineUserIds }}>
-      {children}
-    </SocketContext.Provider>
-  );
+  return <SocketContext.Provider value={{ socket, connected, onlineUserIds }}>{children}</SocketContext.Provider>;
 }

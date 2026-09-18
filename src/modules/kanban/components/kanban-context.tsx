@@ -1,14 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type {
-  CycleDTO,
-  KanbanFetchCardDetail,
-  KanbanMutate,
-  LabelDTO,
-  MemberDTO,
-  StoryDTO,
-} from "../types";
+import type { CycleDTO, KanbanFetchCardDetail, KanbanMutate, LabelDTO, MemberDTO, StoryDTO } from "../types";
 
 type KanbanContextValue = {
   mutate: KanbanMutate;
@@ -30,13 +23,7 @@ type KanbanContextValue = {
 
 const KanbanContext = createContext<KanbanContextValue | null>(null);
 
-export function KanbanProvider({
-  value,
-  children,
-}: {
-  value: KanbanContextValue;
-  children: React.ReactNode;
-}) {
+export function KanbanProvider({ value, children }: { value: KanbanContextValue; children: React.ReactNode }) {
   return <KanbanContext.Provider value={value}>{children}</KanbanContext.Provider>;
 }
 

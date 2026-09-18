@@ -61,10 +61,7 @@ export function CycleManager({ workspaceId }: { workspaceId: string }) {
       {cycles.length > 0 ? (
         <ul className="space-y-0.5">
           {cycles.map((c) => (
-            <li
-              key={c.id}
-              className="group flex items-center gap-1 rounded-md px-2 py-1 text-sm hover:bg-accent"
-            >
+            <li key={c.id} className="group flex items-center gap-1 rounded-md px-2 py-1 text-sm hover:bg-accent">
               <span className="flex-1 truncate">{c.name}</span>
               <span className="shrink-0 text-[11px] text-muted-foreground">
                 {fmt(c.startsAt)}–{fmt(c.endsAt)}
@@ -103,13 +100,7 @@ export function CycleManager({ workspaceId }: { workspaceId: string }) {
               placeholder="Início"
               className="h-8"
             />
-            <DatePicker
-              value={endsAt}
-              disabled={pending}
-              onChange={setEndsAt}
-              placeholder="Fim"
-              className="h-8"
-            />
+            <DatePicker value={endsAt} disabled={pending} onChange={setEndsAt} placeholder="Fim" className="h-8" />
           </div>
           <Button size="sm" className="w-full" disabled={pending} onClick={create}>
             Criar cycle

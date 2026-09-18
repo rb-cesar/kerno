@@ -10,9 +10,7 @@ export default async function BoardsPage({ params }: { params: Promise<{ slug: s
 
   // Resolve o workspace pelo slug e carrega o board direto no service (mesmo
   // processo). A permissão de membro é checada lá dentro.
-  const workspace: WorkspaceView | null = await container.workspaces
-    .getBySlug(user.id, slug)
-    .catch(() => null);
+  const workspace: WorkspaceView | null = await container.workspaces.getBySlug(user.id, slug).catch(() => null);
   if (!workspace) notFound();
 
   const board = await container.kanban.boardForWorkspace(user.id, workspace.id).catch(() => null);

@@ -5,10 +5,7 @@ import { createUser } from "@/core/auth/create-user";
 import { registerSchema } from "@/core/auth/dto";
 import { signIn } from "@/core/auth/next-auth";
 
-export async function registerAction(
-  _prev: AuthFormState,
-  formData: FormData,
-): Promise<AuthFormState> {
+export async function registerAction(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

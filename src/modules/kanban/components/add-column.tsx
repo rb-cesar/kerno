@@ -43,11 +43,7 @@ export function AddColumn({ boardId }: { boardId: string }) {
           }}
         />
       ) : (
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-muted-foreground"
-          onClick={() => setAdding(true)}
-        >
+        <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={() => setAdding(true)}>
           <Plus /> Adicionar coluna
         </Button>
       )}

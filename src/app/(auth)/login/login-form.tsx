@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
-} from "@/components/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@/components/ui";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { loginAction } from "./actions";
 
@@ -31,13 +23,7 @@ export function LoginForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-            />
+            <Input id="password" name="password" type="password" required autoComplete="current-password" />
           </div>
           {state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
           <SubmitButton className="w-full">Entrar</SubmitButton>

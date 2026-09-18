@@ -4,15 +4,7 @@ import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-p
 import { BarChart3, BookMarked, LayoutGrid, List, Map as MapIcon, Search } from "lucide-react";
 import { type HTMLAttributes, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
-import {
-  cn,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  TooltipProvider,
-} from "@/components/ui";
+import { cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TooltipProvider } from "@/components/ui";
 import type {
   BoardData,
   ColumnDTO,
@@ -53,16 +45,8 @@ const PRIORITY_LANES: { p: Priority; label: string }[] = [
 ];
 
 /** Recorta as colunas por faixa, mantendo só as faixas com algum card. */
-function buildLanes(
-  groupBy: GroupBy,
-  columns: ColumnDTO[],
-  members: { id: string; name: string }[],
-): Lane[] {
-  const lane = (
-    key: string,
-    label: string,
-    keep: (c: ColumnDTO["cards"][number]) => boolean,
-  ): Lane | null => {
+function buildLanes(groupBy: GroupBy, columns: ColumnDTO[], members: { id: string; name: string }[]): Lane[] {
+  const lane = (key: string, label: string, keep: (c: ColumnDTO["cards"][number]) => boolean): Lane | null => {
     const laneColumns = columns.map((col) => ({ ...col, cards: col.cards.filter(keep) }));
     const total = laneColumns.reduce((n, col) => n + col.cards.length, 0);
     return total > 0 ? { key, label, columns: laneColumns } : null;
@@ -76,9 +60,9 @@ function buildLanes(
     return unassigned ? [...lanes, unassigned] : lanes;
   }
   // priority
-  return PRIORITY_LANES.map(({ p, label }) =>
-    lane(`p:${p}`, label, (c) => c.priority === p),
-  ).filter((l): l is Lane => l !== null);
+  return PRIORITY_LANES.map(({ p, label }) => lane(`p:${p}`, label, (c) => c.priority === p)).filter(
+    (l): l is Lane => l !== null,
+  );
 }
 
 /**
@@ -172,10 +156,7 @@ export function KanbanBoard({
     });
 
   const filtersActive =
-    labelFilter.size > 0 ||
-    assigneeFilter.size > 0 ||
-    priorityFilter.size > 0 ||
-    cycleFilter.size > 0;
+    labelFilter.size > 0 || assigneeFilter.size > 0 || priorityFilter.size > 0 || cycleFilter.size > 0;
   const grouped = groupBy !== "none" && view === "board";
 
   const clearFilters = useCallback(() => {
@@ -200,12 +181,9 @@ export function KanbanBoard({
   const cardVisible = useCallback(
     (card: ColumnDTO["cards"][number]) => {
       const labelOk = labelFilter.size === 0 || card.labels.some((l) => labelFilter.has(l.id));
-      const assigneeOk =
-        assigneeFilter.size === 0 ||
-        (card.assignedTo != null && assigneeFilter.has(card.assignedTo));
+      const assigneeOk = assigneeFilter.size === 0 || (card.assignedTo != null && assigneeFilter.has(card.assignedTo));
       const priorityOk = priorityFilter.size === 0 || priorityFilter.has(card.priority);
-      const cycleOk =
-        cycleFilter.size === 0 || (card.cycleId != null && cycleFilter.has(card.cycleId));
+      const cycleOk = cycleFilter.size === 0 || (card.cycleId != null && cycleFilter.has(card.cycleId));
       return labelOk && assigneeOk && priorityOk && cycleOk;
     },
     [labelFilter, assigneeFilter, priorityFilter, cycleFilter],
@@ -441,9 +419,7 @@ export function KanbanBoard({
                     title="Quadro"
                     className={cn(
                       "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                      view === "board"
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground",
+                      view === "board" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
                     )}
                   >
                     <LayoutGrid className="h-3.5 w-3.5" /> Quadro
@@ -454,9 +430,7 @@ export function KanbanBoard({
                     title="Lista"
                     className={cn(
                       "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                      view === "list"
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground",
+                      view === "list" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
                     )}
                   >
                     <List className="h-3.5 w-3.5" /> Lista
@@ -467,9 +441,7 @@ export function KanbanBoard({
                     title="Métricas"
                     className={cn(
                       "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                      view === "metrics"
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground",
+                      view === "metrics" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
                     )}
                   >
                     <BarChart3 className="h-3.5 w-3.5" /> Métricas
@@ -480,9 +452,7 @@ export function KanbanBoard({
                     title="Histórias"
                     className={cn(
                       "flex items-center gap-1 rounded px-2 py-0.5 text-xs",
-                      view === "stories"
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground",
+                      view === "stories" ? "bg-accent text-accent-foreground" : "text-muted-foreground",
                     )}
                   >
                     <BookMarked className="h-3.5 w-3.5" /> Histórias
@@ -490,11 +460,7 @@ export function KanbanBoard({
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   Agrupar:
-                  <Select
-                    value={groupBy}
-                    disabled={view !== "board"}
-                    onValueChange={(v) => setGroupBy(v as GroupBy)}
-                  >
+                  <Select value={groupBy} disabled={view !== "board"} onValueChange={(v) => setGroupBy(v as GroupBy)}>
                     <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
                       <SelectValue />
                     </SelectTrigger>
@@ -580,9 +546,7 @@ export function KanbanBoard({
                   </div>
                 ) : (
                   <>
-                    {minimapOpen ? (
-                      <BoardMinimap columns={visibleColumns} scrollRef={boardScrollRef} />
-                    ) : null}
+                    {minimapOpen ? <BoardMinimap columns={visibleColumns} scrollRef={boardScrollRef} /> : null}
                     <Droppable droppableId="board" direction="horizontal" type="column">
                       {(dropProvided) => (
                         <div

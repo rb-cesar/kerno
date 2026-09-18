@@ -3,11 +3,7 @@
 import { $createCodeNode } from "@lexical/code";
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  LexicalTypeaheadMenuPlugin,
-  MenuOption,
-  type MenuTextMatch,
-} from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { LexicalTypeaheadMenuPlugin, MenuOption, type MenuTextMatch } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { $createQuoteNode } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
 import {
@@ -19,17 +15,7 @@ import {
   type LexicalEditor,
   type TextFormatType,
 } from "lexical";
-import {
-  Bold,
-  Braces,
-  Code,
-  Italic,
-  List,
-  ListOrdered,
-  type LucideIcon,
-  Quote,
-  Strikethrough,
-} from "lucide-react";
+import { Bold, Braces, Code, Italic, List, ListOrdered, type LucideIcon, Quote, Strikethrough } from "lucide-react";
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/components/ui";
@@ -140,11 +126,7 @@ class SlashOption extends MenuOption {
  * `menuOpenRef` (opcional) avisa quem embrulha o campo — ex.: um plugin de
  * Enter-to-send — que o menu está aberto e não deve tratar o Enter.
  */
-export function SlashCommandPlugin({
-  menuOpenRef,
-}: {
-  menuOpenRef?: MutableRefObject<boolean>;
-} = {}) {
+export function SlashCommandPlugin({ menuOpenRef }: { menuOpenRef?: MutableRefObject<boolean> } = {}) {
   const [editor] = useLexicalComposerContext();
   const [query, setQuery] = useState<string | null>(null);
   const internalRef = useRef(false);
@@ -171,11 +153,7 @@ export function SlashCommandPlugin({
   }, []);
 
   const onSelectOption = useCallback(
-    (
-      selectedOption: SlashOption,
-      nodeToReplace: ReturnType<typeof $createTextNode> | null,
-      closeMenu: () => void,
-    ) => {
+    (selectedOption: SlashOption, nodeToReplace: ReturnType<typeof $createTextNode> | null, closeMenu: () => void) => {
       editor.update(() => {
         if (nodeToReplace) {
           const empty = $createTextNode("");
@@ -195,10 +173,7 @@ export function SlashCommandPlugin({
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(
-        anchorElementRef,
-        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
-      ) => {
+      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

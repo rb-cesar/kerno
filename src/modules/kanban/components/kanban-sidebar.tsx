@@ -47,11 +47,7 @@ export function KanbanSidebar({
   onToggleCycle: (id: string) => void;
   onClear: () => void;
 }) {
-  const active =
-    labelFilter.size > 0 ||
-    assigneeFilter.size > 0 ||
-    priorityFilter.size > 0 ||
-    cycleFilter.size > 0;
+  const active = labelFilter.size > 0 || assigneeFilter.size > 0 || priorityFilter.size > 0 || cycleFilter.size > 0;
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r">
@@ -63,11 +59,7 @@ export function KanbanSidebar({
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase text-muted-foreground">Filtros</span>
           {active ? (
-            <button
-              type="button"
-              onClick={onClear}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
+            <button type="button" onClick={onClear} className="text-xs text-muted-foreground hover:text-foreground">
               Limpar
             </button>
           ) : null}

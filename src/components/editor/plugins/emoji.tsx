@@ -1,22 +1,10 @@
 "use client";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  LexicalTypeaheadMenuPlugin,
-  MenuOption,
-  type MenuTextMatch,
-} from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { LexicalTypeaheadMenuPlugin, MenuOption, type MenuTextMatch } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { $createTextNode, $getRoot, $getSelection, $isRangeSelection } from "lexical";
 import { Smile } from "lucide-react";
-import {
-  lazy,
-  type MutableRefObject,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { lazy, type MutableRefObject, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/components/ui";
 import { searchEmojis } from "./emoji-data";
@@ -85,11 +73,7 @@ export function EmojiTypeaheadPlugin({ menuOpenRef }: { menuOpenRef?: MutableRef
   }, []);
 
   const onSelectOption = useCallback(
-    (
-      selectedOption: EmojiOption,
-      nodeToReplace: ReturnType<typeof $createTextNode> | null,
-      closeMenu: () => void,
-    ) => {
+    (selectedOption: EmojiOption, nodeToReplace: ReturnType<typeof $createTextNode> | null, closeMenu: () => void) => {
       editor.update(() => {
         if (nodeToReplace) {
           const textNode = $createTextNode(selectedOption.native);
@@ -108,10 +92,7 @@ export function EmojiTypeaheadPlugin({ menuOpenRef }: { menuOpenRef?: MutableRef
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}
       options={options}
-      menuRenderFn={(
-        anchorElementRef,
-        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
-      ) => {
+      menuRenderFn={(anchorElementRef, { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) => {
         if (!anchorElementRef.current || options.length === 0) return null;
         return createPortal(
           <div className="absolute bottom-full left-0 mb-2 max-h-72 w-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

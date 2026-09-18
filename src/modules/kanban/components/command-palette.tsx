@@ -38,18 +38,23 @@ export function CommandPalette({
   );
 
   const results = useMemo<Item[]>(() => {
-    const q = query.trim().toLowerCase();
+    const queryString = query.trim().toLowerCase();
     const items: Item[] = [];
-    if (filtersActive && (q === "" || "limpar filtros".includes(q))) {
+
+    if (filtersActive && (queryString === "" || "limpar filtros".includes(queryString))) {
       items.push({ kind: "action", id: "clear", label: "Limpar filtros", run: onClearFilters });
     }
+
     for (const { card, columnName } of cards) {
       const key = `${data.workspaceKey}-${card.number}`;
-      if (q === "" || `${key} ${card.title}`.toLowerCase().includes(q)) {
+
+      if (queryString === "" || `${key} ${card.title}`.toLowerCase().includes(queryString)) {
         items.push({ kind: "card", id: card.id, label: `${key}  ${card.title}`, sub: columnName });
       }
+
       if (items.length >= 50) break;
     }
+
     return items;
   }, [query, cards, data.workspaceKey, filtersActive, onClearFilters]);
 
@@ -104,9 +109,7 @@ export function CommandPalette({
         </div>
         <ul className="max-h-80 overflow-y-auto p-1">
           {results.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-muted-foreground">
-              Nada encontrado.
-            </li>
+            <li className="px-3 py-6 text-center text-sm text-muted-foreground">Nada encontrado.</li>
           ) : (
             results.map((item, i) => (
               <li key={`${item.kind}:${item.id}`}>
@@ -122,9 +125,7 @@ export function CommandPalette({
                   {item.kind === "card" ? (
                     <>
                       <span className="truncate">{item.label}</span>
-                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                        {item.sub}
-                      </span>
+                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">{item.sub}</span>
                     </>
                   ) : (
                     <span className="text-muted-foreground">{item.label}</span>

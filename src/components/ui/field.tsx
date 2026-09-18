@@ -31,8 +31,7 @@ function useFieldContext(): FieldContextValue {
  */
 export function useField() {
   const { id, hintId, errorId, invalid, hasHint, hasError } = useFieldContext();
-  const describedBy =
-    [hasHint ? hintId : null, hasError ? errorId : null].filter(Boolean).join(" ") || undefined;
+  const describedBy = [hasHint ? hintId : null, hasError ? errorId : null].filter(Boolean).join(" ") || undefined;
   return {
     id,
     "aria-describedby": describedBy,
@@ -46,99 +45,79 @@ export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /** Container que padroniza Label + controle + dica/erro e liga o aria automaticamente. */
-const Field = React.forwardRef<HTMLDivElement, FieldProps>(
-  ({ className, invalid = false, ...props }, ref) => {
-    const base = React.useId();
-    const [hasHint, setHasHint] = React.useState(false);
-    const [hasError, setHasError] = React.useState(false);
+const Field = React.forwardRef<HTMLDivElement, FieldProps>(({ className, invalid = false, ...props }, ref) => {
+  const base = React.useId();
+  const [hasHint, setHasHint] = React.useState(false);
+  const [hasError, setHasError] = React.useState(false);
 
-    const value = React.useMemo<FieldContextValue>(
-      () => ({
-        id: `${base}-control`,
-        hintId: `${base}-hint`,
-        errorId: `${base}-error`,
-        invalid: invalid || hasError,
-        hasHint,
-        hasError,
-        setHasHint,
-        setHasError,
-      }),
-      [base, invalid, hasHint, hasError],
-    );
+  const value = React.useMemo<FieldContextValue>(
+    () => ({
+      id: `${base}-control`,
+      hintId: `${base}-hint`,
+      errorId: `${base}-error`,
+      invalid: invalid || hasError,
+      hasHint,
+      hasError,
+      setHasHint,
+      setHasError,
+    }),
+    [base, invalid, hasHint, hasError],
+  );
 
-    return (
-      <FieldContext.Provider value={value}>
-        <div ref={ref} className={cn("space-y-2", className)} {...props} />
-      </FieldContext.Provider>
-    );
-  },
-);
+  return (
+    <FieldContext.Provider value={value}>
+      <div ref={ref} className={cn("space-y-2", className)} {...props} />
+    </FieldContext.Provider>
+  );
+});
 Field.displayName = "Field";
 
-const FieldLabel = React.forwardRef<
-  React.ElementRef<typeof Label>,
-  React.ComponentPropsWithoutRef<typeof Label>
->((props, ref) => {
-  const { id } = useFieldContext();
-  return <Label ref={ref} htmlFor={id} {...props} />;
-});
+const FieldLabel = React.forwardRef<React.ElementRef<typeof Label>, React.ComponentPropsWithoutRef<typeof Label>>(
+  (props, ref) => {
+    const { id } = useFieldContext();
+    return <Label ref={ref} htmlFor={id} {...props} />;
+  },
+);
 FieldLabel.displayName = "FieldLabel";
 
 /** Injeta id/aria-describedby/aria-invalid no controle filho (via Slot). */
-const FieldControl = React.forwardRef<HTMLElement, { children: React.ReactElement }>(
-  ({ children }, ref) => {
-    const field = useField();
+const FieldControl = React.forwardRef<HTMLElement, { children: React.ReactElement }>(({ children }, ref) => {
+  const field = useField();
+  return (
+    <Slot ref={ref} {...field}>
+      {children}
+    </Slot>
+  );
+});
+FieldControl.displayName = "FieldControl";
+
+const FieldHint = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, ...props }, ref) => {
+    const { hintId, setHasHint } = useFieldContext();
+    React.useEffect(() => {
+      setHasHint(true);
+      return () => setHasHint(false);
+    }, [setHasHint]);
+    return <p ref={ref} id={hintId} className={cn("text-xs text-muted-foreground", className)} {...props} />;
+  },
+);
+FieldHint.displayName = "FieldHint";
+
+const FieldError = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, children, ...props }, ref) => {
+    const { errorId, setHasError } = useFieldContext();
+    React.useEffect(() => {
+      setHasError(true);
+      return () => setHasError(false);
+    }, [setHasError]);
+    if (!children) return null;
     return (
-      <Slot ref={ref} {...field}>
+      <p ref={ref} id={errorId} role="alert" className={cn("text-sm text-destructive", className)} {...props}>
         {children}
-      </Slot>
+      </p>
     );
   },
 );
-FieldControl.displayName = "FieldControl";
-
-const FieldHint = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => {
-  const { hintId, setHasHint } = useFieldContext();
-  React.useEffect(() => {
-    setHasHint(true);
-    return () => setHasHint(false);
-  }, [setHasHint]);
-  return (
-    <p
-      ref={ref}
-      id={hintId}
-      className={cn("text-xs text-muted-foreground", className)}
-      {...props}
-    />
-  );
-});
-FieldHint.displayName = "FieldHint";
-
-const FieldError = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, children, ...props }, ref) => {
-  const { errorId, setHasError } = useFieldContext();
-  React.useEffect(() => {
-    setHasError(true);
-    return () => setHasError(false);
-  }, [setHasError]);
-  if (!children) return null;
-  return (
-    <p
-      ref={ref}
-      id={errorId}
-      role="alert"
-      className={cn("text-sm text-destructive", className)}
-      {...props}
-    >
-      {children}
-    </p>
-  );
-});
 FieldError.displayName = "FieldError";
 
 export { Field, FieldControl, FieldError, FieldHint, FieldLabel };

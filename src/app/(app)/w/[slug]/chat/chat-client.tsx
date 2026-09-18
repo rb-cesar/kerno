@@ -8,13 +8,7 @@ import { ChatPanel } from "@/modules/chat/components/chat-panel";
 import type { ChatData } from "@/modules/chat/types";
 import { kanbanClient } from "@/modules/kanban/client";
 
-export function ChatClient({
-  initial,
-  currentUserId,
-}: {
-  initial: ChatData;
-  currentUserId: string;
-}) {
+export function ChatClient({ initial, currentUserId }: { initial: ChatData; currentUserId: string }) {
   const { socket, onlineUserIds } = useSocket();
   const { openCard } = useWorkspaceDock();
 
@@ -25,10 +19,7 @@ export function ChatClient({
   );
 
   // Clicar no chip de tarefa abre no dock compartilhado do workspace.
-  const onOpenTask = useCallback(
-    (cardId: string, label?: string) => openCard(cardId, { title: label }),
-    [openCard],
-  );
+  const onOpenTask = useCallback((cardId: string, label?: string) => openCard(cardId, { title: label }), [openCard]);
 
   return (
     <ChatPanel
