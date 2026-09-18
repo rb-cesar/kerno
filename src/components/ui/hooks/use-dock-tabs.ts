@@ -48,9 +48,7 @@ export function useDockTabs(): DockController {
     setTabs((prev) => {
       const idx = prev.findIndex((t) => t.id === tab.id);
       if (idx >= 0) {
-        const copy = prev.slice();
-        copy[idx] = { ...copy[idx]!, preview: false };
-        return copy;
+        return prev.map((t, i) => (i === idx ? { ...t, preview: false } : t));
       }
       return [...prev, { ...tab, preview: false }];
     });

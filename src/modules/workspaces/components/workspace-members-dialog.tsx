@@ -92,6 +92,7 @@ export function WorkspaceMembersDialog({
               </div>
               {isManager ? (
                 <button
+                  type="button"
                   disabled={pending}
                   onClick={() =>
                     run(() => removeWorkspaceMember({ workspaceId, slug, userId: m.id }))

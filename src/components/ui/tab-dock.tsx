@@ -95,9 +95,16 @@ export function TabDock({
             <div
               key={tab.id}
               role="tab"
+              tabIndex={0}
               aria-selected={active}
               onClick={() => onActivate(tab.id)}
               onDoubleClick={() => onPin(tab.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onActivate(tab.id);
+                }
+              }}
               onMouseDown={(e) => {
                 if (e.button === 1) {
                   e.preventDefault();

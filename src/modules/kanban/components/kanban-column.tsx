@@ -148,6 +148,7 @@ function ColumnSettings({ column }: { column: ColumnDTO }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         className="text-muted-foreground hover:text-foreground"
         title="Configurar coluna"

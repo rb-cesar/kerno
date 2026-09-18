@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/suspicious/noUnknownAtRules: @tailwind é diretiva do Tailwind, não CSS padrão — falso positivo esperado do linter de CSS do Biome */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

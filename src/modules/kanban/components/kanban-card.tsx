@@ -58,6 +58,7 @@ export function KanbanCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
+                    role="img"
                     className="flex items-center gap-0.5 text-primary"
                     aria-label="História vinculada"
                   >

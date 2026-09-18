@@ -60,7 +60,9 @@ export function EmojiShortcutPlugin() {
         const text = node.getTextContent();
         const match = /:([a-z0-9_+-]{2,30}):/i.exec(text);
         if (!match) return;
-        const emoji = EMOJI[match[1]!.toLowerCase()];
+        const emojiName = match[1];
+        if (!emojiName) return;
+        const emoji = EMOJI[emojiName.toLowerCase()];
         if (!emoji) return;
         const next = text.slice(0, match.index) + emoji + text.slice(match.index + match[0].length);
         node.setTextContent(next);
@@ -153,7 +155,7 @@ function blockOffset(block: ElementNode, selection: RangeSelection): number {
     const children = block.getChildren();
     let sum = 0;
     for (let i = 0; i < anchor.offset && i < children.length; i += 1) {
-      sum += children[i]!.getTextContentSize();
+      sum += children[i]?.getTextContentSize() ?? 0;
     }
     return sum;
   }

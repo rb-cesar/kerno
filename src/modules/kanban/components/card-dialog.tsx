@@ -56,6 +56,7 @@ function CardSkeleton() {
       <div className="w-64 shrink-0 space-y-4 border-l bg-muted/20 p-4">
         <Skeleton className="h-4 w-20" />
         {Array.from({ length: 5 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: placeholders estáticos, sem identidade própria
           <div key={i} className="space-y-1.5">
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-9 w-full" />

@@ -58,6 +58,7 @@ export function LabelManager({ boardId }: { boardId: string }) {
               <div key={l.id} className="flex items-center justify-between">
                 <Badge style={{ backgroundColor: l.color, color: "#fff" }}>{l.name}</Badge>
                 <button
+                  type="button"
                   onClick={() => remove(l.id)}
                   disabled={pending}
                   className="text-muted-foreground hover:text-destructive"

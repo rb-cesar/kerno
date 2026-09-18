@@ -338,7 +338,9 @@ export function KanbanBoard({
       const [movedCol] = reordered.columns.splice(source.index, 1);
       if (!movedCol) return;
       reordered.columns.splice(destination.index, 0, movedCol);
-      reordered.columns.forEach((c, i) => (c.order = i));
+      reordered.columns.forEach((c, i) => {
+        c.order = i;
+      });
       setData(reordered);
       const res = await mutate({
         type: "reorderColumns",

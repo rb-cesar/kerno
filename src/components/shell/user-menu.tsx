@@ -41,7 +41,7 @@ export function UserMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="rounded-full outline-none ring-ring focus-visible:ring-2">
+          <button type="button" className="rounded-full outline-none ring-ring focus-visible:ring-2">
             <Avatar>
               <AvatarFallback>{initialsOf(name)}</AvatarFallback>
             </Avatar>

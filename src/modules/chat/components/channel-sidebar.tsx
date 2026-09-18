@@ -58,6 +58,7 @@ export function ChannelSidebar({
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-xs font-semibold uppercase text-muted-foreground">Canais</span>
         <button
+          type="button"
           onClick={() => setAdding((v) => !v)}
           className="text-muted-foreground hover:text-foreground"
           title="Novo canal"
@@ -72,6 +73,7 @@ export function ChannelSidebar({
           return (
             <button
               key={channel.id}
+              type="button"
               onClick={() => onSelectChannel(channel.id)}
               className={cn(
                 "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors",
@@ -117,6 +119,7 @@ export function ChannelSidebar({
               return (
                 <button
                   key={conv.id}
+                  type="button"
                   onClick={() => onSelectConversation(conv.id)}
                   className={cn(
                     "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors",

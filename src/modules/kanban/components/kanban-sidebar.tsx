@@ -64,6 +64,7 @@ export function KanbanSidebar({
           <span className="text-xs font-semibold uppercase text-muted-foreground">Filtros</span>
           {active ? (
             <button
+              type="button"
               onClick={onClear}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
@@ -83,6 +84,7 @@ export function KanbanSidebar({
                 return (
                   <button
                     key={m.id}
+                    type="button"
                     onClick={() => onToggleAssignee(m.id)}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
@@ -108,6 +110,7 @@ export function KanbanSidebar({
               return (
                 <button
                   key={p}
+                  type="button"
                   onClick={() => onTogglePriority(p)}
                   style={
                     on
@@ -134,6 +137,7 @@ export function KanbanSidebar({
                 return (
                   <button
                     key={l.id}
+                    type="button"
                     onClick={() => onToggleLabel(l.id)}
                     style={
                       on
@@ -159,6 +163,7 @@ export function KanbanSidebar({
                 return (
                   <button
                     key={c.id}
+                    type="button"
                     onClick={() => onToggleCycle(c.id)}
                     className={cn(
                       "flex w-full items-center rounded-md px-2 py-1 text-left text-sm transition-colors",

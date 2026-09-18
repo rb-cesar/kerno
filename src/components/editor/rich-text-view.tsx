@@ -46,8 +46,10 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
         {({ style, tokens, getLineProps, getTokenProps }) => (
           <pre className="overflow-x-auto p-3 font-mono text-[0.85em]" style={style}>
             {tokens.map((line, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: linhas/tokens de highlight, ordem fixa, sem id próprio
               <div key={i} {...getLineProps({ line })}>
                 {line.map((token, key) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: idem — token dentro da linha
                   <span key={key} {...getTokenProps({ token })} />
                 ))}
               </div>
@@ -174,6 +176,7 @@ function renderParagraph(lines: string[], key: string): ReactNode {
   return (
     <p key={key} className="whitespace-pre-wrap break-words">
       {lines.map((line, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: linhas do parágrafo, ordem fixa, sem id próprio
         <Fragment key={i}>
           {i > 0 ? <br /> : null}
           {parseInline(line, `${key}.${i}`)}
@@ -238,6 +241,7 @@ export function RichTextView({ content }: { content: string }): ReactNode {
       blocks.push(
         <ListTag key={`l.${i}`} className={`${listClass} space-y-0.5 pl-5`}>
           {items.map((item, idx) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: itens da lista, ordem fixa, sem id próprio
             <li key={idx}>{parseInline(item, `l.${i}.${idx}`)}</li>
           ))}
         </ListTag>,

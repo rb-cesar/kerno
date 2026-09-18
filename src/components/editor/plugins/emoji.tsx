@@ -184,6 +184,7 @@ export function EmojiPickerButton({ busy = false }: { busy?: boolean }) {
 
       {open ? (
         <>
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: backdrop invisível p/ fechar ao clicar fora — não é um controle, não deve entrar na ordem de tab */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute bottom-full right-0 z-50 mb-2">
             <Suspense

@@ -49,6 +49,7 @@ export function CycleManager({ workspaceId }: { workspaceId: string }) {
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase text-muted-foreground">Cycles</span>
         <button
+          type="button"
           onClick={() => setOpen((v) => !v)}
           className="text-muted-foreground hover:text-foreground"
           title="Novo cycle"
@@ -69,6 +70,7 @@ export function CycleManager({ workspaceId }: { workspaceId: string }) {
                 {fmt(c.startsAt)}–{fmt(c.endsAt)}
               </span>
               <button
+                type="button"
                 onClick={() => remove(c.id)}
                 disabled={pending}
                 className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
