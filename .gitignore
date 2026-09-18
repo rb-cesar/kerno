@@ -3,7 +3,6 @@ node_modules/
 dist/
 .turbo/
 out/
-storybook-static/
 *.tsbuildinfo
 
 # env
@@ -24,6 +23,3 @@ Thumbs.db
 
 # prisma
 prisma/*.db
-# fragmentos .prisma reunidos pelo gather (fonte: db/prisma/models + modules/*/prisma).
-# A subpasta migrations/ é versionada (não ignorar) — o Prisma a procura aqui dentro.
-packages/db/prisma/schema/*.prisma
