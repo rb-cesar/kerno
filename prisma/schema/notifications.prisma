@@ -1,0 +1,22 @@
+// Notificação — vínculo entre um Event (o fato, único e imutável) e um
+// destinatário. Não duplica type/payload: só guarda pra quem o evento é
+// relevante, o texto já traduzido (ver server/notification-dispatcher.ts) e o
+// estado de leitura, que é por (evento, usuário) — um evento pode ter vários
+// destinatários, cada um com o próprio readAt.
+
+model Notification {
+  id        String    @id @default(cuid())
+  eventId   String
+  userId    String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([userId, readAt])
+}

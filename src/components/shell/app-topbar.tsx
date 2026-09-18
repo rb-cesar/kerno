@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/shell/notification-bell";
 import { UserMenu } from "@/components/shell/user-menu";
 
 /**
@@ -18,7 +19,10 @@ export function AppTopbar({ name, email }: { name: string; email: string }) {
       <Link href="/app" className="text-lg font-bold tracking-tight">
         Kerno
       </Link>
-      <UserMenu name={name} email={email} />
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <UserMenu name={name} email={email} />
+      </div>
     </header>
   );
 }

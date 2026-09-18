@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSocket } from "@/components/providers/socket-provider";
+import { useWorkspacePresence } from "@/components/providers/workspace-presence-provider";
 import { cn } from "@/components/ui";
 import { WorkspaceMembersDialog } from "@/modules/workspaces/components/workspace-members-dialog";
 
@@ -20,7 +21,8 @@ export function WorkspaceHeader({
   isManager: boolean;
   members: Member[];
 }) {
-  const { connected, onlineUserIds } = useSocket();
+  const { connected } = useSocket();
+  const onlineUserIds = useWorkspacePresence();
 
   const online = members.filter((m) => onlineUserIds.includes(m.id));
 

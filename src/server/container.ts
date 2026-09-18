@@ -1,5 +1,6 @@
 import { createChatService } from "@/modules/chat/server";
 import { createKanbanService } from "@/modules/kanban/server";
+import { createNotificationService } from "@/modules/notifications/server";
 import { createWorkspaceService } from "@/modules/workspaces/server";
 
 /**
@@ -17,6 +18,7 @@ function build() {
     workspaces: createWorkspaceService(),
     kanban: createKanbanService(),
     chat: createChatService(),
+    notifications: createNotificationService(),
   };
 }
 
