@@ -28,19 +28,23 @@ export function KanbanCard({
   return (
     <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled}>
       {(provided, snapshot) => (
-        <div
+        <button
+          type="button"
           ref={provided.innerRef}
-          {...(provided.draggableProps as HTMLAttributes<HTMLDivElement>)}
+          {...(provided.draggableProps as HTMLAttributes<HTMLButtonElement>)}
           {...provided.dragHandleProps}
-          role="button"
-          tabIndex={0}
           onClick={() => openCard(card.id)}
           onDoubleClick={() => openCard(card.id, { pin: true })}
           onKeyDown={(e) => {
-            if (e.key === "Enter") openCard(card.id, { pin: true });
+            // preventDefault: um <button> nativo já ativa no Enter (dispara
+            // onClick sozinho) — sem isso, o card abriria em preview E fixado.
+            if (e.key === "Enter") {
+              e.preventDefault();
+              openCard(card.id, { pin: true });
+            }
           }}
           className={cn(
-            "cursor-pointer rounded-md border bg-card p-3 text-sm shadow-sm transition-colors hover:border-foreground/30",
+            "w-full cursor-pointer rounded-md border bg-card p-3 text-left text-sm shadow-sm transition-colors hover:border-foreground/30",
             active && "border-primary ring-1 ring-primary",
             snapshot.isDragging && "ring-2 ring-ring",
           )}
@@ -100,7 +104,7 @@ export function KanbanCard({
               <span className="rounded bg-muted px-1.5 py-0.5 font-medium">{card.estimate} pt</span>
             ) : null}
           </div>
-        </div>
+        </button>
       )}
     </Draggable>
   );

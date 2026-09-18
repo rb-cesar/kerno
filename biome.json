@@ -10,7 +10,8 @@
       "!**/.turbo",
       "!**/*.tsbuildinfo",
       "!**/prisma/schema/migrations",
-      "!**/.claude"
+      "!**/.claude",
+      "!**/src/generated"
     ]
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },

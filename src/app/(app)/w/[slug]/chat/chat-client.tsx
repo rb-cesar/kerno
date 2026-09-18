@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useMemo } from "react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { useWorkspacePresence } from "@/components/providers/workspace-presence-provider";
 import { useWorkspaceDock } from "@/components/shell/workspace-dock-provider";
@@ -13,6 +14,15 @@ export function ChatClient({ initial, currentUserId }: { initial: ChatData; curr
   const { socket } = useSocket();
   const onlineUserIds = useWorkspacePresence();
   const { openCard } = useWorkspaceDock();
+  const searchParams = useSearchParams();
+
+  // Deep-link de notificação (?channel=<id> ou ?dm=<id>).
+  const initialTarget = useMemo(() => {
+    const channelId = searchParams.get("channel");
+    const conversationId = searchParams.get("dm");
+    if (!channelId && !conversationId) return undefined;
+    return { channelId: channelId ?? undefined, conversationId: conversationId ?? undefined };
+  }, [searchParams]);
 
   // Liga a menção `!` à API do kanban (busca por workspace).
   const searchTasks = useCallback(
@@ -39,6 +49,7 @@ export function ChatClient({ initial, currentUserId }: { initial: ChatData; curr
       toggleReaction={chatClient.toggleReaction}
       searchTasks={searchTasks}
       onOpenTask={onOpenTask}
+      initialTarget={initialTarget}
     />
   );
 }

@@ -9,15 +9,21 @@ import { useSocket } from "./socket-provider";
 type NotificationsContextValue = {
   items: NotificationDTO[];
   unreadCount: number;
+  hasMore: boolean;
+  loadingMore: boolean;
   markRead: (id: string) => void;
   markAllRead: () => void;
+  loadMore: () => void;
 };
 
 const NotificationsContext = createContext<NotificationsContextValue>({
   items: [],
   unreadCount: 0,
+  hasMore: false,
+  loadingMore: false,
   markRead: () => {},
   markAllRead: () => {},
+  loadMore: () => {},
 });
 
 export function useNotifications(): NotificationsContextValue {
@@ -34,11 +40,14 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const { socket } = useSocket();
   const [items, setItems] = useState<NotificationDTO[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     notificationsClient.fetch().then((data) => {
       setItems(data.items);
       setUnreadCount(data.unreadCount);
+      setHasMore(data.hasMore);
     });
   }, []);
 
@@ -69,8 +78,23 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     void notificationsClient.markAllRead();
   }, []);
 
+  const loadMore = useCallback(() => {
+    const oldest = items.at(-1)?.createdAt;
+    if (!oldest) return;
+    setLoadingMore(true);
+    notificationsClient
+      .fetch(oldest)
+      .then((data) => {
+        setItems((cur) => [...cur, ...data.items]);
+        setHasMore(data.hasMore);
+      })
+      .finally(() => setLoadingMore(false));
+  }, [items]);
+
   return (
-    <NotificationsContext.Provider value={{ items, unreadCount, markRead, markAllRead }}>
+    <NotificationsContext.Provider
+      value={{ items, unreadCount, hasMore, loadingMore, markRead, markAllRead, loadMore }}
+    >
       {children}
     </NotificationsContext.Provider>
   );
