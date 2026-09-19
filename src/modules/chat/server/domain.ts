@@ -1,5 +1,6 @@
 import { prisma } from "@/core/db";
 import { createEvent, eventBus } from "@/core/events";
+import { fetchCursorPage } from "@/core/pagination";
 import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO, MessagesPage, ReactionDTO } from "../types";
 
 const MESSAGE_PAGE_SIZE = 50;
@@ -132,26 +133,25 @@ export class ChatDomain {
     return channels.map((c) => ({ id: c.id, name: c.name, isDefault: c.isDefault }));
   }
 
-  /**
-   * `beforeId`: id da mensagem mais antiga já carregada — usa o cursor nativo
-   * do Prisma (busca a linha por id, pula ela, segue na ordem) em vez de
-   * filtrar por `createdAt` sozinho, que pode pular/duplicar linha quando
-   * duas mensagens caem no mesmo milissegundo.
-   */
+  /** `beforeId`: id da mensagem mais antiga já carregada — paginação por cursor (ver `fetchCursorPage`). */
   async getMessages(
     channelId: string,
     viewerId: string,
     beforeId?: string,
     limit = MESSAGE_PAGE_SIZE,
   ): Promise<MessagesPage> {
-    const rows = await prisma.message.findMany({
-      where: { channelId },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      ...(beforeId ? { cursor: { id: beforeId }, skip: 1 } : {}),
-      take: limit,
-      include: MESSAGE_INCLUDE,
-    });
-    return { items: rows.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: rows.length === limit };
+    const page = await fetchCursorPage(
+      (args) =>
+        prisma.message.findMany({
+          where: { channelId },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          include: MESSAGE_INCLUDE,
+          ...args,
+        }),
+      beforeId,
+      limit,
+    );
+    return { items: page.items.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: page.hasMore };
   }
 
   async createChannel(workspaceId: string, name: string): Promise<ChannelDTO> {
@@ -307,14 +307,18 @@ export class ChatDomain {
     beforeId?: string,
     limit = MESSAGE_PAGE_SIZE,
   ): Promise<MessagesPage> {
-    const rows = await prisma.message.findMany({
-      where: { conversationId },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      ...(beforeId ? { cursor: { id: beforeId }, skip: 1 } : {}),
-      take: limit,
-      include: MESSAGE_INCLUDE,
-    });
-    return { items: rows.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: rows.length === limit };
+    const page = await fetchCursorPage(
+      (args) =>
+        prisma.message.findMany({
+          where: { conversationId },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          include: MESSAGE_INCLUDE,
+          ...args,
+        }),
+      beforeId,
+      limit,
+    );
+    return { items: page.items.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: page.hasMore };
   }
 
   async sendDirectMessage(

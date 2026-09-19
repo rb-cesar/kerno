@@ -1,5 +1,6 @@
 import { prisma } from "@/core/db";
-import type { NotificationDTO, NotificationRecipient } from "../types";
+import { fetchCursorPage } from "@/core/pagination";
+import type { NotificationDTO, NotificationRecipient, NotificationsPage } from "../types";
 
 export const NOTIFICATIONS_PAGE_SIZE = 50;
 
@@ -24,15 +25,20 @@ export class NotificationDomain {
     };
   }
 
-  /** `before`: só notificações criadas antes desse instante — paginação por cursor. */
-  async list(userId: string, before?: Date): Promise<NotificationDTO[]> {
-    const rows = await prisma.notification.findMany({
-      where: { userId, ...(before ? { createdAt: { lt: before } } : {}) },
-      orderBy: { createdAt: "desc" },
-      take: NOTIFICATIONS_PAGE_SIZE,
-      include: { event: { select: { type: true } } },
-    });
-    return rows.map((row) => this.toDTO(row));
+  /** `beforeId`: id da notificação mais antiga já carregada — paginação por cursor. */
+  async list(userId: string, beforeId?: string, limit = NOTIFICATIONS_PAGE_SIZE): Promise<NotificationsPage> {
+    const page = await fetchCursorPage(
+      (args) =>
+        prisma.notification.findMany({
+          where: { userId },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          include: { event: { select: { type: true } } },
+          ...args,
+        }),
+      beforeId,
+      limit,
+    );
+    return { items: page.items.map((row) => this.toDTO(row)), hasMore: page.hasMore };
   }
 
   async unreadCount(userId: string): Promise<number> {

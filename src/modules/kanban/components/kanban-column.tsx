@@ -2,7 +2,7 @@
 
 import { type DraggableProvidedDragHandleProps, Droppable } from "@hello-pangea/dnd";
 import { GripVertical, Plus, Settings2 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { type RefObject, useEffect, useRef, useState, useTransition } from "react";
 import {
   Button,
   cn,
@@ -23,21 +23,45 @@ import type { ColumnDTO, StatusCategory } from "../types";
 import { KanbanCard } from "./kanban-card";
 import { useKanban } from "./kanban-context";
 
-/** "Carregar mais" — coluna com mais cards do que o snapshot trouxe de uma vez. */
-function LoadMoreCards({ columnId }: { columnId: string }) {
+/**
+ * "Carregar mais" — coluna com mais cards do que o snapshot trouxe de uma vez.
+ * Scroll infinito: carrega a próxima página ao aproximar do fim da coluna,
+ * via IntersectionObserver contra o container rolável da própria coluna.
+ */
+function LoadMoreCards({
+  columnId,
+  scrollRootRef,
+}: {
+  columnId: string;
+  scrollRootRef: RefObject<HTMLDivElement | null>;
+}) {
   const { loadMoreCards, loadingColumnIds } = useKanban();
   const loading = loadingColumnIds.has(columnId);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Via ref pra sempre ler o estado mais recente sem recriar o observer a cada render.
+  const latestRef = useRef({ loading, columnId, loadMoreCards });
+  latestRef.current = { loading, columnId, loadMoreCards };
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    const root = scrollRootRef.current;
+    if (!el || !root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const { loading, columnId, loadMoreCards } = latestRef.current;
+        if (entries[0]?.isIntersecting && !loading) void loadMoreCards(columnId);
+      },
+      { root, threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scrollRootRef]);
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => loadMoreCards(columnId)}
-      disabled={loading}
-      className="w-full text-xs text-muted-foreground"
-    >
-      {loading ? "Carregando…" : "Carregar mais cards"}
-    </Button>
+    <div ref={sentinelRef} className="flex h-6 items-center justify-center">
+      {loading ? <span className="text-xs text-muted-foreground">Carregando…</span> : null}
+    </div>
   );
 }
 
@@ -234,6 +258,7 @@ export function KanbanColumn({
   laneMode?: boolean;
 }) {
   const overLimit = column.wipLimit != null && column.totalCards > column.wipLimit;
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <div className={cn("flex w-72 shrink-0 flex-col rounded-lg bg-muted/40", laneMode ? "self-start" : "h-full")}>
@@ -259,7 +284,10 @@ export function KanbanColumn({
       <Droppable droppableId={droppableId ?? column.id} isDropDisabled={laneMode}>
         {(provided, snapshot) => (
           <div
-            ref={provided.innerRef}
+            ref={(el) => {
+              provided.innerRef(el);
+              scrollRef.current = el;
+            }}
             {...provided.droppableProps}
             className={cn(
               "space-y-2 px-2 pb-2",
@@ -272,7 +300,7 @@ export function KanbanColumn({
               <KanbanCard key={card.id} card={card} index={index} dragDisabled={dragDisabled} />
             ))}
             {provided.placeholder}
-            {!laneMode && column.hasMoreCards ? <LoadMoreCards columnId={column.id} /> : null}
+            {!laneMode && column.hasMoreCards ? <LoadMoreCards columnId={column.id} scrollRootRef={scrollRef} /> : null}
           </div>
         )}
       </Droppable>

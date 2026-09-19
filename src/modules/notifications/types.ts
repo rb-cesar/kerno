@@ -17,6 +17,11 @@ export interface NotificationsData {
   hasMore: boolean;
 }
 
+export interface NotificationsPage {
+  items: NotificationDTO[];
+  hasMore: boolean;
+}
+
 /** Destinatário de um evento — decidido pela composição do app (ver server/notification-dispatcher). */
 export interface NotificationRecipient {
   userId: string;

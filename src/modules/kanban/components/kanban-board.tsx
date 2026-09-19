@@ -226,15 +226,44 @@ export function KanbanBoard({
 
   const activeBoardKey = `kerno:boards:active:${data.workspaceId}`;
 
-  const refresh = useCallback(async () => {
-    const fresh = await fetchSnapshot(boardIdRef.current);
-    if (fresh) setData(fresh);
-  }, [fetchSnapshot]);
+  // Colunas atuais via ref — refresh() lê daqui em vez de fechar sobre `data`,
+  // senão a identidade de refresh (e de onRemoteChange, abaixo) mudaria a cada
+  // render e reassinaria o listener de socket em useKanbanRealtime sem necessidade.
+  const columnsRef = useRef(data.columns);
+  useEffect(() => {
+    columnsRef.current = data.columns;
+  }, [data.columns]);
 
   // Carrega mais cards de uma coluna específica ("carregar mais" — colunas
   // com mais que CARD_PAGE_SIZE cards só trazem a 1ª página no snapshot).
-  // Nota: um refresh() completo volta a coluna pra 1ª página (o snapshot só
-  // traz CARD_PAGE_SIZE por coluna) — aceitável pra essa primeira versão.
+  const refresh = useCallback(async () => {
+    const fresh = await fetchSnapshot(boardIdRef.current);
+    if (!fresh) return;
+
+    // Um snapshot novo só traz a 1ª página de cada coluna — colunas que já
+    // tinham mais cards carregados (via "carregar mais") voltariam pra 1ª
+    // página. Repõe a profundidade anterior buscando as páginas seguintes.
+    const prevCountByColumn = new Map(columnsRef.current.map((c) => [c.id, c.cards.length]));
+    const columns = await Promise.all(
+      fresh.columns.map(async (column) => {
+        const prevCount = prevCountByColumn.get(column.id) ?? 0;
+        if (prevCount <= column.cards.length || !column.hasMoreCards) return column;
+
+        let cards = column.cards;
+        let hasMoreCards: boolean = column.hasMoreCards;
+        while (cards.length < prevCount && hasMoreCards) {
+          const page = await fetchColumnCards(column.id, cards.at(-1)?.id);
+          if (page.items.length === 0) break;
+          cards = [...cards, ...page.items];
+          hasMoreCards = page.hasMore;
+        }
+        return { ...column, cards, hasMoreCards };
+      }),
+    );
+
+    setData({ ...fresh, columns });
+  }, [fetchSnapshot, fetchColumnCards]);
+
   const [loadingColumnIds, setLoadingColumnIds] = useState<Set<string>>(new Set());
   const loadMoreCards = useCallback(
     async (columnId: string) => {

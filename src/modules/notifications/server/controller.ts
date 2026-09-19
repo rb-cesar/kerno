@@ -7,8 +7,8 @@ export function createNotificationController(notifications: NotificationService)
   app.use("*", requireUser);
 
   app.get("/", async (c) => {
-    const before = c.req.query("before");
-    return c.json(await notifications.listForUser(c.get("userId"), before ? new Date(before) : undefined));
+    const beforeId = c.req.query("before");
+    return c.json(await notifications.listForUser(c.get("userId"), beforeId));
   });
 
   app.post("/:id/read", async (c) => {

@@ -2,7 +2,7 @@
 
 import { CornerUpLeft, Pencil, SmilePlus } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Button, cn } from "@/components/ui";
+import { cn } from "@/components/ui";
 import type { ChatResult, MessageDTO } from "../types";
 import { useChat } from "./chat-context";
 import { MessageComposer } from "./message-composer";
@@ -50,6 +50,7 @@ export function MessageList({
 }) {
   const { currentUserId, onOpenTask } = useChat();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   // Mapa id→elemento da bolha, para rolar até a mensagem citada ao clicar na resposta.
   const bubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -66,6 +67,26 @@ export function MessageList({
     if (scrollRef.current) prependHeightRef.current = scrollRef.current.scrollHeight;
     onLoadOlder();
   };
+
+  // Scroll infinito: carrega mensagens antigas ao aproximar do topo, sem
+  // precisar de clique. Via ref pra sempre ler o `loadingOlder`/callback mais
+  // recentes (o observer é criado uma vez por transição de `hasMore`, não a
+  // cada render).
+  const latestRef = useRef({ loadingOlder, handleLoadOlder });
+  latestRef.current = { loadingOlder, handleLoadOlder };
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !latestRef.current.loadingOlder) latestRef.current.handleLoadOlder();
+      },
+      { root: scrollRef.current, threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   // Mantém a posição visual: soma a diferença de altura ao scrollTop antes do
   // navegador pintar, ancorando na mesma mensagem que estava no topo.
@@ -107,16 +128,10 @@ export function MessageList({
   return (
     <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
       {hasMore ? (
-        <div className="flex justify-center pb-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLoadOlder}
-            disabled={loadingOlder}
-            className="text-xs text-muted-foreground"
-          >
-            {loadingOlder ? "Carregando…" : "Carregar mensagens anteriores"}
-          </Button>
+        <div ref={sentinelRef} className="flex h-8 items-center justify-center pb-1">
+          {loadingOlder ? (
+            <span className="text-xs text-muted-foreground">Carregando mensagens anteriores…</span>
+          ) : null}
         </div>
       ) : null}
       {messages.map((message) => {

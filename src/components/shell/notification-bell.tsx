@@ -2,6 +2,7 @@
 
 import { Bell } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { useNotifications } from "@/components/providers/notifications-provider";
 import { Badge, Button, cn, Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@/components/ui";
 import type { NotificationDTO } from "@/modules/notifications/types";
@@ -43,6 +44,61 @@ function NotificationRow({ notification, onRead }: { notification: NotificationD
   );
 }
 
+/**
+ * Lista rolável + scroll infinito. Componente próprio porque `PopoverContent`
+ * desmonta ao fechar (Radix): isso garante que o observer é recriado do zero
+ * a cada abertura do popover, em vez de tentar sobreviver ao ciclo de
+ * montagem/desmontagem do conteúdo.
+ */
+function NotificationList({
+  items,
+  hasMore,
+  loadingMore,
+  markRead,
+  loadMore,
+}: {
+  items: NotificationDTO[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  markRead: (id: string) => void;
+  loadMore: () => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const latestRef = useRef({ loadingMore, loadMore });
+  latestRef.current = { loadingMore, loadMore };
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const { loadingMore, loadMore } = latestRef.current;
+        if (entries[0]?.isIntersecting && !loadingMore) loadMore();
+      },
+      { root: scrollRef.current, threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore]);
+
+  return (
+    <div ref={scrollRef} className="flex max-h-96 flex-col gap-0.5 overflow-y-auto">
+      {items.length === 0 ? (
+        <p className="px-3 py-6 text-center text-sm text-muted-foreground">Nenhuma notificação por aqui.</p>
+      ) : (
+        items.map((n) => <NotificationRow key={n.id} notification={n} onRead={() => !n.read && markRead(n.id)} />)
+      )}
+      {hasMore ? (
+        <div ref={sentinelRef} className="flex h-6 items-center justify-center">
+          {loadingMore ? <span className="text-xs text-muted-foreground">Carregando…</span> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** Sino com contagem de não-lidas — usado no HubRail (dentro de um workspace) e no AppTopbar. */
 export function NotificationBell({
   side = "bottom",
@@ -79,24 +135,13 @@ export function NotificationBell({
             </Button>
           ) : null}
         </div>
-        <div className="flex max-h-96 flex-col gap-0.5 overflow-y-auto">
-          {items.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Nenhuma notificação por aqui.</p>
-          ) : (
-            items.map((n) => <NotificationRow key={n.id} notification={n} onRead={() => !n.read && markRead(n.id)} />)
-          )}
-          {hasMore ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="mt-1 w-full text-xs text-muted-foreground"
-            >
-              {loadingMore ? "Carregando…" : "Carregar mais"}
-            </Button>
-          ) : null}
-        </div>
+        <NotificationList
+          items={items}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          markRead={markRead}
+          loadMore={loadMore}
+        />
       </PopoverContent>
     </Popover>
   );

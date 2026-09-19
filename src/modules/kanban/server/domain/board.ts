@@ -1,4 +1,5 @@
 import { prisma } from "@/core/db";
+import { fetchCursorPage } from "@/core/pagination";
 import { type BoardData, type CardDTO, type CardsPage, DEFAULT_BOARD_COLUMNS, type TaskRefDTO } from "../../types";
 
 /** Máximo de boards por workspace. */
@@ -67,14 +68,18 @@ export class BoardDomain {
    * carregado — cursor nativo do Prisma (busca a linha, pula ela, segue).
    */
   async getColumnCards(columnId: string, afterId?: string, limit = CARD_PAGE_SIZE): Promise<CardsPage> {
-    const rows = await prisma.card.findMany({
-      where: { columnId },
-      orderBy: [{ order: "asc" }, { id: "asc" }],
-      ...(afterId ? { cursor: { id: afterId }, skip: 1 } : {}),
-      take: limit,
-      include: CARD_INCLUDE,
-    });
-    return { items: rows.map((row) => this.toCardDTO(row)), hasMore: rows.length === limit };
+    const page = await fetchCursorPage(
+      (args) =>
+        prisma.card.findMany({
+          where: { columnId },
+          orderBy: [{ order: "asc" }, { id: "asc" }],
+          include: CARD_INCLUDE,
+          ...args,
+        }),
+      afterId,
+      limit,
+    );
+    return { items: page.items.map((row) => this.toCardDTO(row)), hasMore: page.hasMore };
   }
 
   /** Carrega o board completo (colunas, cards, labels, membros) já no formato de DTO. */
