@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { createCallController } from "@/modules/calls/server";
 import { createChatController } from "@/modules/chat/server";
 import { createKanbanController } from "@/modules/kanban/server";
 import { createNotificationController } from "@/modules/notifications/server";
@@ -34,6 +35,7 @@ export function createApi() {
   app.route("/kanban", createKanbanController(container.kanban));
   app.route("/chat", createChatController(container.chat));
   app.route("/notifications", createNotificationController(container.notifications));
+  app.route("/calls", createCallController(container.calls));
 
   return app;
 }

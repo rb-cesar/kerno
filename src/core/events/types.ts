@@ -12,6 +12,8 @@ export type KernoEventType =
   | "message:edited"
   | "dm:sent"
   | "reaction:changed"
+  | "call:started"
+  | "call:ended"
   | "user:joined"
   | "user:left";
 
@@ -101,6 +103,25 @@ export interface ReactionChangedPayload {
   participantIds: string[];
 }
 
+/**
+ * Chamada iniciada. Em canal vai para a room do projeto (participantIds
+ * vazio); em DM (participantIds preenchido) só para as rooms pessoais —
+ * mesmo roteamento de `reaction:changed`.
+ */
+export interface CallStartedPayload {
+  callId: string;
+  channelId: string | null;
+  conversationId: string | null;
+  participantIds: string[];
+}
+
+export interface CallEndedPayload {
+  callId: string;
+  channelId: string | null;
+  conversationId: string | null;
+  participantIds: string[];
+}
+
 export interface UserPresencePayload {
   userId: string;
 }
@@ -117,6 +138,8 @@ export interface KernoEventMap {
   "message:edited": MessageEditedPayload;
   "dm:sent": DirectMessagePayload;
   "reaction:changed": ReactionChangedPayload;
+  "call:started": CallStartedPayload;
+  "call:ended": CallEndedPayload;
   "user:joined": UserPresencePayload;
   "user:left": UserPresencePayload;
 }

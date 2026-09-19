@@ -17,5 +17,24 @@ services:
       timeout: 5s
       retries: 10
 
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: kerno-livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-change-me-min-32-chars}"
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      # Faixa curta de propósito: Docker Desktop no Windows falha ao expor uma
+      # faixa UDP grande (ex.: 50000-60000) por causa das portas dinâmicas
+      # excluídas do Windows. 41 portas bastam pra alguns participantes em dev.
+      - "50000-50040:50000-50040/udp"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   kerno_pgdata:

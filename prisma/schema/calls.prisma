@@ -1,0 +1,46 @@
+// Hub Calls — chamada de áudio+vídeo (LiveKit self-hosted) ligada a um
+// Channel OU a uma DirectConversation (exatamente um dos dois — mesmo padrão
+// de Message em chat.prisma). O nome da room no LiveKit é o próprio `id`
+// desta tabela, sem campo separado.
+
+enum CallStatus {
+  RINGING
+  ACTIVE
+  ENDED
+}
+
+model Call {
+  id             String     @id @default(cuid())
+  workspaceId    String
+  channelId      String?
+  conversationId String?
+  startedBy      String
+  status         CallStatus @default(RINGING)
+  startedAt      DateTime   @default(now())
+  endedAt        DateTime?
+
+  workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  channel      Channel?            @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  conversation DirectConversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  participants CallParticipant[]
+
+  @@index([workspaceId])
+  @@index([channelId])
+  @@index([conversationId])
+}
+
+// Quem entrou na chamada e quando saiu — histórico + "quem está na call
+// agora" no nosso banco. `leftAt` nulo = ainda conectado do ponto de vista do
+// backend (o estado ao vivo de verdade vive no LiveKit).
+model CallParticipant {
+  id       String    @id @default(cuid())
+  callId   String
+  userId   String
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@index([callId])
+  @@index([userId])
+}

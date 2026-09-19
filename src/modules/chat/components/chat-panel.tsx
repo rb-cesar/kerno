@@ -1,6 +1,6 @@
 "use client";
 
-import { AtSign, CornerUpLeft, Hash, X } from "lucide-react";
+import { AtSign, CornerUpLeft, Hash, Phone, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { cn } from "@/components/ui";
@@ -69,6 +69,8 @@ export function ChatPanel({
   searchTasks,
   onOpenTask,
   initialTarget,
+  onStartCall,
+  renderCallBanner,
 }: {
   initial: ChatData;
   currentUserId: string;
@@ -88,6 +90,10 @@ export function ChatPanel({
   onOpenTask?: (cardId: string, label?: string) => void;
   /** Deep-link de notificação: canal ou DM pra abrir na montagem. */
   initialTarget?: { channelId?: string; conversationId?: string };
+  /** Inicia uma chamada nesse canal/DM (opcional — omitido se o hub Calls não estiver plugado). */
+  onStartCall?: (target: { channelId?: string; conversationId?: string }) => void;
+  /** Banner "chamada em andamento" pro canal/DM informado, ou null se não houver (opcional). */
+  renderCallBanner?: (target: { channelId?: string; conversationId?: string }) => React.ReactNode;
 }) {
   const [channels, setChannels] = useState<ChannelDTO[]>(initial.channels);
   const [conversations, setConversations] = useState<DirectConversationDTO[]>(initial.conversations);
@@ -271,10 +277,23 @@ export function ChatPanel({
         <div className="flex flex-1 flex-col">
           {activeChannel ? (
             <>
-              <div className="flex items-center gap-1.5 border-b px-4 py-3 font-semibold">
-                <Hash className="h-4 w-4 text-muted-foreground" />
-                {activeChannel.name}
+              <div className="flex items-center justify-between gap-2 border-b px-4 py-3 font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  {activeChannel.name}
+                </div>
+                {onStartCall ? (
+                  <button
+                    type="button"
+                    onClick={() => onStartCall({ channelId: activeChannel.id })}
+                    title="Iniciar chamada"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Phone className="h-4 w-4" />
+                  </button>
+                ) : null}
               </div>
+              {renderCallBanner?.({ channelId: activeChannel.id })}
               <MessageList
                 messages={messages}
                 hasMore={hasMoreMessages}
@@ -296,13 +315,26 @@ export function ChatPanel({
             </>
           ) : activeConversation ? (
             <>
-              <div className="flex items-center gap-2 border-b px-4 py-3 font-semibold">
-                <AtSign className="h-4 w-4 text-muted-foreground" />
-                {activeConversation.participants.map((p) => p.name).join(", ") || "Conversa"}
-                {activeConversation.participants.some((p) => onlineUserIds.includes(p.id)) ? (
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
+              <div className="flex items-center justify-between gap-2 border-b px-4 py-3 font-semibold">
+                <div className="flex items-center gap-2">
+                  <AtSign className="h-4 w-4 text-muted-foreground" />
+                  {activeConversation.participants.map((p) => p.name).join(", ") || "Conversa"}
+                  {activeConversation.participants.some((p) => onlineUserIds.includes(p.id)) ? (
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
+                  ) : null}
+                </div>
+                {onStartCall ? (
+                  <button
+                    type="button"
+                    onClick={() => onStartCall({ conversationId: activeConversation.id })}
+                    title="Iniciar chamada"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Phone className="h-4 w-4" />
+                  </button>
                 ) : null}
               </div>
+              {renderCallBanner?.({ conversationId: activeConversation.id })}
               <MessageList
                 messages={messages}
                 hasMore={hasMoreMessages}

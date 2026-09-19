@@ -49,6 +49,7 @@ model Workspace {
   channels            Channel[]
   directConversations DirectConversation[]
   events              Event[]
+  calls               Call[]
 }
 
 model WorkspaceUser {
