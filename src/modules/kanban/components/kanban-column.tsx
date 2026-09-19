@@ -23,6 +23,24 @@ import type { ColumnDTO, StatusCategory } from "../types";
 import { KanbanCard } from "./kanban-card";
 import { useKanban } from "./kanban-context";
 
+/** "Carregar mais" — coluna com mais cards do que o snapshot trouxe de uma vez. */
+function LoadMoreCards({ columnId }: { columnId: string }) {
+  const { loadMoreCards, loadingColumnIds } = useKanban();
+  const loading = loadingColumnIds.has(columnId);
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => loadMoreCards(columnId)}
+      disabled={loading}
+      className="w-full text-xs text-muted-foreground"
+    >
+      {loading ? "Carregando…" : "Carregar mais cards"}
+    </Button>
+  );
+}
+
 // Cor + rótulo por categoria do estado (coluna).
 const CATEGORY_COLOR: Record<StatusCategory, string> = {
   BACKLOG: "#94a3b8",
@@ -215,7 +233,7 @@ export function KanbanColumn({
   /** Modo faixa: altura automática, sem alça de arraste, settings nem add-card. */
   laneMode?: boolean;
 }) {
-  const overLimit = column.wipLimit != null && column.cards.length > column.wipLimit;
+  const overLimit = column.wipLimit != null && column.totalCards > column.wipLimit;
 
   return (
     <div className={cn("flex w-72 shrink-0 flex-col rounded-lg bg-muted/40", laneMode ? "self-start" : "h-full")}>
@@ -232,7 +250,7 @@ export function KanbanColumn({
             className={cn("text-xs font-normal text-muted-foreground", overLimit && "font-semibold text-destructive")}
             title={column.wipLimit != null ? `Limite de WIP: ${column.wipLimit}` : undefined}
           >
-            {column.wipLimit != null ? `${column.cards.length}/${column.wipLimit}` : column.cards.length}
+            {column.wipLimit != null ? `${column.totalCards}/${column.wipLimit}` : column.totalCards}
           </span>
         </div>
         {laneMode ? null : <ColumnSettings column={column} />}
@@ -254,6 +272,7 @@ export function KanbanColumn({
               <KanbanCard key={card.id} card={card} index={index} dragDisabled={dragDisabled} />
             ))}
             {provided.placeholder}
+            {!laneMode && column.hasMoreCards ? <LoadMoreCards columnId={column.id} /> : null}
           </div>
         )}
       </Droppable>

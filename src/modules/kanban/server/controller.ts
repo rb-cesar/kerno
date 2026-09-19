@@ -21,6 +21,11 @@ export function createKanbanController(kanban: KanbanService) {
     c.json(await kanban.searchCards(c.get("userId"), c.req.param("workspaceId"), c.req.query("q") ?? "")),
   );
 
+  /** Próxima página de cards de uma coluna — "carregar mais" no board. */
+  app.get("/columns/:columnId/cards", async (c) =>
+    c.json(await kanban.columnCards(c.get("userId"), c.req.param("columnId"), c.req.query("after"))),
+  );
+
   /** Detalhe de um card (sub-tarefas, comentários, atividade) — sob demanda. */
   app.get("/cards/:cardId/detail", async (c) =>
     c.json(await kanban.cardDetail(c.get("userId"), c.req.param("cardId"))),

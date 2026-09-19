@@ -26,7 +26,7 @@ export function KanbanList({ columns }: { columns: ColumnDTO[] }) {
                 style={{ backgroundColor: CATEGORY_COLOR[column.category] }}
               />
               {column.name}
-              <span className="text-xs font-normal text-muted-foreground">{column.cards.length}</span>
+              <span className="text-xs font-normal text-muted-foreground">{column.totalCards}</span>
             </div>
             <ul className="divide-y rounded-md border">
               {column.cards.map((card) => {

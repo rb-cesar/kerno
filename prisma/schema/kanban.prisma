@@ -98,6 +98,9 @@ model Card {
   checklists   Checklist[]
 
   @@index([columnId])
+  // Composto com order: paginação de cards por coluna (BoardDomain.getColumnCards)
+  // segue a mesma ordem de exibição — where(columnId)+orderBy(order)+cursor.
+  @@index([columnId, order])
   @@index([boardId])
   @@index([assignedTo])
   @@index([cycleId])

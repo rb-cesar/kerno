@@ -5,6 +5,7 @@ import type {
   BoardData,
   BoardMetricsDTO,
   CardDetailDTO,
+  CardsPage,
   KanbanCommand,
   KanbanMutationResult,
   TaskRefDTO,
@@ -30,6 +31,14 @@ export const kanbanClient = {
 
   metrics: (boardId: string): Promise<BoardMetricsDTO | null> =>
     request<BoardMetricsDTO>(`/kanban/boards/${boardId}/metrics`).catch(() => null),
+
+  /** Próxima página de cards de uma coluna — "carregar mais" no board. */
+  columnCards: (columnId: string, afterId?: string): Promise<CardsPage> =>
+    request<CardsPage>(
+      afterId
+        ? `/kanban/columns/${columnId}/cards?after=${encodeURIComponent(afterId)}`
+        : `/kanban/columns/${columnId}/cards`,
+    ).catch(() => ({ items: [], hasMore: false })),
 
   command: (command: KanbanCommand): Promise<KanbanMutationResult> =>
     request<KanbanMutationResult>(`/kanban/commands`, { method: "POST", body: command }).catch((error: unknown) => ({

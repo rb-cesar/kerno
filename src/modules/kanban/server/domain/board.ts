@@ -1,10 +1,82 @@
 import { prisma } from "@/core/db";
-import { type BoardData, DEFAULT_BOARD_COLUMNS, type TaskRefDTO } from "../../types";
+import { type BoardData, type CardDTO, type CardsPage, DEFAULT_BOARD_COLUMNS, type TaskRefDTO } from "../../types";
 
 /** Máximo de boards por workspace. */
 export const MAX_BOARDS = 5;
 
+/**
+ * Máximo de cards trazidos por coluna de uma vez — boards com mais que isso
+ * numa coluna carregam o resto sob demanda (ver getColumnCards). Sem isso,
+ * getBoardSnapshot trazia todos os cards do board (até MAX_CARDS_PER_BOARD)
+ * numa query só, toda vez que alguém abria o board.
+ */
+export const CARD_PAGE_SIZE = 100;
+
+// Include padrão de card — usado tanto no snapshot quanto na paginação por
+// coluna, pra manter os dois caminhos produzindo o mesmo CardDTO.
+const CARD_INCLUDE = {
+  user: { select: { id: true, name: true } },
+  labels: { include: { label: true } },
+  story: { select: { title: true } },
+} as const;
+
+type CardRow = {
+  id: string;
+  number: number;
+  title: string;
+  description: string | null;
+  columnId: string;
+  order: number;
+  priority: CardDTO["priority"];
+  dueDate: Date | null;
+  estimate: number | null;
+  parentId: string | null;
+  cycleId: string | null;
+  storyId: string | null;
+  assignedTo: string | null;
+  user: { id: string; name: string } | null;
+  story: { title: string } | null;
+  labels: { label: { id: string; name: string; color: string } }[];
+};
+
 export class BoardDomain {
+  private toCardDTO(card: CardRow): CardDTO {
+    return {
+      id: card.id,
+      number: card.number,
+      title: card.title,
+      description: card.description,
+      columnId: card.columnId,
+      order: card.order,
+      priority: card.priority,
+      dueDate: card.dueDate ? card.dueDate.toISOString() : null,
+      estimate: card.estimate,
+      parentId: card.parentId,
+      cycleId: card.cycleId,
+      storyId: card.storyId,
+      storyTitle: card.story?.title ?? null,
+      assignedTo: card.assignedTo,
+      assignee: card.user ? { id: card.user.id, name: card.user.name } : null,
+      labels: card.labels.map((cl) => ({ id: cl.label.id, name: cl.label.name, color: cl.label.color })),
+    };
+  }
+
+  /**
+   * Próxima página de cards de uma coluna, na mesma ordem de exibição
+   * (order asc, id como desempate). `afterId`: id do último card já
+   * carregado — cursor nativo do Prisma (busca a linha, pula ela, segue).
+   */
+  async getColumnCards(columnId: string, afterId?: string, limit = CARD_PAGE_SIZE): Promise<CardsPage> {
+    const rows = await prisma.card.findMany({
+      where: { columnId },
+      orderBy: [{ order: "asc" }, { id: "asc" }],
+      ...(afterId ? { cursor: { id: afterId }, skip: 1 } : {}),
+      take: limit,
+      include: CARD_INCLUDE,
+    });
+    return { items: rows.map((row) => this.toCardDTO(row)), hasMore: rows.length === limit };
+  }
+
   /** Carrega o board completo (colunas, cards, labels, membros) já no formato de DTO. */
   async getBoardSnapshot(boardId: string): Promise<BoardData | null> {
     const board = await prisma.board.findUnique({
@@ -23,11 +95,9 @@ export class BoardDomain {
           orderBy: { order: "asc" },
           include: {
             cards: {
-              orderBy: { order: "asc" },
-              include: {
-                user: { select: { id: true, name: true } },
-                labels: { include: { label: true } },
-              },
+              orderBy: [{ order: "asc" }, { id: "asc" }],
+              take: CARD_PAGE_SIZE,
+              include: CARD_INCLUDE,
             },
           },
         },
@@ -37,15 +107,15 @@ export class BoardDomain {
     if (!board) return null;
 
     const memberById = new Map(board.workspace.users.map((m) => [m.user.id, m.user]));
-    const storyTitleById = new Map(board.stories.map((s) => [s.id, s.title]));
-    const taskCountByStory = new Map<string, number>();
-    for (const column of board.columns) {
-      for (const card of column.cards) {
-        if (card.storyId) {
-          taskCountByStory.set(card.storyId, (taskCountByStory.get(card.storyId) ?? 0) + 1);
-        }
-      }
-    }
+
+    // Contagens reais via agregação — não dá pra somar column.cards (a
+    // relação acima só traz a 1ª página) nem pra a taskCount das stories.
+    const [columnCounts, storyCounts] = await Promise.all([
+      prisma.card.groupBy({ by: ["columnId"], where: { boardId }, _count: { _all: true } }),
+      prisma.card.groupBy({ by: ["storyId"], where: { boardId, storyId: { not: null } }, _count: { _all: true } }),
+    ]);
+    const totalByColumn = new Map(columnCounts.map((c) => [c.columnId, c._count._all]));
+    const taskCountByStory = new Map(storyCounts.map((s) => [s.storyId as string, s._count._all]));
 
     return {
       id: board.id,
@@ -77,36 +147,20 @@ export class BoardDomain {
         startsAt: c.startsAt.toISOString(),
         endsAt: c.endsAt.toISOString(),
       })),
-      columns: board.columns.map((column) => ({
-        id: column.id,
-        name: column.name,
-        order: column.order,
-        category: column.category,
-        color: column.color,
-        wipLimit: column.wipLimit,
-        cards: column.cards.map((card) => ({
-          id: card.id,
-          number: card.number,
-          title: card.title,
-          description: card.description,
-          columnId: card.columnId,
-          order: card.order,
-          priority: card.priority,
-          dueDate: card.dueDate ? card.dueDate.toISOString() : null,
-          estimate: card.estimate,
-          parentId: card.parentId,
-          cycleId: card.cycleId,
-          storyId: card.storyId,
-          storyTitle: card.storyId ? (storyTitleById.get(card.storyId) ?? null) : null,
-          assignedTo: card.assignedTo,
-          assignee: card.user ? { id: card.user.id, name: card.user.name } : null,
-          labels: card.labels.map((cl) => ({
-            id: cl.label.id,
-            name: cl.label.name,
-            color: cl.label.color,
-          })),
-        })),
-      })),
+      columns: board.columns.map((column) => {
+        const total = totalByColumn.get(column.id) ?? column.cards.length;
+        return {
+          id: column.id,
+          name: column.name,
+          order: column.order,
+          category: column.category,
+          color: column.color,
+          wipLimit: column.wipLimit,
+          cards: column.cards.map((card) => this.toCardDTO(card)),
+          totalCards: total,
+          hasMoreCards: total > column.cards.length,
+        };
+      }),
     };
   }
 

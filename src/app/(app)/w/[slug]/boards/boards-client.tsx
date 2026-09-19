@@ -28,6 +28,7 @@ export function BoardsClient({ initial, currentUserId }: { initial: BoardData; c
       fetchSnapshot={kanbanClient.snapshot}
       fetchCardDetail={kanbanClient.cardDetail}
       fetchMetrics={kanbanClient.metrics}
+      fetchColumnCards={kanbanClient.columnCards}
       onOpenCard={openCard}
       activeCardId={activeCardId}
     />

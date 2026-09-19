@@ -6,6 +6,10 @@ import type { BoardData, KanbanFetch, KanbanFetchCardDetail, KanbanMutate } from
 import { CardPanelContent } from "./card-dialog";
 import { KanbanProvider } from "./kanban-context";
 
+// Estável entre renders — este painel nunca renderiza KanbanColumn, então
+// "carregar mais" nunca fica em andamento aqui.
+const EMPTY_LOADING_COLUMNS = new Set<string>();
+
 /**
  * Conteúdo de uma tarefa para uso FORA do board (ex.: como aba do dock no chat).
  * Self-contained: busca o snapshot do board que contém o card + monta um contexto
@@ -90,6 +94,9 @@ export function TaskSidePanel({
         mutate,
         refresh,
         fetchCardDetail,
+        // Painel de detalhe não renderiza KanbanColumn — "carregar mais" nunca é acionado aqui.
+        loadMoreCards: async () => {},
+        loadingColumnIds: EMPTY_LOADING_COLUMNS,
         currentUserId,
         workspaceKey: data.workspaceKey,
         members: data.members,
