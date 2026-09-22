@@ -17,6 +17,12 @@ export function createCallController(calls: CallService) {
     try {
       const event = await livekitWebhookReceiver.receive(rawBody, c.req.header("Authorization") ?? "");
       console.log("[calls] webhook LiveKit:", event.event, event.room?.name);
+      // "room_finished": sinal autoritativo do LiveKit de que a room esvaziou
+      // de verdade — cobre quem fechou a aba sem passar pelo /leave (nosso
+      // próprio registro de participantes não veria isso sozinho).
+      if (event.event === "room_finished" && event.room?.name) {
+        await calls.autoEndCall(event.room.name);
+      }
     } catch (err) {
       console.error("[calls] webhook LiveKit inválido", err);
     }
@@ -30,8 +36,6 @@ export function createCallController(calls: CallService) {
   app.post("/:id/join", requireUser, async (c) => c.json(await calls.joinCall(c.get("userId"), c.req.param("id"))));
 
   app.post("/:id/leave", requireUser, async (c) => c.json(await calls.leaveCall(c.get("userId"), c.req.param("id"))));
-
-  app.post("/:id/end", requireUser, async (c) => c.json(await calls.endCall(c.get("userId"), c.req.param("id"))));
 
   app.get("/active", requireUser, async (c) =>
     c.json(await calls.activeCalls(c.get("userId"), c.req.query("workspaceId") ?? "")),

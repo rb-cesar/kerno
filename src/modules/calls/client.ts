@@ -19,9 +19,6 @@ export const callsClient = {
   leaveCall: (callId: string): Promise<CallResult<{ callId: string }>> =>
     request<CallResult<{ callId: string }>>(`/calls/${callId}/leave`, { method: "POST" }).catch(callError),
 
-  endCall: (callId: string): Promise<CallResult<{ callId: string }>> =>
-    request<CallResult<{ callId: string }>>(`/calls/${callId}/end`, { method: "POST" }).catch(callError),
-
   fetchActive: (workspaceId: string): Promise<CallDTO[]> =>
     request<CallDTO[]>(`/calls/active?workspaceId=${encodeURIComponent(workspaceId)}`).catch(() => []),
 };

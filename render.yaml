@@ -1,0 +1,29 @@
+# Deploy do Kerno no Render — mesmo host usado pelo StockUp (rb-cesar/stockup):
+# plano free, processo persistente (necessário pro Socket.io — ver DEPLOY.md).
+# Como usar: no Render, New + → Blueprint → conecte o repo rb-cesar/kerno.
+# As variáveis com sync:false são segredos preenchidos no dashboard (não versionados).
+services:
+  - type: web
+    name: kerno
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
+      - key: AUTH_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: LIVEKIT_URL
+        sync: false
+      - key: NEXT_PUBLIC_LIVEKIT_WS_URL
+        sync: false

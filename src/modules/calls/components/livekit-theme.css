@@ -1,0 +1,55 @@
+/*
+ * Remapeia as variáveis de tema do LiveKit (`--lk-*`) pros tokens do Kerno,
+ * pra qualquer coisa renderizada pelos componentes/prefabs da lib (PreJoin,
+ * ControlBar, seletor de dispositivo, botão "Entrar"...) seguir o tema ativo
+ * do app em vez do azul/cinza padrão deles — cor primária, raio de borda e
+ * fonte trocam junto quando o usuário troca de tema.
+ *
+ * Só faz efeito onde a gente marca `data-lk-theme="default"` explicitamente
+ * (CallSurface, CallPreJoin) — a lib não aplica isso sozinha. Importado em
+ * layout.tsx DEPOIS de "@livekit/components-styles" de propósito: precisa
+ * vencer o `[data-lk-theme=default]` de lá na cascata.
+ */
+[data-lk-theme] {
+  color-scheme: light dark;
+
+  --lk-bg: hsl(var(--background));
+  --lk-bg2: hsl(var(--card));
+  --lk-bg3: hsl(var(--muted));
+  --lk-bg4: hsl(var(--accent));
+  --lk-bg5: hsl(var(--border));
+
+  --lk-fg: hsl(var(--foreground));
+  --lk-fg2: hsl(var(--foreground));
+  --lk-fg3: hsl(var(--muted-foreground));
+  --lk-fg4: hsl(var(--muted-foreground));
+  --lk-fg5: hsl(var(--muted-foreground));
+
+  --lk-border-color: hsl(var(--border));
+
+  --lk-accent-fg: hsl(var(--primary-foreground));
+  --lk-accent-bg: hsl(var(--primary));
+  --lk-accent2: hsl(var(--primary) / 0.9);
+  --lk-accent3: hsl(var(--primary) / 0.8);
+  --lk-accent4: hsl(var(--primary) / 0.7);
+
+  --lk-danger-fg: hsl(var(--destructive-foreground));
+  --lk-danger: hsl(var(--destructive));
+  --lk-danger2: hsl(var(--destructive) / 0.9);
+  --lk-danger3: hsl(var(--destructive) / 0.8);
+  --lk-danger4: hsl(var(--destructive) / 0.7);
+
+  --lk-font-family: inherit;
+  --lk-border-radius: var(--radius);
+}
+
+/*
+ * O botão de sair da ControlBar vem só com borda por padrão (preenche de
+ * vermelho apenas no hover) — preenchido sempre é o desenho universal de
+ * "desligar", então força isso aqui em vez de deixar no default da lib.
+ */
+[data-lk-theme] .lk-disconnect-button {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  border-color: transparent;
+}

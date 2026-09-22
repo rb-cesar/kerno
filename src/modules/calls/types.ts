@@ -32,5 +32,4 @@ export type CallsStartCall = (target: {
 }) => Promise<CallResult<CallJoinResult>>;
 export type CallsJoinCall = (callId: string) => Promise<CallResult<CallJoinResult>>;
 export type CallsLeaveCall = (callId: string) => Promise<CallResult<{ callId: string }>>;
-export type CallsEndCall = (callId: string) => Promise<CallResult<{ callId: string }>>;
 export type CallsFetchActive = (workspaceId: string) => Promise<CallDTO[]>;

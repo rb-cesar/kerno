@@ -104,13 +104,32 @@ export class CallDomain {
     return this.toDTO(call);
   }
 
-  /** Fecha o registro de participação em aberto (pode não haver nenhum, se já foi fechado). */
-  async leave(callId: string, userId: string): Promise<void> {
+  /**
+   * Fecha o registro de participação em aberto (pode não haver nenhum, se já
+   * foi fechado). `isEmpty` diz pro chamador se ninguém mais ficou na
+   * chamada — quem decide o que fazer com isso (encerrar) é a service, não
+   * o domain.
+   */
+  async leave(callId: string, userId: string): Promise<{ isEmpty: boolean }> {
     await prisma.callParticipant.updateMany({ where: { callId, userId, leftAt: null }, data: { leftAt: new Date() } });
+    const remaining = await prisma.callParticipant.count({ where: { callId, leftAt: null } });
+    return { isEmpty: remaining === 0 };
   }
 
+  /**
+   * Idempotente: encerrar uma chamada já encerrada não republica o evento
+   * nem reescreve `endedAt` — necessário porque o encerramento pode chegar
+   * por mais de um caminho pra mesma chamada (quem sai por último, e o
+   * webhook do LiveKit como reforço de quem só fechou a aba).
+   */
   async end(callId: string, endedBy?: string): Promise<CallDTO> {
-    const call = await prisma.call.update({ where: { id: callId }, data: { status: "ENDED", endedAt: new Date() } });
+    const { count } = await prisma.call.updateMany({
+      where: { id: callId, status: { not: "ENDED" } },
+      data: { status: "ENDED", endedAt: new Date() },
+    });
+    const call = await prisma.call.findUniqueOrThrow({ where: { id: callId } });
+    if (count === 0) return this.toDTO(call);
+
     await prisma.callParticipant.updateMany({ where: { callId, leftAt: null }, data: { leftAt: new Date() } });
 
     const { participantIds } = await this.resolveTarget(call.channelId, call.conversationId);
