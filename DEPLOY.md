@@ -58,7 +58,12 @@ O `render.yaml` já cria o serviço via Blueprint (New + → Blueprint → conec
 `rb-cesar/kerno`); só falta preencher no dashboard as variáveis marcadas
 `sync: false`:
 
-- `DATABASE_URL` — a do Postgres do passo 1
+- `DATABASE_URL` — a do Postgres do passo 1. Se o Postgres for do próprio
+  Render, use a **Internal Database URL** (não a External) — a external falha
+  do web service com "Connection terminated unexpectedly" mesmo com
+  credenciais corretas (rede interna do Render x endpoint externo, sem relação
+  com SSL). A external serve normalmente pra rodar `pnpm db:push` da sua
+  máquina, só não pro `DATABASE_URL` do serviço em si.
 - `AUTH_SECRET` — segredo forte (`openssl rand -base64 32`)
 - `AUTH_URL` — a URL pública do serviço. Ex.: `https://kerno.onrender.com`
   (usada pelo NextAuth **e** para decidir o prefixo seguro do cookie de sessão — `https://` liga o `__Secure-` prefix)
