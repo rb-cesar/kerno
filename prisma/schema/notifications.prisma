@@ -18,5 +18,9 @@ model Notification {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
+  // [userId, createdAt]: cursor de paginação (list, orderBy createdAt desc).
+  // [userId, readAt]: contagem de não lidas (count where readAt IS NULL) —
+  // acessos diferentes, os dois índices servem queries reais distintas.
+  @@index([userId, createdAt])
   @@index([userId, readAt])
 }

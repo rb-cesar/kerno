@@ -7,6 +7,10 @@ type KanbanContextValue = {
   mutate: KanbanMutate;
   refresh: () => Promise<void> | void;
   fetchCardDetail: KanbanFetchCardDetail;
+  /** Carrega mais cards de uma coluna específica ("carregar mais"). */
+  loadMoreCards: (columnId: string) => Promise<void>;
+  /** Colunas com um "carregar mais" em andamento. */
+  loadingColumnIds: Set<string>;
   currentUserId: string;
   workspaceKey: string;
   members: MemberDTO[];

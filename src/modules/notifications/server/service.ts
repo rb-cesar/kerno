@@ -1,5 +1,5 @@
 import type { NotificationsData } from "../types";
-import { NOTIFICATIONS_PAGE_SIZE, notificationDomain } from "./domain";
+import { notificationDomain } from "./domain";
 
 /**
  * Notificações são sempre escopadas ao próprio usuário (sem recurso de outro
@@ -7,12 +7,12 @@ import { NOTIFICATIONS_PAGE_SIZE, notificationDomain } from "./domain";
  * módulos.
  */
 export class NotificationService {
-  async listForUser(userId: string, before?: Date): Promise<NotificationsData> {
-    const [items, unreadCount] = await Promise.all([
-      notificationDomain.list(userId, before),
+  async listForUser(userId: string, beforeId?: string): Promise<NotificationsData> {
+    const [page, unreadCount] = await Promise.all([
+      notificationDomain.list(userId, beforeId),
       notificationDomain.unreadCount(userId),
     ]);
-    return { items, unreadCount, hasMore: items.length === NOTIFICATIONS_PAGE_SIZE };
+    return { items: page.items, unreadCount, hasMore: page.hasMore };
   }
 
   async markRead(userId: string, notificationId: string): Promise<void> {

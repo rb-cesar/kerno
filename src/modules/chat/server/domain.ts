@@ -1,6 +1,7 @@
 import { prisma } from "@/core/db";
 import { createEvent, eventBus } from "@/core/events";
-import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO, ReactionDTO } from "../types";
+import { fetchCursorPage } from "@/core/pagination";
+import type { ChannelDTO, DirectConversationDTO, MemberDTO, MessageDTO, MessagesPage, ReactionDTO } from "../types";
 
 const MESSAGE_PAGE_SIZE = 50;
 
@@ -132,14 +133,25 @@ export class ChatDomain {
     return channels.map((c) => ({ id: c.id, name: c.name, isDefault: c.isDefault }));
   }
 
-  async getMessages(channelId: string, viewerId: string, limit = MESSAGE_PAGE_SIZE): Promise<MessageDTO[]> {
-    const rows = await prisma.message.findMany({
-      where: { channelId },
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      include: MESSAGE_INCLUDE,
-    });
-    return rows.reverse().map((row) => this.toMessageDTO(row, viewerId));
+  /** `beforeId`: id da mensagem mais antiga já carregada — paginação por cursor (ver `fetchCursorPage`). */
+  async getMessages(
+    channelId: string,
+    viewerId: string,
+    beforeId?: string,
+    limit = MESSAGE_PAGE_SIZE,
+  ): Promise<MessagesPage> {
+    const page = await fetchCursorPage(
+      (args) =>
+        prisma.message.findMany({
+          where: { channelId },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          include: MESSAGE_INCLUDE,
+          ...args,
+        }),
+      beforeId,
+      limit,
+    );
+    return { items: page.items.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: page.hasMore };
   }
 
   async createChannel(workspaceId: string, name: string): Promise<ChannelDTO> {
@@ -289,14 +301,24 @@ export class ChatDomain {
     return this.toConversationDTO(conv, viewerId);
   }
 
-  async getDirectMessages(conversationId: string, viewerId: string, limit = MESSAGE_PAGE_SIZE): Promise<MessageDTO[]> {
-    const rows = await prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      include: MESSAGE_INCLUDE,
-    });
-    return rows.reverse().map((row) => this.toMessageDTO(row, viewerId));
+  async getDirectMessages(
+    conversationId: string,
+    viewerId: string,
+    beforeId?: string,
+    limit = MESSAGE_PAGE_SIZE,
+  ): Promise<MessagesPage> {
+    const page = await fetchCursorPage(
+      (args) =>
+        prisma.message.findMany({
+          where: { conversationId },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          include: MESSAGE_INCLUDE,
+          ...args,
+        }),
+      beforeId,
+      limit,
+    );
+    return { items: page.items.reverse().map((row) => this.toMessageDTO(row, viewerId)), hasMore: page.hasMore };
   }
 
   async sendDirectMessage(

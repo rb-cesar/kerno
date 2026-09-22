@@ -1,9 +1,10 @@
 "use client";
 
-import { AtSign, CornerUpLeft, Hash, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { AtSign, ChevronRight, CornerUpLeft, Hash, Phone, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { cn } from "@/components/ui";
+import { useCalls } from "@/modules/calls/components/calls-provider";
 import type {
   ChannelDTO,
   ChatCreateChannel,
@@ -32,6 +33,14 @@ type ActiveTarget = { kind: "channel"; id: string } | { kind: "dm"; id: string }
 function sameTarget(a: ActiveTarget | null, b: ActiveTarget): boolean {
   return a !== null && a.kind === b.kind && a.id === b.id;
 }
+
+// Largura da coluna de conversa quando há chamada ativa: abre no botão de
+// chat da barra de controles da própria chamada (não existe mais tira/rail
+// permanente) e é redimensionável arrastando a borda — até o teto de 342px,
+// a mesma proporção da chamada em destaque (65/35) validada no mockup.
+const MIN_CHAT_WIDTH = 260;
+const DEFAULT_CHAT_WIDTH = 280;
+const MAX_CHAT_WIDTH = 342;
 
 /** Faixa "respondendo a X", mostrada acima do composer. */
 function ReplyBanner({ reply, onCancel }: { reply: MessageDTO; onCancel: () => void }) {
@@ -69,6 +78,10 @@ export function ChatPanel({
   searchTasks,
   onOpenTask,
   initialTarget,
+  onStartCall,
+  renderCallBanner,
+  hasActiveCall,
+  callPanelSlotRef,
 }: {
   initial: ChatData;
   currentUserId: string;
@@ -88,6 +101,14 @@ export function ChatPanel({
   onOpenTask?: (cardId: string, label?: string) => void;
   /** Deep-link de notificação: canal ou DM pra abrir na montagem. */
   initialTarget?: { channelId?: string; conversationId?: string };
+  /** Inicia uma chamada nesse canal/DM (opcional — omitido se o hub Calls não estiver plugado). */
+  onStartCall?: (target: { channelId?: string; conversationId?: string }) => void;
+  /** Banner "chamada em andamento" pro canal/DM informado, ou null se não houver (opcional). */
+  renderCallBanner?: (target: { channelId?: string; conversationId?: string }) => React.ReactNode;
+  /** Estou numa chamada agora — abre a coluna do painel de chamada ao lado das mensagens. */
+  hasActiveCall?: boolean;
+  /** Nó onde o CallsProvider deve portar a superfície da chamada (ver calls-provider.tsx). */
+  callPanelSlotRef?: (el: HTMLDivElement | null) => void;
 }) {
   const [channels, setChannels] = useState<ChannelDTO[]>(initial.channels);
   const [conversations, setConversations] = useState<DirectConversationDTO[]>(initial.conversations);
@@ -95,17 +116,71 @@ export function ChatPanel({
     initial.initialChannelId ? { kind: "channel", id: initial.initialChannelId } : null,
   );
   const [messages, setMessages] = useState<MessageDTO[]>(initial.initialMessages);
+  const [hasMoreMessages, setHasMoreMessages] = useState(initial.initialHasMore);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [unread, setUnread] = useState<Set<string>>(new Set());
   const [replyTo, setReplyTo] = useState<MessageDTO | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { isChatOpen, toggleChat } = useCalls();
+  const [chatWidth, setChatWidth] = useState(DEFAULT_CHAT_WIDTH);
+  const dragState = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  // Cada chamada nova recomeça com a largura padrão — não herda o arrasto de uma chamada anterior.
+  useEffect(() => {
+    setChatWidth(DEFAULT_CHAT_WIDTH);
+  }, [hasActiveCall]);
+
+  const handleDragMove = useCallback((e: MouseEvent) => {
+    if (!dragState.current) return;
+    const delta = dragState.current.startX - e.clientX;
+    const next = Math.min(MAX_CHAT_WIDTH, Math.max(MIN_CHAT_WIDTH, dragState.current.startWidth + delta));
+    setChatWidth(next);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    dragState.current = null;
+    document.body.style.userSelect = "";
+    window.removeEventListener("mousemove", handleDragMove);
+    window.removeEventListener("mouseup", handleDragEnd);
+  }, [handleDragMove]);
+
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      dragState.current = { startX: e.clientX, startWidth: chatWidth };
+      document.body.style.userSelect = "none";
+      window.addEventListener("mousemove", handleDragMove);
+      window.addEventListener("mouseup", handleDragEnd);
+    },
+    [chatWidth, handleDragMove, handleDragEnd],
+  );
 
   const loadMessages = useCallback(
     async (target: ActiveTarget) => {
-      const msgs = target.kind === "channel" ? await fetchMessages(target.id) : await fetchDirectMessages(target.id);
-      setMessages(msgs);
+      const page = target.kind === "channel" ? await fetchMessages(target.id) : await fetchDirectMessages(target.id);
+      setMessages(page.items);
+      setHasMoreMessages(page.hasMore);
     },
     [fetchMessages, fetchDirectMessages],
   );
+
+  /** Carrega mensagens mais antigas e prepende — mantém as já carregadas. */
+  const loadOlderMessages = useCallback(async () => {
+    if (!active || loadingOlder) return;
+    const oldest = messages[0];
+    if (!oldest) return;
+    setLoadingOlder(true);
+    try {
+      const page =
+        active.kind === "channel"
+          ? await fetchMessages(active.id, oldest.id)
+          : await fetchDirectMessages(active.id, oldest.id);
+      setMessages((prev) => [...page.items, ...prev]);
+      setHasMoreMessages(page.hasMore);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [active, messages, loadingOlder, fetchMessages, fetchDirectMessages]);
 
   const select = useCallback(
     (target: ActiveTarget) => {
@@ -219,6 +294,91 @@ export function ChatPanel({
   const activeChannel = active?.kind === "channel" ? (channels.find((c) => c.id === active.id) ?? null) : null;
   const activeConversation = active?.kind === "dm" ? (conversations.find((c) => c.id === active.id) ?? null) : null;
 
+  const messageContent = activeChannel ? (
+    <>
+      <div className="flex items-center justify-between gap-2 border-b px-4 py-3 font-semibold">
+        <div className="flex items-center gap-1.5">
+          <Hash className="h-4 w-4 text-muted-foreground" />
+          {activeChannel.name}
+        </div>
+        {onStartCall ? (
+          <button
+            type="button"
+            onClick={() => onStartCall({ channelId: activeChannel.id })}
+            title="Iniciar chamada"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Phone className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
+      {renderCallBanner?.({ channelId: activeChannel.id })}
+      <MessageList
+        messages={messages}
+        hasMore={hasMoreMessages}
+        loadingOlder={loadingOlder}
+        onLoadOlder={loadOlderMessages}
+        editingId={editingId}
+        onEditingChange={setEditingId}
+        onReply={setReplyTo}
+        onEdit={handleEdit}
+        onToggleReaction={handleToggleReaction}
+      />
+      {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
+      <MessageComposer
+        onSend={handleSend}
+        placeholder={`Mensagem em #${activeChannel.name}`}
+        draftKey={`${initial.workspaceId}:channel:${activeChannel.id}`}
+        onRequestEditLast={handleEditLast}
+      />
+    </>
+  ) : activeConversation ? (
+    <>
+      <div className="flex items-center justify-between gap-2 border-b px-4 py-3 font-semibold">
+        <div className="flex items-center gap-2">
+          <AtSign className="h-4 w-4 text-muted-foreground" />
+          {activeConversation.participants.map((p) => p.name).join(", ") || "Conversa"}
+          {activeConversation.participants.some((p) => onlineUserIds.includes(p.id)) ? (
+            <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
+          ) : null}
+        </div>
+        {onStartCall ? (
+          <button
+            type="button"
+            onClick={() => onStartCall({ conversationId: activeConversation.id })}
+            title="Iniciar chamada"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Phone className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
+      {renderCallBanner?.({ conversationId: activeConversation.id })}
+      <MessageList
+        messages={messages}
+        hasMore={hasMoreMessages}
+        loadingOlder={loadingOlder}
+        onLoadOlder={loadOlderMessages}
+        editingId={editingId}
+        onEditingChange={setEditingId}
+        onReply={setReplyTo}
+        onEdit={handleEdit}
+        onToggleReaction={handleToggleReaction}
+      />
+      {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
+      <MessageComposer
+        onSend={handleSend}
+        placeholder={`Mensagem para ${activeConversation.participants[0]?.name ?? "membro"}`}
+        draftKey={`${initial.workspaceId}:dm:${activeConversation.id}`}
+        onRequestEditLast={handleEditLast}
+      />
+    </>
+  ) : (
+    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      Selecione um canal ou inicie uma conversa.
+    </div>
+  );
+
   return (
     <ChatProvider
       value={{
@@ -247,60 +407,44 @@ export function ChatPanel({
           onChannelCreated={handleChannelCreated}
           onStartDirect={handleStartDirect}
         />
-        <div className="flex flex-1 flex-col">
-          {activeChannel ? (
-            <>
-              <div className="flex items-center gap-1.5 border-b px-4 py-3 font-semibold">
-                <Hash className="h-4 w-4 text-muted-foreground" />
-                {activeChannel.name}
+        {hasActiveCall ? (
+          // Sem cabeçalho próprio aqui: CallSurface/CallPreJoin já renderizam
+          // o deles ("Chamada" / "Entrar na chamada") dentro do slot — um
+          // segundo título estático aqui só duplicava a barra.
+          <div className="flex min-w-0 flex-1 flex-col border-r">
+            <div ref={callPanelSlotRef} className="min-h-0 flex-1" />
+          </div>
+        ) : null}
+        {hasActiveCall && isChatOpen ? (
+          // Só mouse: o teclado tem o botão "Recolher" pra chegar no mesmo
+          // resultado, então isto fica fora da árvore de a11y.
+          <div
+            aria-hidden="true"
+            onMouseDown={handleDragStart}
+            className="w-1.5 shrink-0 cursor-col-resize bg-border transition-colors hover:bg-primary/50"
+          />
+        ) : null}
+        {!hasActiveCall || isChatOpen ? (
+          <div
+            className={cn("flex flex-col", hasActiveCall ? "shrink-0" : "flex-1")}
+            style={hasActiveCall ? { width: chatWidth } : undefined}
+          >
+            {hasActiveCall ? (
+              <div className="flex items-center justify-end border-b px-2 py-1">
+                <button
+                  type="button"
+                  onClick={toggleChat}
+                  title="Recolher conversa"
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                  Recolher
+                </button>
               </div>
-              <MessageList
-                messages={messages}
-                editingId={editingId}
-                onEditingChange={setEditingId}
-                onReply={setReplyTo}
-                onEdit={handleEdit}
-                onToggleReaction={handleToggleReaction}
-              />
-              {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
-              <MessageComposer
-                onSend={handleSend}
-                placeholder={`Mensagem em #${activeChannel.name}`}
-                draftKey={`${initial.workspaceId}:channel:${activeChannel.id}`}
-                onRequestEditLast={handleEditLast}
-              />
-            </>
-          ) : activeConversation ? (
-            <>
-              <div className="flex items-center gap-2 border-b px-4 py-3 font-semibold">
-                <AtSign className="h-4 w-4 text-muted-foreground" />
-                {activeConversation.participants.map((p) => p.name).join(", ") || "Conversa"}
-                {activeConversation.participants.some((p) => onlineUserIds.includes(p.id)) ? (
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
-                ) : null}
-              </div>
-              <MessageList
-                messages={messages}
-                editingId={editingId}
-                onEditingChange={setEditingId}
-                onReply={setReplyTo}
-                onEdit={handleEdit}
-                onToggleReaction={handleToggleReaction}
-              />
-              {replyTo ? <ReplyBanner reply={replyTo} onCancel={() => setReplyTo(null)} /> : null}
-              <MessageComposer
-                onSend={handleSend}
-                placeholder={`Mensagem para ${activeConversation.participants[0]?.name ?? "membro"}`}
-                draftKey={`${initial.workspaceId}:dm:${activeConversation.id}`}
-                onRequestEditLast={handleEditLast}
-              />
-            </>
-          ) : (
-            <div className={cn("flex flex-1 items-center justify-center text-sm text-muted-foreground")}>
-              Selecione um canal ou inicie uma conversa.
-            </div>
-          )}
-        </div>
+            ) : null}
+            {messageContent}
+          </div>
+        ) : null}
       </div>
     </ChatProvider>
   );

@@ -4,6 +4,7 @@ import type {
   BoardData,
   BoardMetricsDTO,
   CardDetailDTO,
+  CardsPage,
   KanbanCommand,
   KanbanMutationResult,
   TaskRefDTO,
@@ -38,6 +39,12 @@ export class KanbanService {
     const snapshot = await domain.board.getBoardSnapshot(boardId);
     if (!snapshot) throw new NotFound("Board não encontrado");
     return snapshot;
+  }
+
+  /** Próxima página de cards de uma coluna — carga sob demanda ("carregar mais"). */
+  async columnCards(userId: string, columnId: string, afterId?: string): Promise<CardsPage> {
+    await kanbanGuards.guardColumn(userId, columnId);
+    return domain.board.getColumnCards(columnId, afterId);
   }
 
   /** Detalhe do card (sub-tarefas + comentários + atividade) — carga sob demanda. */

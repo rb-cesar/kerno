@@ -6,14 +6,18 @@ import type { NotificationDTO } from "@/modules/notifications/types";
 // Tipos de evento que podem virar notificação — filtra antes de gastar
 // consulta em eventos irrelevantes (card:moved, reaction:changed, ...). O type
 // guard (em vez de um Set.has) é o que deixa o TS estreitar o payload abaixo.
-type RelevantEvent = Extract<AnyKernoEvent, { type: "card:assigned" | "card:commented" | "message:sent" | "dm:sent" }>;
+type RelevantEvent = Extract<
+  AnyKernoEvent,
+  { type: "card:assigned" | "card:commented" | "message:sent" | "dm:sent" | "call:started" }
+>;
 
 function isRelevant(event: AnyKernoEvent): event is RelevantEvent {
   return (
     event.type === "card:assigned" ||
     event.type === "card:commented" ||
     event.type === "message:sent" ||
-    event.type === "dm:sent"
+    event.type === "dm:sent" ||
+    event.type === "call:started"
   );
 }
 
@@ -70,6 +74,18 @@ async function recipientsFor(event: RelevantEvent, workspaceSlug: string): Promi
         body: excerpt,
         link: `/w/${workspaceSlug}/boards?card=${cardId}`,
       });
+    }
+    return [...out.values()];
+  }
+
+  if (event.type === "call:started") {
+    // Só chamada de DM vira notificação — chamada de canal já tem o banner
+    // visível a todo mundo no workspace, notificar seria ruído.
+    if (!event.payload.conversationId) return [];
+    const link = `/w/${workspaceSlug}/chat?dm=${event.payload.conversationId}`;
+    for (const participantId of event.payload.participantIds) {
+      if (participantId === event.userId) continue;
+      out.set(participantId, { userId: participantId, title: `${who} está te ligando`, link });
     }
     return [...out.values()];
   }

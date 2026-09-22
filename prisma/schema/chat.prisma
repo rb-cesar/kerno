@@ -9,6 +9,7 @@ model Channel {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   messages  Message[]
+  calls     Call[]
 
   @@index([workspaceId])
 }
@@ -25,6 +26,7 @@ model DirectConversation {
   workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   participants DirectParticipant[]
   messages     Message[]
+  calls        Call[]
 
   @@unique([workspaceId, pairKey])
   @@index([workspaceId])
@@ -62,8 +64,11 @@ model Message {
   replies      Message[]           @relation("MessageReplies")
   reactions    Reaction[]
 
-  @@index([channelId])
-  @@index([conversationId])
+  // Compostos com createdAt: toda listagem real é where+orderBy+take (ver
+  // ChatDomain.getMessages/getDirectMessages) — sem isso o Postgres filtra
+  // pelo índice e ordena à parte em vez de escanear já na ordem certa.
+  @@index([channelId, createdAt])
+  @@index([conversationId, createdAt])
   @@index([replyToId])
 }
 

@@ -3,6 +3,7 @@ import { WorkspacePresenceProvider } from "@/components/providers/workspace-pres
 import { HubRail } from "@/components/shell/hub-rail";
 import { WorkspaceDockProvider } from "@/components/shell/workspace-dock-provider";
 import { requireSession } from "@/core/auth/require-session";
+import { CallsProvider } from "@/modules/calls/components/calls-provider";
 import { WorkspaceHeader } from "@/modules/workspaces/components/workspace-header";
 import type { WorkspaceView } from "@/modules/workspaces/types";
 import { container } from "@/server/container";
@@ -26,21 +27,28 @@ export default async function WorkspaceLayout({
 
   return (
     <WorkspacePresenceProvider workspaceId={workspace.id}>
-      <div className="flex h-screen overflow-hidden">
-        <HubRail basePath={`/w/${slug}`} userName={user.name ?? "Usuário"} userEmail={user.email ?? ""} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <WorkspaceHeader
-            workspaceName={workspace.name}
-            workspaceId={workspace.id}
-            slug={slug}
-            isManager={isManager}
-            members={workspace.members}
-          />
-          <div className="flex-1 overflow-hidden">
-            <WorkspaceDockProvider currentUserId={user.id}>{children}</WorkspaceDockProvider>
+      <CallsProvider
+        workspaceId={workspace.id}
+        currentUserId={user.id}
+        currentUserName={user.name ?? "Usuário"}
+        slug={slug}
+      >
+        <div className="flex h-screen overflow-hidden">
+          <HubRail basePath={`/w/${slug}`} userName={user.name ?? "Usuário"} userEmail={user.email ?? ""} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <WorkspaceHeader
+              workspaceName={workspace.name}
+              workspaceId={workspace.id}
+              slug={slug}
+              isManager={isManager}
+              members={workspace.members}
+            />
+            <div className="flex-1 overflow-hidden">
+              <WorkspaceDockProvider currentUserId={user.id}>{children}</WorkspaceDockProvider>
+            </div>
           </div>
         </div>
-      </div>
+      </CallsProvider>
     </WorkspacePresenceProvider>
   );
 }

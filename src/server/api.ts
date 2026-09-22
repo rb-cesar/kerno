@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { createCallController } from "@/modules/calls/server";
 import { createChatController } from "@/modules/chat/server";
 import { createKanbanController } from "@/modules/kanban/server";
 import { createNotificationController } from "@/modules/notifications/server";
@@ -30,10 +31,14 @@ export function createApi() {
     return c.json({ error: "Erro interno" }, 500);
   });
 
+  // Sem auth, sem domínio — só pro health check do host (Render) saber que o processo subiu.
+  app.get("/health", (c) => c.json({ ok: true }));
+
   app.route("/workspaces", createWorkspaceController(container.workspaces));
   app.route("/kanban", createKanbanController(container.kanban));
   app.route("/chat", createChatController(container.chat));
   app.route("/notifications", createNotificationController(container.notifications));
+  app.route("/calls", createCallController(container.calls));
 
   return app;
 }

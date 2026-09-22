@@ -55,9 +55,14 @@ export function initEventDispatcher(io: IOServer): void {
       return;
     }
 
-    // Edição/reação numa DM: também é privada (participantIds preenchido só nesse caso).
+    // Edição/reação numa DM (ou chamada numa DM): também é privada
+    // (participantIds preenchido só nesse caso; chamada de canal fica vazio e
+    // cai no broadcast pro workspace, no fim da função).
     if (
-      (event.type === "reaction:changed" || event.type === "message:edited") &&
+      (event.type === "reaction:changed" ||
+        event.type === "message:edited" ||
+        event.type === "call:started" ||
+        event.type === "call:ended") &&
       event.payload.participantIds.length > 0
     ) {
       for (const participantId of event.payload.participantIds) {

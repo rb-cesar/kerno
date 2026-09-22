@@ -5,6 +5,8 @@ import { useCallback, useMemo } from "react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { useWorkspacePresence } from "@/components/providers/workspace-presence-provider";
 import { useWorkspaceDock } from "@/components/shell/workspace-dock-provider";
+import { CallBanner } from "@/modules/calls/components/call-banner";
+import { useCalls } from "@/modules/calls/components/calls-provider";
 import { chatClient } from "@/modules/chat/client";
 import { ChatPanel } from "@/modules/chat/components/chat-panel";
 import type { ChatData } from "@/modules/chat/types";
@@ -33,6 +35,19 @@ export function ChatClient({ initial, currentUserId }: { initial: ChatData; curr
   // Clicar no chip de tarefa abre no dock compartilhado do workspace.
   const onOpenTask = useCallback((cardId: string, label?: string) => openCard(cardId, { title: label }), [openCard]);
 
+  // ── Chamadas ao vivo — estado de verdade mora no CallsProvider (nível
+  // workspace, ver layout.tsx), pra sobreviver à navegação pra fora do chat.
+  const { currentCall, isCallUiOpen, requestStartCall, requestJoinCall, findActiveCall, registerCallSlot } = useCalls();
+
+  const renderCallBanner = useCallback(
+    (target: { channelId?: string; conversationId?: string }) => {
+      const call = findActiveCall(target);
+      if (!call || currentCall?.callId === call.id) return null;
+      return <CallBanner onJoin={() => requestJoinCall(call.id)} />;
+    },
+    [findActiveCall, currentCall, requestJoinCall],
+  );
+
   return (
     <ChatPanel
       initial={initial}
@@ -50,6 +65,10 @@ export function ChatClient({ initial, currentUserId }: { initial: ChatData; curr
       searchTasks={searchTasks}
       onOpenTask={onOpenTask}
       initialTarget={initialTarget}
+      onStartCall={requestStartCall}
+      renderCallBanner={renderCallBanner}
+      hasActiveCall={isCallUiOpen}
+      callPanelSlotRef={registerCallSlot}
     />
   );
 }

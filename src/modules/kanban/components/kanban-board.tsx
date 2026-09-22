@@ -10,6 +10,7 @@ import type {
   ColumnDTO,
   KanbanFetch,
   KanbanFetchCardDetail,
+  KanbanFetchColumnCards,
   KanbanFetchMetrics,
   KanbanMutate,
   Priority,
@@ -117,6 +118,7 @@ export function KanbanBoard({
   fetchSnapshot,
   fetchCardDetail,
   fetchMetrics,
+  fetchColumnCards,
   onOpenCard,
   activeCardId = null,
 }: {
@@ -127,6 +129,7 @@ export function KanbanBoard({
   fetchSnapshot: KanbanFetch;
   fetchCardDetail: KanbanFetchCardDetail;
   fetchMetrics: KanbanFetchMetrics;
+  fetchColumnCards: KanbanFetchColumnCards;
   /** Abre a tarefa no dock do workspace (injetado pelo app). */
   onOpenCard?: (cardId: string, opts?: { title?: string; pin?: boolean }) => void;
   /** Tarefa ativa no dock (para destacar o tile). */
@@ -223,10 +226,69 @@ export function KanbanBoard({
 
   const activeBoardKey = `kerno:boards:active:${data.workspaceId}`;
 
+  // Colunas atuais via ref — refresh() lê daqui em vez de fechar sobre `data`,
+  // senão a identidade de refresh (e de onRemoteChange, abaixo) mudaria a cada
+  // render e reassinaria o listener de socket em useKanbanRealtime sem necessidade.
+  const columnsRef = useRef(data.columns);
+  useEffect(() => {
+    columnsRef.current = data.columns;
+  }, [data.columns]);
+
+  // Carrega mais cards de uma coluna específica ("carregar mais" — colunas
+  // com mais que CARD_PAGE_SIZE cards só trazem a 1ª página no snapshot).
   const refresh = useCallback(async () => {
     const fresh = await fetchSnapshot(boardIdRef.current);
-    if (fresh) setData(fresh);
-  }, [fetchSnapshot]);
+    if (!fresh) return;
+
+    // Um snapshot novo só traz a 1ª página de cada coluna — colunas que já
+    // tinham mais cards carregados (via "carregar mais") voltariam pra 1ª
+    // página. Repõe a profundidade anterior buscando as páginas seguintes.
+    const prevCountByColumn = new Map(columnsRef.current.map((c) => [c.id, c.cards.length]));
+    const columns = await Promise.all(
+      fresh.columns.map(async (column) => {
+        const prevCount = prevCountByColumn.get(column.id) ?? 0;
+        if (prevCount <= column.cards.length || !column.hasMoreCards) return column;
+
+        let cards = column.cards;
+        let hasMoreCards: boolean = column.hasMoreCards;
+        while (cards.length < prevCount && hasMoreCards) {
+          const page = await fetchColumnCards(column.id, cards.at(-1)?.id);
+          if (page.items.length === 0) break;
+          cards = [...cards, ...page.items];
+          hasMoreCards = page.hasMore;
+        }
+        return { ...column, cards, hasMoreCards };
+      }),
+    );
+
+    setData({ ...fresh, columns });
+  }, [fetchSnapshot, fetchColumnCards]);
+
+  const [loadingColumnIds, setLoadingColumnIds] = useState<Set<string>>(new Set());
+  const loadMoreCards = useCallback(
+    async (columnId: string) => {
+      const column = data.columns.find((c) => c.id === columnId);
+      const lastCardId = column?.cards.at(-1)?.id;
+      if (!lastCardId) return;
+      setLoadingColumnIds((prev) => new Set(prev).add(columnId));
+      try {
+        const page = await fetchColumnCards(columnId, lastCardId);
+        setData((prev) => ({
+          ...prev,
+          columns: prev.columns.map((c) =>
+            c.id === columnId ? { ...c, cards: [...c.cards, ...page.items], hasMoreCards: page.hasMore } : c,
+          ),
+        }));
+      } finally {
+        setLoadingColumnIds((prev) => {
+          const next = new Set(prev);
+          next.delete(columnId);
+          return next;
+        });
+      }
+    },
+    [data.columns, fetchColumnCards],
+  );
 
   const switchBoard = useCallback(
     async (boardId: string) => {
@@ -363,6 +425,8 @@ export function KanbanBoard({
         mutate,
         refresh,
         fetchCardDetail,
+        loadMoreCards,
+        loadingColumnIds,
         currentUserId,
         workspaceKey: data.workspaceKey,
         members: data.members,

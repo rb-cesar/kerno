@@ -79,11 +79,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const loadMore = useCallback(() => {
-    const oldest = items.at(-1)?.createdAt;
-    if (!oldest) return;
+    const oldestId = items.at(-1)?.id;
+    if (!oldestId) return;
     setLoadingMore(true);
     notificationsClient
-      .fetch(oldest)
+      .fetch(oldestId)
       .then((data) => {
         setItems((cur) => [...cur, ...data.items]);
         setHasMore(data.hasMore);

@@ -96,6 +96,15 @@ export interface ColumnDTO {
   color: string | null;
   wipLimit: number | null;
   cards: CardDTO[];
+  /** Total real de cards na coluna — pode ser maior que `cards.length` (ver hasMoreCards). */
+  totalCards: number;
+  hasMoreCards: boolean;
+}
+
+/** Página de cards de uma coluna (ver BoardDomain.getColumnCards). */
+export interface CardsPage {
+  items: CardDTO[];
+  hasMore: boolean;
 }
 
 export interface BoardData {
@@ -193,3 +202,4 @@ export type KanbanMutate = (command: KanbanCommand) => Promise<KanbanMutationRes
 export type KanbanFetch = (boardId: string) => Promise<BoardData | null>;
 export type KanbanFetchCardDetail = (cardId: string) => Promise<CardDetailDTO | null>;
 export type KanbanFetchMetrics = (boardId: string) => Promise<BoardMetricsDTO | null>;
+export type KanbanFetchColumnCards = (columnId: string, afterId?: string) => Promise<CardsPage>;

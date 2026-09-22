@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "@livekit/components-styles";
+// Depois da lib de propósito: precisa vencer `[data-lk-theme=default]` na cascata.
+import "@/modules/calls/components/livekit-theme.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 
 export const metadata: Metadata = {
