@@ -4,6 +4,7 @@ import "@livekit/components-styles";
 // Depois da lib de propósito: precisa vencer `[data-lk-theme=default]` na cascata.
 import "@/modules/calls/components/livekit-theme.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { QueryProvider } from "@/core/query/query-provider";
 
 export const metadata: Metadata = {
   title: "Kerno",
@@ -16,7 +17,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
