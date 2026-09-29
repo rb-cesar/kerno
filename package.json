@@ -41,6 +41,7 @@
     "@lexical/selection": "^0.45.0",
     "@livekit/components-react": "^2.9.24",
     "@livekit/components-styles": "^1.2.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "^7.10.0",
     "@radix-ui/react-avatar": "^1.1.12",
