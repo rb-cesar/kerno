@@ -3,7 +3,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
-import { getQueryClient } from "./get-query-client";
+import { QueryResource } from "@/core/query";
 
 /**
  * Monta no root (`src/app/layout.tsx`), fora do `ThemeProvider` — cobre tanto
@@ -12,7 +12,7 @@ import { getQueryClient } from "./get-query-client";
  * do React Query pra garantir que o client não é recriado em re-renders.
  */
 export function QueryProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => getQueryClient());
+  const [queryClient] = useState(() => QueryResource.getQueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
