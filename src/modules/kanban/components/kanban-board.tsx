@@ -6,7 +6,7 @@ import { BarChart3, BookMarked, LayoutGrid, List, Map as MapIcon, Search } from 
 import { type HTMLAttributes, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TooltipProvider } from "@/components/ui";
-import { kanbanBoardResource } from "../queries";
+import { kanbanBoardResource, refreshKanbanBoard } from "../queries";
 import type {
   BoardData,
   ColumnDTO,
@@ -18,6 +18,7 @@ import type {
   Priority,
 } from "../types";
 import { AddColumn } from "./add-column";
+import { appendColumnPage } from "./board-cache";
 import { BoardSwitcher } from "./board-switcher";
 import { BoardMinimap } from "./column-minimap";
 import { CommandPalette } from "./command-palette";
@@ -151,11 +152,14 @@ export function KanbanBoard({
 
   // Id do board ativo via ref → refresh/loadMoreCards permanecem estáveis
   // mesmo trocando de board, sem reassinar o listener de socket em
-  // useKanbanRealtime à toa (mesmo motivo de columnsRef, mais abaixo).
+  // useKanbanRealtime à toa.
   const boardIdRef = useRef(activeBoardId);
   useEffect(() => {
     boardIdRef.current = activeBoardId;
   }, [activeBoardId]);
+  // Numera os pedidos de troca de board: como o destino carrega ANTES de trocar, dois cliques
+  // seguidos podem terminar fora de ordem — só o último pedido vale.
+  const switchSeqRef = useRef(0);
 
   const [labelFilter, setLabelFilter] = useState<Set<string>>(new Set());
   const [assigneeFilter, setAssigneeFilter] = useState<Set<string>>(new Set());
@@ -241,63 +245,30 @@ export function KanbanBoard({
 
   const activeBoardKey = `kerno:boards:active:${data.workspaceId}`;
 
-  // Colunas atuais via ref — refresh() lê daqui em vez de fechar sobre `data`,
-  // senão a identidade de refresh (e de onRemoteChange, abaixo) mudaria a cada
-  // render e reassinaria o listener de socket em useKanbanRealtime sem necessidade.
-  const columnsRef = useRef(data.columns);
-  useEffect(() => {
-    columnsRef.current = data.columns;
-  }, [data.columns]);
+  // Re-sincroniza o board com o servidor (realtime, drag&drop que falhou). É o mesmo
+  // resync que o painel da tarefa no dock usa após editar um card — ver
+  // refreshKanbanBoard em ../queries.
+  const refresh = useCallback(async () => {
+    await refreshKanbanBoard(queryClient, boardIdRef.current, {
+      snapshot: fetchSnapshot,
+      columnCards: fetchColumnCards,
+    });
+  }, [fetchSnapshot, fetchColumnCards, queryClient]);
 
   // Carrega mais cards de uma coluna específica ("carregar mais" — colunas
   // com mais que CARD_PAGE_SIZE cards só trazem a 1ª página no snapshot).
-  const refresh = useCallback(async () => {
-    const fresh = await fetchSnapshot(boardIdRef.current);
-    if (!fresh) return;
-
-    // Um snapshot novo só traz a 1ª página de cada coluna — colunas que já
-    // tinham mais cards carregados (via "carregar mais") voltariam pra 1ª
-    // página. Repõe a profundidade anterior buscando as páginas seguintes.
-    const prevCountByColumn = new Map(columnsRef.current.map((c) => [c.id, c.cards.length]));
-    const columns = await Promise.all(
-      fresh.columns.map(async (column) => {
-        const prevCount = prevCountByColumn.get(column.id) ?? 0;
-        if (prevCount <= column.cards.length || !column.hasMoreCards) return column;
-
-        let cards = column.cards;
-        let hasMoreCards: boolean = column.hasMoreCards;
-        while (cards.length < prevCount && hasMoreCards) {
-          const page = await fetchColumnCards(column.id, cards.at(-1)?.id);
-          if (page.items.length === 0) break;
-          cards = [...cards, ...page.items];
-          hasMoreCards = page.hasMore;
-        }
-        return { ...column, cards, hasMoreCards };
-      }),
-    );
-
-    kanbanBoardResource.hydrate(queryClient, { ...fresh, columns }, boardIdRef.current);
-  }, [fetchSnapshot, fetchColumnCards, queryClient]);
-
   const [loadingColumnIds, setLoadingColumnIds] = useState<Set<string>>(new Set());
   const loadMoreCards = useCallback(
     async (columnId: string) => {
       const column = data.columns.find((c) => c.id === columnId);
       const lastCardId = column?.cards.at(-1)?.id;
       if (!lastCardId) return;
+      // Fixo durante o pedido: o board ativo pode mudar enquanto a página vem, e ela pertence a este.
+      const boardId = boardIdRef.current;
       setLoadingColumnIds((prev) => new Set(prev).add(columnId));
       try {
         const page = await fetchColumnCards(columnId, lastCardId);
-        queryClient.setQueryData(kanbanBoardResource.key(boardIdRef.current), (prev: BoardData | undefined) =>
-          prev
-            ? {
-                ...prev,
-                columns: prev.columns.map((c) =>
-                  c.id === columnId ? { ...c, cards: [...c.cards, ...page.items], hasMoreCards: page.hasMore } : c,
-                ),
-              }
-            : prev,
-        );
+        appendColumnPage(queryClient, boardId, columnId, page);
       } finally {
         setLoadingColumnIds((prev) => {
           const next = new Set(prev);
@@ -311,6 +282,7 @@ export function KanbanBoard({
 
   const switchBoard = useCallback(
     async (boardId: string) => {
+      const seq = ++switchSeqRef.current; // voltar ao board atual também cancela uma troca pendente
       if (boardId === boardIdRef.current) return;
       // Carrega o destino ANTES de trocar a chave: se falhar, permanece no board
       // atual (em vez de a chave apontar pra um board sem dados). Sempre revalida
@@ -322,6 +294,7 @@ export function KanbanBoard({
       } catch {
         return;
       }
+      if (seq !== switchSeqRef.current) return; // houve um pedido mais novo enquanto este carregava
       setActiveBoardId(boardId);
       clearFilters();
       try {
@@ -350,13 +323,14 @@ export function KanbanBoard({
 
   const handleCreateBoard = useCallback(
     async (name: string) => {
+      const boardId = boardIdRef.current; // fixo: o ativo pode mudar durante os awaits
       const prevIds = new Set(data.boards.map((b) => b.id));
       const res = await mutate({ type: "createBoard", workspaceId: data.workspaceId, name });
       if (!res.ok) return res;
-      const fresh = await fetchSnapshot(boardIdRef.current);
+      const fresh = await fetchSnapshot(boardId);
       const created = fresh?.boards.find((b) => !prevIds.has(b.id));
       if (created) await switchBoard(created.id);
-      else if (fresh) kanbanBoardResource.hydrate(queryClient, fresh, boardIdRef.current);
+      else if (fresh) kanbanBoardResource.hydrate(queryClient, fresh, boardId);
       return res;
     },
     [data.boards, data.workspaceId, mutate, fetchSnapshot, switchBoard, queryClient],
