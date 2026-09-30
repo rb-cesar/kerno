@@ -6,7 +6,7 @@ import { BarChart3, BookMarked, LayoutGrid, List, Map as MapIcon, Search } from 
 import { type HTMLAttributes, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TooltipProvider } from "@/components/ui";
-import { kanbanBoardResource } from "../queries";
+import { kanbanBoardResource, refreshKanbanBoard } from "../queries";
 import type {
   BoardData,
   ColumnDTO,
@@ -153,7 +153,7 @@ export function KanbanBoard({
   // ANTERIOR por um instante — usar `data.id` aqui escreveria na chave
   // errada nesse intervalo) → refresh/loadMoreCards permanecem estáveis
   // mesmo trocando de board, sem reassinar o listener de socket em
-  // useKanbanRealtime à toa (mesmo motivo de columnsRef, mais abaixo).
+  // useKanbanRealtime à toa.
   const boardIdRef = useRef(activeBoardId);
   useEffect(() => {
     boardIdRef.current = activeBoardId;
@@ -243,44 +243,18 @@ export function KanbanBoard({
 
   const activeBoardKey = `kerno:boards:active:${data.workspaceId}`;
 
-  // Colunas atuais via ref — refresh() lê daqui em vez de fechar sobre `data`,
-  // senão a identidade de refresh (e de onRemoteChange, abaixo) mudaria a cada
-  // render e reassinaria o listener de socket em useKanbanRealtime sem necessidade.
-  const columnsRef = useRef(data.columns);
-  useEffect(() => {
-    columnsRef.current = data.columns;
-  }, [data.columns]);
+  // Re-sincroniza o board com o servidor (realtime, drag&drop que falhou). É o mesmo
+  // resync que o painel da tarefa no dock usa após editar um card — ver
+  // refreshKanbanBoard em ../queries.
+  const refresh = useCallback(async () => {
+    await refreshKanbanBoard(queryClient, boardIdRef.current, {
+      snapshot: fetchSnapshot,
+      columnCards: fetchColumnCards,
+    });
+  }, [fetchSnapshot, fetchColumnCards, queryClient]);
 
   // Carrega mais cards de uma coluna específica ("carregar mais" — colunas
   // com mais que CARD_PAGE_SIZE cards só trazem a 1ª página no snapshot).
-  const refresh = useCallback(async () => {
-    const fresh = await fetchSnapshot(boardIdRef.current);
-    if (!fresh) return;
-
-    // Um snapshot novo só traz a 1ª página de cada coluna — colunas que já
-    // tinham mais cards carregados (via "carregar mais") voltariam pra 1ª
-    // página. Repõe a profundidade anterior buscando as páginas seguintes.
-    const prevCountByColumn = new Map(columnsRef.current.map((c) => [c.id, c.cards.length]));
-    const columns = await Promise.all(
-      fresh.columns.map(async (column) => {
-        const prevCount = prevCountByColumn.get(column.id) ?? 0;
-        if (prevCount <= column.cards.length || !column.hasMoreCards) return column;
-
-        let cards = column.cards;
-        let hasMoreCards: boolean = column.hasMoreCards;
-        while (cards.length < prevCount && hasMoreCards) {
-          const page = await fetchColumnCards(column.id, cards.at(-1)?.id);
-          if (page.items.length === 0) break;
-          cards = [...cards, ...page.items];
-          hasMoreCards = page.hasMore;
-        }
-        return { ...column, cards, hasMoreCards };
-      }),
-    );
-
-    kanbanBoardResource.hydrate(queryClient, { ...fresh, columns }, boardIdRef.current);
-  }, [fetchSnapshot, fetchColumnCards, queryClient]);
-
   const [loadingColumnIds, setLoadingColumnIds] = useState<Set<string>>(new Set());
   const loadMoreCards = useCallback(
     async (columnId: string) => {
