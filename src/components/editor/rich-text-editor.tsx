@@ -9,7 +9,7 @@ import {
   ListItemNode,
   ListNode,
 } from "@lexical/list";
-import { $convertFromMarkdownString, $convertToMarkdownString, type Transformer } from "@lexical/markdown";
+import type { Transformer } from "@lexical/markdown";
 import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -34,6 +34,7 @@ import { Bold, Braces, Code, Italic, List, ListOrdered, Quote, Strikethrough } f
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/components/ui";
 import { editorTheme, TRANSFORMERS, URL_MATCHER } from "./config";
+import { $exportMarkdown, $importMarkdown } from "./markdown";
 import {
   type ActiveFormats,
   ActiveFormatsPlugin,
@@ -65,7 +66,7 @@ function InitialMarkdownPlugin({ markdown, transformers }: { markdown: string; t
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     editor.update(() => {
-      if (markdown) $convertFromMarkdownString(markdown, transformers);
+      if (markdown) $importMarkdown(markdown, transformers);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
@@ -86,7 +87,7 @@ function OnChangeMarkdownPlugin({
       editor.registerUpdateListener(({ editorState }) => {
         let markdown = "";
         editorState.read(() => {
-          markdown = $convertToMarkdownString(transformers);
+          markdown = $exportMarkdown(transformers);
         });
         onChange(markdown);
       }),
