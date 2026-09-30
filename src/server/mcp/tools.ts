@@ -6,6 +6,7 @@ import { kanbanCommandSchema } from "@/modules/kanban/dto";
 import * as domain from "@/modules/kanban/server/domain";
 import { kanbanGuards } from "@/modules/kanban/server/guards";
 import type { BoardData, CardDTO, KanbanCommand, KanbanMutationResult } from "@/modules/kanban/types";
+import type { ActionResult } from "@/modules/workspaces/types";
 import { container } from "@/server/container";
 import { registerChatTools } from "./chat-tools";
 import { DESTRUCTIVE, READ, run, WRITE, workspaceSlug } from "./common";
@@ -80,20 +81,48 @@ const workspaceForRef = z
   .string()
   .optional()
   .describe("Slug do workspace — só necessário se `card` for uma referência KEY-N");
-const dueDate = z.string().nullable().describe("Data ISO (2026-10-31) ou null para remover");
+
+/** `YYYY-MM-DD` de um dia que existe: `2026-02-31` não passa (o JS o normalizaria para março). */
+function isRealCalendarDate(value: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return false;
+  const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const d = new Date(Date.UTC(year, month - 1, day));
+  return d.getUTCFullYear() === year && d.getUTCMonth() === month - 1 && d.getUTCDate() === day;
+}
+
+const dueDate = z
+  .string()
+  .refine(isRealCalendarDate, "Use uma data real no formato YYYY-MM-DD (ex.: 2026-10-31)")
+  .nullable()
+  .describe("Data no formato YYYY-MM-DD (ex.: 2026-10-31) ou null para remover");
+
+const unique = <T>(items: T[]): T[] => [...new Set(items)];
+
+/** `ActionResult` (convites/papéis) devolve `{ ok: false, error }` em vez de lançar — converte para exceção. */
+function unwrapAction(result: ActionResult, done: string): string {
+  if (!result.ok) throw new Error(result.error);
+  return result.message ?? done;
+}
 
 export function registerKernoTools(server: McpServer, userId: string): void {
   // ── Helpers que dependem do usuário ───────────────────────────────────────
 
   /** Aceita id de card ou "KEY-N"; a referência é resolvida dentro de um workspace de que o usuário é membro. */
   async function resolveCardId(card: string, workspace?: string): Promise<string> {
-    const ref = /^[A-Za-z]+-(\d+)$/.exec(card.trim());
+    const ref = /^([A-Za-z]+)-(\d+)$/.exec(card.trim());
     if (!ref) return card.trim();
     if (!workspace) throw new RuleViolation(`Para usar a referência ${card}, informe também o slug em \`workspace\`.`);
 
     const ws = await workspaces.getBySlug(userId, workspace); // também checa membership
+    // O número sozinho identifica o card no workspace, mas o prefixo tem que bater: um typo
+    // (WRONG-12) não pode cair em silêncio em outro card.
+    const { key } = await prisma.workspace.findUniqueOrThrow({ where: { id: ws.id }, select: { key: true } });
+    if ((ref[1] ?? "").toUpperCase() !== key.toUpperCase()) {
+      throw new RuleViolation(`A referência ${card} não é do workspace "${workspace}" (a chave dele é ${key}).`);
+    }
     const found = await prisma.card.findFirst({
-      where: { number: Number(ref[1]), board: { workspaceId: ws.id } },
+      where: { number: Number(ref[2]), board: { workspaceId: ws.id } },
       select: { id: true },
     });
     if (!found) throw new NotFound(`Card ${card} não encontrado no workspace ${workspace}`);
@@ -135,6 +164,27 @@ export function registerKernoTools(server: McpServer, userId: string): void {
     storyId?: string | null;
   };
 
+  /**
+   * Valida o patch ANTES de qualquer escrita — create_card não pode deixar um card pela metade
+   * (criado e publicado) quando o responsável/etiqueta/data do patch é inválido.
+   */
+  async function assertPatchValid(ctx: { boardId: string; workspaceId: string }, patch: CardPatch): Promise<void> {
+    if (patch.assigneeId) {
+      const member = await prisma.workspaceUser.findUnique({
+        where: { userId_workspaceId: { userId: patch.assigneeId, workspaceId: ctx.workspaceId } },
+      });
+      if (!member)
+        throw new RuleViolation("O responsável precisa ser membro do workspace (ids em get_board → members)");
+    }
+    if (patch.dueDate && !isRealCalendarDate(patch.dueDate)) {
+      throw new RuleViolation("Data inválida: use uma data real no formato YYYY-MM-DD");
+    }
+    if (patch.labelIds && patch.labelIds.length > 0) {
+      const owned = await prisma.label.count({ where: { id: { in: patch.labelIds }, boardId: ctx.boardId } });
+      if (owned !== unique(patch.labelIds).length) throw new RuleViolation("Etiqueta de outro board");
+    }
+  }
+
   /** `updateCard` do app exige o card inteiro; aqui `undefined` = manter, `null` = limpar. */
   async function patchCard(cardId: string, patch: CardPatch): Promise<void> {
     await kanbanGuards.guardCard(userId, cardId, "MEMBER");
@@ -146,14 +196,7 @@ export function registerKernoTools(server: McpServer, userId: string): void {
     const title = patch.title === undefined ? current.title : patch.title.trim();
     if (!title) throw new RuleViolation("Título vazio");
 
-    if (patch.assigneeId) {
-      const member = await prisma.workspaceUser.findUnique({
-        where: { userId_workspaceId: { userId: patch.assigneeId, workspaceId: current.board.workspaceId } },
-      });
-      if (!member)
-        throw new RuleViolation("O responsável precisa ser membro do workspace (ids em get_board → members)");
-    }
-    if (patch.dueDate && Number.isNaN(new Date(patch.dueDate).getTime())) throw new RuleViolation("Data inválida");
+    await assertPatchValid({ boardId: current.boardId, workspaceId: current.board.workspaceId }, patch);
 
     const command: KanbanCommand = {
       type: "updateCard",
@@ -161,7 +204,7 @@ export function registerKernoTools(server: McpServer, userId: string): void {
       title,
       description: patch.description === undefined ? current.description : patch.description,
       assignedTo: patch.assigneeId === undefined ? current.assignedTo : patch.assigneeId,
-      labelIds: patch.labelIds ?? current.labels.map((l) => l.labelId),
+      labelIds: patch.labelIds ? unique(patch.labelIds) : current.labels.map((l) => l.labelId),
       priority: patch.priority ?? current.priority,
       dueDate: patch.dueDate === undefined ? (current.dueDate?.toISOString() ?? null) : patch.dueDate,
       estimate: patch.estimate === undefined ? current.estimate : patch.estimate,
@@ -355,7 +398,7 @@ export function registerKernoTools(server: McpServer, userId: string): void {
     ({ workspace, email, role }) =>
       run(async () => {
         const ws = await workspaces.getBySlug(userId, workspace);
-        return workspaces.invite(userId, ws.id, { email, role });
+        return unwrapAction(await workspaces.invite(userId, ws.id, { email, role }), "Membro adicionado.");
       }),
   );
 
@@ -374,7 +417,10 @@ export function registerKernoTools(server: McpServer, userId: string): void {
     ({ workspace, user_id, role }) =>
       run(async () => {
         const ws = await workspaces.getBySlug(userId, workspace);
-        return workspaces.updateMember(userId, ws.id, { userId: user_id, role });
+        return unwrapAction(
+          await workspaces.updateMember(userId, ws.id, { userId: user_id, role }),
+          "Papel atualizado.",
+        );
       }),
   );
 
@@ -389,7 +435,7 @@ export function registerKernoTools(server: McpServer, userId: string): void {
     ({ workspace, user_id }) =>
       run(async () => {
         const ws = await workspaces.getBySlug(userId, workspace);
-        return workspaces.removeMember(userId, ws.id, user_id);
+        return unwrapAction(await workspaces.removeMember(userId, ws.id, user_id), "Membro removido.");
       }),
   );
 
@@ -421,7 +467,6 @@ export function registerKernoTools(server: McpServer, userId: string): void {
         await kanbanGuards.guardColumn(userId, column_id, "MEMBER");
         const trimmed = title.trim();
         if (!trimmed) throw new RuleViolation("Título vazio");
-        const created = await domain.card.createCard(column_id, trimmed, userId);
 
         const patch: CardPatch = {
           description,
@@ -429,9 +474,30 @@ export function registerKernoTools(server: McpServer, userId: string): void {
           assigneeId: assignee_id,
           dueDate: due_date,
           estimate,
-          labelIds: label_ids,
+          labelIds: label_ids ? unique(label_ids) : undefined,
         };
-        if (Object.values(patch).some((v) => v !== undefined)) await patchCard(created.id, patch);
+        const hasPatch = Object.values(patch).some((v) => v !== undefined);
+
+        // Tudo que pode falhar é validado antes de criar: o card é publicado (evento, anúncio
+        // no chat) assim que nasce e não pode ficar pela metade.
+        if (hasPatch) {
+          const column = await prisma.column.findUniqueOrThrow({
+            where: { id: column_id },
+            select: { boardId: true, board: { select: { workspaceId: true } } },
+          });
+          await assertPatchValid({ boardId: column.boardId, workspaceId: column.board.workspaceId }, patch);
+        }
+
+        const created = await domain.card.createCard(column_id, trimmed, userId);
+        if (hasPatch) {
+          try {
+            await patchCard(created.id, patch);
+          } catch (err) {
+            // Falha inesperada depois de validar (ex.: banco): desfaz em vez de deixar o card sem os campos.
+            await domain.card.deleteCard(created.id, userId).catch(() => undefined);
+            throw err;
+          }
+        }
 
         return { id: created.id, ref: await cardRef(created.id), title: trimmed };
       }),

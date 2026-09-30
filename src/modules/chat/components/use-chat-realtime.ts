@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { Socket } from "socket.io-client";
 import type { AnyKernoEvent } from "@/core/events";
+import { isOwnEvent } from "@/core/events/types";
 
 /** Alvo de uma mensagem recebida em tempo real. */
 export type ChatTarget = { kind: "channel"; id: string } | { kind: "dm"; id: string; participantIds: string[] };
@@ -23,7 +24,7 @@ export function useChatRealtime(
     if (!socket) return;
 
     const handler = (event: AnyKernoEvent) => {
-      const fromSelf = event.userId === currentUserId;
+      const fromSelf = isOwnEvent(event, currentUserId);
       if (event.type === "message:sent") {
         onEvent({ kind: "channel", id: event.payload.channelId }, fromSelf, "message");
       } else if (event.type === "dm:sent") {

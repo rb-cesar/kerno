@@ -68,6 +68,12 @@ async function getWorkspaceWithMembers(workspaceId: string, userId: string): Pro
   };
 }
 
+/** O workspace nunca fica sem admin: rebaixar ou remover o último deixaria ninguém capaz de gerenciá-lo. */
+async function assertAnotherAdminRemains(workspaceId: string): Promise<void> {
+  const adminCount = await prisma.workspaceUser.count({ where: { workspaceId, role: "ADMIN" } });
+  if (adminCount <= 1) throw new Error("O workspace precisa de pelo menos um admin");
+}
+
 async function addWorkspaceMember(input: { workspaceId: string; userId: string; role?: WorkspaceRole }): Promise<void> {
   const workspace = await prisma.workspace.findUnique({
     where: { id: input.workspaceId },
@@ -76,6 +82,14 @@ async function addWorkspaceMember(input: { workspaceId: string; userId: string; 
   if (!workspace) throw new NotFound("Workspace não encontrado");
 
   const role: WorkspaceRole = input.role && WORKSPACE_ROLES.includes(input.role) ? input.role : "MEMBER";
+
+  // Troca de papel de quem já é ADMIN para outro papel: mesma regra do removeWorkspaceMember.
+  if (role !== "ADMIN") {
+    const current = await prisma.workspaceUser.findUnique({
+      where: { userId_workspaceId: { userId: input.userId, workspaceId: input.workspaceId } },
+    });
+    if (current?.role === "ADMIN") await assertAnotherAdminRemains(input.workspaceId);
+  }
 
   await prisma.workspaceUser.upsert({
     where: { userId_workspaceId: { userId: input.userId, workspaceId: input.workspaceId } },
@@ -90,14 +104,7 @@ async function removeWorkspaceMember(input: { workspaceId: string; userId: strin
   });
   if (!target) throw new NotFound("Membro não encontrado no workspace");
 
-  if (target.role === "ADMIN") {
-    const adminCount = await prisma.workspaceUser.count({
-      where: { workspaceId: input.workspaceId, role: "ADMIN" },
-    });
-    if (adminCount <= 1) {
-      throw new Error("O workspace precisa de pelo menos um admin");
-    }
-  }
+  if (target.role === "ADMIN") await assertAnotherAdminRemains(input.workspaceId);
 
   await prisma.workspaceUser.delete({
     where: { userId_workspaceId: { userId: input.userId, workspaceId: input.workspaceId } },

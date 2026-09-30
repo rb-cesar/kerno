@@ -1,5 +1,6 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { withEventOrigin } from "@/core/events";
 
 // Peças compartilhadas pelos conjuntos de tools (kanban/workspaces em tools.ts,
 // chat em chat-tools.ts).
@@ -13,7 +14,7 @@ const fail = (message: string): CallToolResult => ({ content: [{ type: "text", t
 /** Erros de domínio/permissão viram resultado `isError` (o modelo lê a mensagem e reage) — nunca derrubam o servidor. */
 export async function run(fn: () => Promise<unknown>): Promise<CallToolResult> {
   try {
-    return ok(await fn());
+    return ok(await withEventOrigin("mcp", fn));
   } catch (err) {
     return fail(err instanceof Error ? err.message : String(err));
   }

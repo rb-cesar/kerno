@@ -3,6 +3,8 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/core/db";
+import { eventBus } from "@/core/events";
+import { type EventOrigin, isOwnEvent } from "@/core/events/types";
 import { container } from "@/server/container";
 import { registerKernoTools } from "./tools";
 
@@ -253,5 +255,162 @@ describe("kerno MCP chat tools", () => {
   it("cria canal (nome normalizado)", async () => {
     const created = (await call(admin, "create_channel", { workspace: slug, name: "Time Backend" })).json();
     expect(created.name).toBe("time-backend");
+  });
+});
+
+describe("kerno MCP tools — correções da revisão", () => {
+  it("referência KEY-N: o prefixo precisa ser o do workspace (WRONG-1 não cai no card 1)", async () => {
+    const board = (await call(admin, "get_board", { workspace: slug })).json();
+    const created = (await call(admin, "create_card", { column_id: board.columns[0].id, title: "alvo da ref" })).json();
+    const number = created.ref.split("-")[1];
+
+    const wrong = await call(admin, "get_card", { card: `WRONG-${number}`, workspace: slug });
+    expect(wrong.isError).toBe(true);
+    expect(wrong.text).toContain(key);
+    expect((await call(admin, "update_card", { card: `WRONG-${number}`, workspace: slug, title: "x" })).isError).toBe(
+      true,
+    );
+    expect((await call(admin, "delete_card", { card: `WRONG-${number}`, workspace: slug })).isError).toBe(true);
+
+    // a chave certa funciona, em qualquer caixa
+    const ok = await call(admin, "get_card", { card: `${key.toLowerCase()}-${number}`, workspace: slug });
+    expect(ok.isError).toBe(false);
+    expect(ok.json().title).toBe("alvo da ref");
+  });
+
+  it("create_card é tudo-ou-nada: patch inválido não deixa um card criado pela metade", async () => {
+    const board = (await call(admin, "get_board", { workspace: slug })).json();
+    const columnId = board.columns[0].id as string;
+    const count = () => prisma.card.count({ where: { boardId: board.id } });
+    const before = await count();
+    const published: string[] = [];
+    const off = eventBus.onAny((e) => {
+      published.push(e.type);
+    });
+
+    const badAssignee = await call(admin, "create_card", { column_id: columnId, title: "a", assignee_id: outsiderId });
+    expect(badAssignee.isError).toBe(true);
+
+    const otherBoard = await prisma.label.create({
+      data: { name: "de outro board", color: "#000", board: { create: { name: "b2", workspaceId } } },
+    });
+    const badLabel = await call(admin, "create_card", { column_id: columnId, title: "b", label_ids: [otherBoard.id] });
+    expect(badLabel.isError).toBe(true);
+
+    const badDate = await call(admin, "create_card", { column_id: columnId, title: "c", due_date: "2026-02-31" });
+    expect(badDate.isError).toBe(true);
+
+    off();
+    expect(await count()).toBe(before); // nenhum card nasceu
+    expect(published).toEqual([]); // nem foi publicado e depois desfeito (evento/anúncio no chat)
+
+    const good = await call(admin, "create_card", {
+      column_id: columnId,
+      title: "d",
+      assignee_id: adminId,
+      due_date: "2026-03-01",
+    });
+    expect(good.isError).toBe(false);
+    expect(await count()).toBe(before + 1);
+  });
+
+  it("rejeita datas que não existem no calendário (2026-02-31 não vira março)", async () => {
+    const board = (await call(admin, "get_board", { workspace: slug })).json();
+    const created = (await call(admin, "create_card", { column_id: board.columns[0].id, title: "data" })).json();
+
+    for (const bad of ["2026-02-31", "2026-13-01", "2026-00-10", "31/12/2026", "2026-2-3", "amanhã"]) {
+      const res = await call(admin, "update_card", { card: created.id, due_date: bad });
+      expect(res.isError, bad).toBe(true);
+    }
+    expect((await call(admin, "update_card", { card: created.id, due_date: "2028-02-29" })).isError).toBe(false); // bissexto
+    expect((await call(admin, "get_card", { card: created.id })).json().dueDate).toBe("2028-02-29");
+    expect((await call(admin, "update_card", { card: created.id, due_date: null })).isError).toBe(false);
+  });
+
+  it("falhas de convite/papel/remoção voltam como erro MCP, não como sucesso", async () => {
+    const nobody = await call(admin, "invite_member", { workspace: slug, email: "ninguem-existe@example.com" });
+    expect(nobody.isError).toBe(true);
+    expect(nobody.text).toContain("Nenhum usuário");
+
+    // quem não é admin não convida (o VIEWER lê o workspace, mas não o administra)
+    const byViewer = await call(viewer, "invite_member", { workspace: slug, email: "alguem@example.com" });
+    expect(byViewer.isError).toBe(true);
+
+    const removeMissing = await call(admin, "remove_member", { workspace: slug, user_id: outsiderId });
+    expect(removeMissing.isError).toBe(true);
+
+    const ok = await call(admin, "invite_member", {
+      workspace: slug,
+      email: `mcp-outsider-${suffix}@example.com`,
+      role: "VIEWER",
+    });
+    expect(ok.isError).toBe(false);
+    expect(ok.text).toContain("adicionado");
+    expect((await call(admin, "remove_member", { workspace: slug, user_id: outsiderId })).isError).toBe(false);
+  });
+
+  it("não rebaixa o único ADMIN do workspace (nem pelo serviço do app)", async () => {
+    const extra = await prisma.user.create({
+      data: { name: "mcp-extra", email: `mcp-extra-${suffix}@example.com`, passwordHash: "x" },
+    });
+    const { slug: soloSlug } = await container.workspaces.createWorkspace(adminId, { name: `Solo ${suffix}` });
+    const solo = await prisma.workspace.findUniqueOrThrow({ where: { slug: soloSlug } });
+    const roleOf = async (userId: string) =>
+      (await prisma.workspaceUser.findUnique({ where: { userId_workspaceId: { userId, workspaceId: solo.id } } }))
+        ?.role;
+
+    try {
+      await prisma.workspaceUser.create({ data: { userId: extra.id, workspaceId: solo.id, role: "MEMBER" } });
+
+      const demote = await call(admin, "set_member_role", { workspace: soloSlug, user_id: adminId, role: "MEMBER" });
+      expect(demote.isError).toBe(true);
+      expect(demote.text).toContain("pelo menos um admin");
+      expect(await roleOf(adminId)).toBe("ADMIN");
+
+      // o mesmo vale direto no serviço (a API HTTP do app usava o mesmo caminho sem a trava)
+      const viaService = await container.workspaces.updateMember(adminId, solo.id, { userId: adminId, role: "VIEWER" });
+      expect(viaService.ok).toBe(false);
+      const noRole = await container.workspaces.updateMember(adminId, solo.id, { userId: adminId });
+      expect(noRole.ok).toBe(false); // sem papel = MEMBER: também rebaixaria
+      expect(await roleOf(adminId)).toBe("ADMIN");
+
+      // com um segundo admin, rebaixar é permitido
+      expect(
+        (await call(admin, "set_member_role", { workspace: soloSlug, user_id: extra.id, role: "ADMIN" })).isError,
+      ).toBe(false);
+      expect(
+        (await call(admin, "set_member_role", { workspace: soloSlug, user_id: adminId, role: "MEMBER" })).isError,
+      ).toBe(false);
+      expect(await roleOf(adminId)).toBe("MEMBER");
+    } finally {
+      await prisma.workspace.delete({ where: { id: solo.id } });
+      await prisma.user.delete({ where: { id: extra.id } });
+    }
+  });
+
+  it("eventos causados pelo MCP saem marcados com a origem (o navegador do mesmo usuário não os descarta)", async () => {
+    const seen: { type: string; userId?: string; origin?: EventOrigin }[] = [];
+    const off = eventBus.onAny((e) => {
+      seen.push({ type: e.type, userId: e.userId, origin: e.origin });
+    });
+    try {
+      const board = (await call(admin, "get_board", { workspace: slug })).json();
+      await call(admin, "create_card", { column_id: board.columns[0].id, title: "via mcp" });
+      const viaMcp = seen.find((e) => e.type === "card:created");
+      expect(viaMcp).toMatchObject({ userId: adminId, origin: "mcp" });
+      expect(isOwnEvent(viaMcp ?? {}, adminId)).toBe(false); // conta como remoto para o cliente
+
+      seen.length = 0;
+      await container.kanban.runCommand(adminId, {
+        type: "createCard",
+        columnId: board.columns[0].id,
+        title: "via ui",
+      });
+      const viaUi = seen.find((e) => e.type === "card:created");
+      expect(viaUi?.origin).toBeUndefined(); // ação normal do app: sem marca
+      expect(isOwnEvent(viaUi ?? {}, adminId)).toBe(true);
+    } finally {
+      off();
+    }
   });
 });
