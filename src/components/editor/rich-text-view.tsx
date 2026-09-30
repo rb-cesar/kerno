@@ -3,6 +3,8 @@
 import { Check, Copy } from "lucide-react";
 import { Highlight, themes } from "prism-react-renderer";
 import { Fragment, type ReactNode, useState } from "react";
+import { ESCAPED_CHAR, parseBlocks, unescapeMarkdown } from "./blocks";
+import { renderBlocks } from "./render-blocks";
 
 // Renderizador de Markdown (subconjunto estilo Discord/Slack), SEM dependências
 // pesadas e SEM dangerouslySetInnerHTML: tudo vira nó React, então o conteúdo do
@@ -69,6 +71,13 @@ type InlineRule = {
 
 const INLINE_RULES: InlineRule[] = [
   {
+    // Caractere escapado pelo editor (`\_`, `\*`…) → o próprio caractere, sem a barra.
+    // Primeiro: senão `\*` seria lido como abertura de negrito/itálico.
+    regex: ESCAPED_CHAR,
+    recurse: false,
+    render: (m, _c, key) => <Fragment key={key}>{m[1]}</Fragment>,
+  },
+  {
     // Menção: @[Nome](user:ID) → chip destacado (antes da regra de link).
     regex: /@\[([^\]\n]+)\]\(user:([^)\s]+)\)/,
     recurse: false,
@@ -98,7 +107,7 @@ const INLINE_RULES: InlineRule[] = [
         rel="noreferrer noopener"
         className="text-primary underline underline-offset-2"
       >
-        {m[1]}
+        {unescapeMarkdown(m[1] ?? "")}
       </a>
     ),
   },
@@ -172,99 +181,13 @@ function parseInline(text: string, keyBase: string): ReactNode[] {
   return nodes;
 }
 
-function renderParagraph(lines: string[], key: string): ReactNode {
-  return (
-    <p key={key} className="whitespace-pre-wrap break-words">
-      {lines.map((line, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: linhas do parágrafo, ordem fixa, sem id próprio
-        <Fragment key={i}>
-          {i > 0 ? <br /> : null}
-          {parseInline(line, `${key}.${i}`)}
-        </Fragment>
-      ))}
-    </p>
-  );
-}
-
-const UNORDERED = /^\s*[-*]\s+/;
-const ORDERED = /^\s*\d+\.\s+/;
-
 export function RichTextView({ content }: { content: string }): ReactNode {
-  const lines = content.split("\n");
-  const at = (idx: number): string => lines[idx] ?? "";
-  const blocks: ReactNode[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = at(i);
-
-    if (line.trimStart().startsWith("```")) {
-      const lang = line.trim().slice(3).trim();
-      const code: string[] = [];
-      i += 1;
-      while (i < lines.length && !at(i).trimStart().startsWith("```")) {
-        code.push(at(i));
-        i += 1;
-      }
-      i += 1;
-      blocks.push(<CodeBlock key={`pre.${i}`} code={code.join("\n")} lang={lang} />);
-      continue;
-    }
-
-    if (/^\s*>\s?/.test(line)) {
-      const quote: string[] = [];
-      while (i < lines.length && /^\s*>\s?/.test(at(i))) {
-        quote.push(at(i).replace(/^\s*>\s?/, ""));
-        i += 1;
-      }
-      blocks.push(
-        <blockquote key={`q.${i}`} className="border-l-2 border-muted-foreground/40 pl-3 text-muted-foreground">
-          {renderParagraph(quote, `q.${i}.p`)}
-        </blockquote>,
-      );
-      continue;
-    }
-
-    if (UNORDERED.test(line) || ORDERED.test(line)) {
-      const isOrdered = ORDERED.test(line);
-      const marker = isOrdered ? ORDERED : UNORDERED;
-      const items: string[] = [];
-      while (i < lines.length && marker.test(at(i))) {
-        items.push(at(i).replace(marker, ""));
-        i += 1;
-      }
-      const listClass = isOrdered ? "list-decimal" : "list-disc";
-      const ListTag = isOrdered ? "ol" : "ul";
-      blocks.push(
-        <ListTag key={`l.${i}`} className={`${listClass} space-y-0.5 pl-5`}>
-          {items.map((item, idx) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: itens da lista, ordem fixa, sem id próprio
-            <li key={idx}>{parseInline(item, `l.${i}.${idx}`)}</li>
-          ))}
-        </ListTag>,
-      );
-      continue;
-    }
-
-    if (line.trim() === "") {
-      i += 1;
-      continue;
-    }
-
-    const para: string[] = [];
-    while (
-      i < lines.length &&
-      at(i).trim() !== "" &&
-      !at(i).trimStart().startsWith("```") &&
-      !/^\s*>\s?/.test(at(i)) &&
-      !UNORDERED.test(at(i)) &&
-      !ORDERED.test(at(i))
-    ) {
-      para.push(at(i));
-      i += 1;
-    }
-    blocks.push(renderParagraph(para, `p.${i}`));
-  }
-
-  return <div className="space-y-2 text-sm leading-relaxed">{blocks}</div>;
+  return (
+    <div className="text-sm leading-relaxed">
+      {renderBlocks(parseBlocks(content), {
+        inline: parseInline,
+        code: ({ code, lang }) => <CodeBlock code={code} lang={lang} />,
+      })}
+    </div>
+  );
 }

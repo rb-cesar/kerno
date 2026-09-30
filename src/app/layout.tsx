@@ -3,8 +3,8 @@ import "./globals.css";
 import "@livekit/components-styles";
 // Depois da lib de propósito: precisa vencer `[data-lk-theme=default]` na cascata.
 import "@/modules/calls/components/livekit-theme.css";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import { QueryProvider } from "@/core/query/query-provider";
 
 export const metadata: Metadata = {
   title: "Kerno",

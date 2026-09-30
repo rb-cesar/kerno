@@ -1,4 +1,5 @@
 export { editorTheme, TRANSFORMERS, URL_MATCHER } from "./config";
+export { $exportMarkdown, $importMarkdown } from "./markdown";
 export {
   $computeActiveFormats,
   type ActiveFormats,

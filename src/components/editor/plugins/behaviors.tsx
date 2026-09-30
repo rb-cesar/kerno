@@ -2,7 +2,7 @@
 
 import { $isCodeNode, registerCodeHighlighting } from "@lexical/code";
 import { $isListItemNode, $isListNode } from "@lexical/list";
-import { $convertFromMarkdownString, type Transformer } from "@lexical/markdown";
+import type { Transformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $isQuoteNode } from "@lexical/rich-text";
 import {
@@ -23,6 +23,7 @@ import {
   TextNode,
 } from "lexical";
 import { type MutableRefObject, useEffect } from "react";
+import { $importMarkdown } from "../markdown";
 
 /** `registerCodeHighlighting` num plugin — usado por qualquer campo com bloco de código. */
 export function CodeHighlightPlugin() {
@@ -104,7 +105,7 @@ export function PasteMarkdownPlugin({ transformers }: { transformers: Transforme
 
           event.preventDefault();
           editor.update(() => {
-            $convertFromMarkdownString(text, transformers);
+            $importMarkdown(text, transformers);
           });
           return true;
         },

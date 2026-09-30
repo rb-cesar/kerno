@@ -61,6 +61,7 @@ export function WorkspaceDockProvider({ currentUserId, children }: { currentUser
               mutate={kanbanClient.command}
               fetchCardBoard={kanbanClient.cardBoard}
               fetchSnapshot={kanbanClient.snapshot}
+              fetchColumnCards={kanbanClient.columnCards}
               fetchCardDetail={kanbanClient.cardDetail}
               onClose={() => dock.close(tab.id)}
             />

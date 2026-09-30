@@ -1,8 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { Skeleton, TooltipProvider } from "@/components/ui";
-import type { BoardData, KanbanFetch, KanbanFetchCardDetail, KanbanMutate } from "../types";
+import { refreshKanbanBoard } from "../queries";
+import type { BoardData, KanbanFetch, KanbanFetchCardDetail, KanbanFetchColumnCards, KanbanMutate } from "../types";
 import { CardPanelContent } from "./card-dialog";
 import { KanbanProvider } from "./kanban-context";
 
@@ -22,6 +24,7 @@ export function TaskSidePanel({
   mutate,
   fetchCardBoard,
   fetchSnapshot,
+  fetchColumnCards,
   fetchCardDetail,
   onClose,
 }: {
@@ -32,9 +35,12 @@ export function TaskSidePanel({
   fetchCardBoard: (cardId: string) => Promise<BoardData | null>;
   /** Snapshot por boardId — usado pelo refresh após mutações. */
   fetchSnapshot: KanbanFetch;
+  /** Páginas seguintes de uma coluna — o refresh repõe a profundidade que o board já tinha carregada. */
+  fetchColumnCards: KanbanFetchColumnCards;
   fetchCardDetail: KanbanFetchCardDetail;
   onClose: () => void;
 }) {
+  const queryClient = useQueryClient();
   const [data, setData] = useState<BoardData | null>(null);
   const [shownCardId, setShownCardId] = useState<string>(cardId);
   const [remoteRev, setRemoteRev] = useState(0);
@@ -52,14 +58,20 @@ export function TaskSidePanel({
     };
   }, [cardId, fetchCardBoard]);
 
+  // Além de atualizar este painel, grava o snapshot novo no cache compartilhado do board:
+  // este painel vive fora da árvore do board (no dock) e o realtime do board ignora as
+  // mudanças do próprio usuário — sem isso, editar um card aqui não chegava ao board.
   const refresh = useCallback(async () => {
     if (!data) return;
-    const fresh = await fetchSnapshot(data.id);
+    const fresh = await refreshKanbanBoard(queryClient, data.id, {
+      snapshot: fetchSnapshot,
+      columnCards: fetchColumnCards,
+    });
     if (fresh) {
       setData(fresh);
       setRemoteRev((r) => r + 1);
     }
-  }, [data, fetchSnapshot]);
+  }, [data, fetchSnapshot, fetchColumnCards, queryClient]);
 
   // Navegação interna (ex.: clicar numa sub-tarefa) troca o card mostrado nesta aba.
   const openCard = useCallback((id: string) => setShownCardId(id), []);

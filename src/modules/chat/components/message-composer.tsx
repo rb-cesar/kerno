@@ -3,7 +3,7 @@
 import { $createCodeNode, $isCodeNode, CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, ListItemNode, ListNode } from "@lexical/list";
-import { $convertFromMarkdownString, $convertToMarkdownString, type Transformer } from "@lexical/markdown";
+import type { Transformer } from "@lexical/markdown";
 import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -45,6 +45,8 @@ import {
 } from "lucide-react";
 import { type MutableRefObject, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
+  $exportMarkdown,
+  $importMarkdown,
   type ActiveFormats,
   ActiveFormatsPlugin,
   TRANSFORMERS as BASE_TRANSFORMERS,
@@ -116,7 +118,7 @@ function InitialContentPlugin({ markdown, autoFocus }: { markdown?: string; auto
   useEffect(() => {
     if (markdown) {
       editor.update(() => {
-        $convertFromMarkdownString(markdown, TRANSFORMERS);
+        $importMarkdown(markdown, TRANSFORMERS);
       });
     }
     if (autoFocus) {
@@ -158,7 +160,7 @@ function DraftPlugin({ draftKey }: { draftKey: string }) {
       () => {
         const root = $getRoot();
         root.clear();
-        if (saved) $convertFromMarkdownString(saved, TRANSFORMERS);
+        if (saved) $importMarkdown(saved, TRANSFORMERS);
         else root.append($createParagraphNode());
       },
       { tag: "draft-load" },
@@ -172,7 +174,7 @@ function DraftPlugin({ draftKey }: { draftKey: string }) {
         if (tags.has("draft-load")) return;
         let markdown = "";
         editorState.read(() => {
-          markdown = $convertToMarkdownString(TRANSFORMERS).trim();
+          markdown = $exportMarkdown(TRANSFORMERS).trim();
         });
         const key = DRAFT_PREFIX + draftKey;
         if (markdown) window.localStorage.setItem(key, markdown);
@@ -389,7 +391,7 @@ function ComposerInner({
   const submit = useCallback(() => {
     let markdown = "";
     editor.getEditorState().read(() => {
-      markdown = $convertToMarkdownString(TRANSFORMERS).trim();
+      markdown = $exportMarkdown(TRANSFORMERS).trim();
     });
     if (!markdown) return;
 
