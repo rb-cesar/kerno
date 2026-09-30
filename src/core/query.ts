@@ -60,6 +60,15 @@ export class QueryResource<TData> {
       placeholderData: this.config.keepPreviousData ? keepPreviousData : undefined,
     });
 
+  /**
+   * Busca fora de um componente e devolve o resultado (ou lança). Sempre vai à
+   * rede — ignora o `staleTime` do recurso — e deixa o resultado no cache, então
+   * um `useQuery` montado logo depois já o encontra. Serve pra "só troca a chave
+   * se o destino carregar", sem entrar em estado de erro na chave nova.
+   */
+  fetch = (qc: QueryClient, id: string): Promise<TData> =>
+    qc.fetchQuery({ queryKey: this.key(id), queryFn: () => this.config.fetch(id), staleTime: 0 });
+
   /** Semeia o cache com um resultado já obtido (servidor via `container.X`, ou uma escrita otimista no cliente). */
   hydrate = (qc: QueryClient, data: TData, id: string): void => {
     qc.setQueryData(this.key(id), data);

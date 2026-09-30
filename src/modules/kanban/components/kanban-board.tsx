@@ -139,19 +139,17 @@ export function KanbanBoard({
 }) {
   const queryClient = useQueryClient();
   // Board ativo — trocável via BoardSwitcher. O snapshot em si vive no cache
-  // do React Query (chave por boardId, com `keepPreviousData` — ver
-  // modules/kanban/queries.ts), não num useState local: sobrevive à
-  // desmontagem da rota (troca pro chat e volta) em vez de resetar pro
-  // `initial` antigo. `initial` só serve de fallback antes da hidratação SSR
-  // assumir (ver boards/page.tsx) e como valor inicial de `activeBoardId`.
+  // do React Query (chave por boardId — ver modules/kanban/queries.ts), não
+  // num useState local: sobrevive à desmontagem da rota (troca pro chat e
+  // volta) em vez de resetar pro `initial` antigo. `activeBoardId` só muda
+  // depois que o board de destino carregou (ver `switchBoard`), então o cache
+  // sempre tem dados pra chave ativa; `initial` só cobre o instante antes da
+  // hidratação SSR assumir (ver boards/page.tsx).
   const [activeBoardId, setActiveBoardId] = useState(initial.id);
   const { data: queried } = kanbanBoardResource.useQuery(activeBoardId);
   const data = queried ?? initial;
 
-  // Id do board ativo via ref (espelha `activeBoardId`, não `data.id`: durante
-  // a troca de board, com `keepPreviousData`, `data` ainda é a do board
-  // ANTERIOR por um instante — usar `data.id` aqui escreveria na chave
-  // errada nesse intervalo) → refresh/loadMoreCards permanecem estáveis
+  // Id do board ativo via ref → refresh/loadMoreCards permanecem estáveis
   // mesmo trocando de board, sem reassinar o listener de socket em
   // useKanbanRealtime à toa (mesmo motivo de columnsRef, mais abaixo).
   const boardIdRef = useRef(activeBoardId);
@@ -314,9 +312,16 @@ export function KanbanBoard({
   const switchBoard = useCallback(
     async (boardId: string) => {
       if (boardId === boardIdRef.current) return;
-      // Só troca a chave — o próprio useQuery busca (ou serve do cache, se já
-      // visitado nesta sessão) o board de destino. `keepPreviousData` (ver
-      // modules/kanban/queries.ts) mantém o board atual visível entre as duas.
+      // Carrega o destino ANTES de trocar a chave: se falhar, permanece no board
+      // atual (em vez de a chave apontar pra um board sem dados). Sempre revalida
+      // — o realtime só atualiza o board ativo, então um board já visitado pode
+      // estar defasado no cache. O resultado fica no cache, então o `useQuery`
+      // da chave nova já monta com os dados.
+      try {
+        await kanbanBoardResource.fetch(queryClient, boardId);
+      } catch {
+        return;
+      }
       setActiveBoardId(boardId);
       clearFilters();
       try {
@@ -325,7 +330,7 @@ export function KanbanBoard({
         /* localStorage indisponível — ignora */
       }
     },
-    [activeBoardKey, clearFilters],
+    [activeBoardKey, clearFilters, queryClient],
   );
 
   // Restaura o último board ativo (por workspace) na montagem.
