@@ -75,6 +75,29 @@ O `render.yaml` já cria o serviço via Blueprint (New + → Blueprint → conec
 
 `NODE_ENV`, `PORT` e `HOST` já vêm resolvidos pelo `render.yaml`/pelo próprio Render.
 
+## 3) MCP pessoal (opcional)
+
+O app expõe `POST /api/mcp` — um servidor [MCP](https://modelcontextprotocol.io) (Streamable HTTP, stateless)
+que deixa o Claude ler e escrever nos workspaces, no chat e no kanban **de produção**. As tools rodam dentro
+do servidor, então valem as mesmas permissões do app e o realtime/notificações funcionam normalmente.
+
+É **opt-in e single-user**: só existe se as duas envs abaixo estiverem definidas (senão a rota responde 404).
+Ficam de fora do `render.yaml` de propósito — preencha só no dashboard, se quiser o recurso:
+
+- `KERNO_MCP_TOKEN` — segredo forte, mínimo 32 caracteres (`openssl rand -hex 32`). Quem o tem age como o
+  usuário abaixo: trate como uma senha. Para revogar, apague ou troque a env.
+- `KERNO_MCP_USER_EMAIL` — e-mail da conta do Kerno em nome de quem o MCP age.
+
+Registrar no Claude Code (a partir daqui o token vive só no seu `~/.claude.json`):
+
+```bash
+claude mcp add kerno-prod --transport http --scope local \
+  --header "Authorization: Bearer $KERNO_MCP_TOKEN" \
+  https://SEU-SERVICO.onrender.com/api/mcp
+```
+
+No plano free a primeira chamada depois de um período ocioso acorda o processo (cold start).
+
 ---
 
 ## Checklist pós-deploy

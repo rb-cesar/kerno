@@ -6,11 +6,16 @@ import { QueryResource } from "@/core/query";
 import { kanbanClient } from "./client";
 import type { BoardData, KanbanFetch, KanbanFetchColumnCards } from "./types";
 
-export const kanbanBoardResource = new QueryResource<BoardData | null>({
+export const kanbanBoardResource = new QueryResource<BoardData>({
   baseKey: ["kanban", "board"],
-  fetch: (boardId) => kanbanClient.snapshot(boardId),
-  // Troca de board (BoardSwitcher) mantém o board anterior visível até o novo carregar.
-  keepPreviousData: true,
+  // `snapshot` engole o erro e devolve `null` — sem lançar aqui, o React Query
+  // trataria `null` como sucesso: cacheado pra sempre (staleTime infinito) e
+  // sem retry.
+  fetch: async (boardId) => {
+    const board = await kanbanClient.snapshot(boardId);
+    if (!board) throw new Error("Falha ao carregar o board");
+    return board;
+  },
   // O realtime (useKanbanRealtime → refresh()) e as próprias mutações já
   // mantêm isso atualizado explicitamente — sem staleTime alto, o React
   // Query poderia refazer a busca sozinho (foco de janela, reconexão) e

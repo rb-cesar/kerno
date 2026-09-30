@@ -144,9 +144,18 @@ export interface KernoEventMap {
   "user:left": UserPresencePayload;
 }
 
+/** Quem causou o evento, quando NÃO foi uma ação feita pela UI do próprio usuário. */
+export type EventOrigin = "mcp";
+
 export interface KernoEventBase {
   workspaceId: string;
   userId?: string;
+  /**
+   * Ações do MCP rodam com a conta de um usuário (`userId`), mas não partem do navegador
+   * dele: os clientes não podem tratá-las como "eco das minhas próprias ações" — ver
+   * `isOwnEvent`.
+   */
+  origin?: EventOrigin;
   at: string; // ISO timestamp
 }
 
@@ -158,3 +167,15 @@ export type KernoEvent<T extends KernoEventType = KernoEventType> = KernoEventBa
 // União discriminada de verdade (um membro por tipo). Use em handlers que
 // recebem "qualquer evento" — o `switch (event.type)` estreita o payload.
 export type AnyKernoEvent = { [K in KernoEventType]: KernoEvent<K> }[KernoEventType];
+
+/**
+ * O evento é eco de algo que ESTE cliente acabou de fazer (já aplicado localmente)? Só então
+ * os handlers de realtime o ignoram. Comparar só `userId` não basta: o MCP age como o mesmo
+ * usuário, e um navegador aberto nessa conta não veria as mudanças feitas por ele.
+ *
+ * Importar daqui (`@/core/events/types`), não de `@/core/events`: o index puxa o event bus
+ * (`node:events`) e não pode ir para o bundle do cliente.
+ */
+export function isOwnEvent(event: Pick<KernoEventBase, "userId" | "origin">, currentUserId: string): boolean {
+  return event.userId === currentUserId && event.origin === undefined;
+}

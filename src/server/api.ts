@@ -5,6 +5,7 @@ import { createKanbanController } from "@/modules/kanban/server";
 import { createNotificationController } from "@/modules/notifications/server";
 import { createWorkspaceController } from "@/modules/workspaces/server";
 import { container } from "./container";
+import { createMcpController } from "./mcp/http";
 
 /**
  * Monta a API HTTP (Hono) do app — chamada pelo route handler do Next
@@ -39,6 +40,10 @@ export function createApi() {
   app.route("/chat", createChatController(container.chat));
   app.route("/notifications", createNotificationController(container.notifications));
   app.route("/calls", createCallController(container.calls));
+
+  // Porta de entrada do MCP pessoal (Bearer token, opt-in por env) — não usa a sessão do
+  // NextAuth, por isso fica fora dos controllers acima. Ver ./mcp/http.
+  app.route("/mcp", createMcpController());
 
   return app;
 }
